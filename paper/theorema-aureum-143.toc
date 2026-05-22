@@ -9,6 +9,7 @@
 \contentsline {paragraph}{Module chain summary.}{7}{section*.4}%
 \contentsline {section}{\numberline {8}Machine Verification Protocol}{7}{section.8}%
 \contentsline {section}{\numberline {9}Lean 4 Formal Certification}{7}{section.9}%
-\contentsline {paragraph}{Master SHA (M7 LOCKED).}{9}{section*.10}%
-\contentsline {paragraph}{Certification context.}{9}{section*.11}%
-\contentsline {section}{\numberline {10}Open Items}{9}{section.10}%
+\contentsline {paragraph}{Note on \texttt {\#print axioms}.}{10}{section*.11}%
+\contentsline {paragraph}{Master SHA (M7 LOCKED).}{10}{section*.12}%
+\contentsline {paragraph}{Certification context.}{10}{section*.13}%
+\contentsline {section}{\numberline {10}Open Items}{10}{section.10}%

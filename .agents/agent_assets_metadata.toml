@@ -5,7 +5,7 @@ generated = []
 id = "1ubIS7yKRHOSVM6QhuvOr"
 uri = "file://paper/theorema-aureum-143.pdf"
 type = "pdf"
-title = "Theorema Aureum 143 — Full Paper with Lean 4 Certification & Module 08A"
+title = "Theorema Aureum 143 — Updated Paper (Corrected Lean 4 Certification)"
 
 [[outputs]]
 id = "ig3yeAQmVfMSKfZj1UNve"

@@ -18,7 +18,7 @@ static lean_object* _init_l_TheoremaAureum_Certificates_VALOR__M5() {
 _start:
 {
 lean_object* x_1; 
-x_1 = lean_unsigned_to_nat(1u);
+x_1 = lean_unsigned_to_nat(42110u);
 return x_1;
 }
 }

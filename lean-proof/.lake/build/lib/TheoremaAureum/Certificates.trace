@@ -1,8 +1,5 @@
 {"log":
  [{"message":
    ".> LEAN_PATH=././.lake/build/lib LD_LIBRARY_PATH= /home/runner/.elan/toolchains/leanprover--lean4---v4.12.0/bin/lean ././././TheoremaAureum/Certificates.lean -R ./././. -o ././.lake/build/lib/TheoremaAureum/Certificates.olean -i ././.lake/build/lib/TheoremaAureum/Certificates.ilean -c ././.lake/build/ir/TheoremaAureum/Certificates.c --json",
-   "level": "trace"},
-  {"message":
-   "././././TheoremaAureum/Certificates.lean:33:23: unused variable `h`\nnote: this linter can be disabled with `set_option linter.unusedVariables false`",
-   "level": "warning"}],
- "depHash": "10660027194080282826"}
+   "level": "trace"}],
+ "depHash": "10420895825540374437"}
