@@ -7,6 +7,7 @@ import {
 import { ShaChip } from "@/components/sha-chip";
 import { StatusBadge } from "@/components/status-badge";
 import { PdfUploader } from "@/components/pdf-uploader";
+import { LeanAxiomChip } from "@/components/lean-axiom-chip";
 import { ArrowLeft, FileText, Code2, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
@@ -159,6 +160,9 @@ export default function CertificateDetailPage() {
                   </div>
                   <div className="font-mono text-xs text-primary bg-primary/10 p-2 border border-primary/20">
                     {cert.leanBinding}
+                  </div>
+                  <div className="mt-2">
+                    <LeanAxiomChip leanBinding={cert.leanBinding} size="md" />
                   </div>
                 </div>
               )}

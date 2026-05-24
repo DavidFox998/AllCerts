@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ShaChip } from "@/components/sha-chip";
 import { StatusBadge } from "@/components/status-badge";
 import { PdfUploader } from "@/components/pdf-uploader";
+import { LeanAxiomChip } from "@/components/lean-axiom-chip";
 import { FileText, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -57,6 +58,10 @@ export default function CertificatesPage() {
                   <ShaChip sha={cert.stdoutSha} />
                 </div>
                 
+                {cert.leanBinding && (
+                  <LeanAxiomChip leanBinding={cert.leanBinding} />
+                )}
+
                 <div className="flex items-center gap-2">
                   {cert.pdfObjectPath || /^M[1-7]$/i.test(cert.moduleId) ? (
                     <div className="flex items-center text-xs font-mono text-muted-foreground border border-border px-2 py-1">
