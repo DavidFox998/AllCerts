@@ -53,7 +53,7 @@ export default function DashboardPage() {
         <Card className="p-4 flex flex-col justify-between border-border bg-card">
           <span className="text-xs font-mono text-muted-foreground uppercase">PDF Documents</span>
           <span className="text-lg font-bold font-mono mt-2">
-            {summary.pdfUploadedCount} / {summary.totalModules}
+            {summary.pdfUploadedCount} / {summary.pdfTotal ?? summary.totalModules}
           </span>
         </Card>
       </div>

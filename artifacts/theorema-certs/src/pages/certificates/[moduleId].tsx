@@ -40,7 +40,7 @@ export default function CertificateDetailPage() {
 
   const staticPdf = getStaticPdfPath(cert.moduleId);
   const pdfSrc = cert.pdfObjectPath
-    ? `/api/storage/objects/${encodeURIComponent(cert.pdfObjectPath)}`
+    ? `/api/storage${cert.pdfObjectPath.startsWith("/objects/") ? cert.pdfObjectPath : `/objects/${cert.pdfObjectPath}`}`
     : staticPdf;
   const hasAnyPdf = !!pdfSrc;
 

@@ -222,6 +222,8 @@ components:
           type: boolean
         pdfUploadedCount:
           type: integer
+        pdfTotal:
+          type: integer
 
     UploadUrlRequest:
       type: object

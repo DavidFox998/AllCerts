@@ -47,7 +47,8 @@ export const GetCertificateSummaryResponse = zod.object({
   "certifiedCount": zod.number(),
   "awaitingCount": zod.number(),
   "dagSealed": zod.boolean(),
-  "pdfUploadedCount": zod.number().optional()
+  "pdfUploadedCount": zod.number().optional(),
+  "pdfTotal": zod.number().optional()
 })
 
 

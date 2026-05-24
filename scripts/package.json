@@ -6,16 +6,20 @@
   "scripts": {
     "hello": "tsx ./src/hello.ts",
     "seed-m8": "tsx ./src/seed-m8.ts",
+    "attach-m8-m9-pdfs": "tsx ./src/attach-m8-m9-pdfs.ts",
     "seed-zero-axiom": "tsx ./src/seed-zero-axiom.ts",
     "seed-cards-v17": "tsx ./src/seed-cards-v17.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.19.0",
     "@workspace/db": "workspace:*",
-    "drizzle-orm": "catalog:"
+    "drizzle-orm": "catalog:",
+    "pdfkit": "^0.18.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "@types/pdfkit": "^0.17.6",
     "tsx": "catalog:"
   }
 }

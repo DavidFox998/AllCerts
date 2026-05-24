@@ -14,4 +14,5 @@ export interface CertificateSummary {
   awaitingCount: number;
   dagSealed: boolean;
   pdfUploadedCount?: number;
+  pdfTotal?: number;
 }
