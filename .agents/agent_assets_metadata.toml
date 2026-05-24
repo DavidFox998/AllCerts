@@ -54,3 +54,9 @@ id = "v6QL_UW0yFX6bgzQbE7pU"
 uri = "file://docs/M10_CM_Descent.pdf"
 type = "pdf"
 title = "M10_CM_Descent.pdf — BSD + Hilbert 12 for the 12 CM modular curves"
+
+[[outputs]]
+id = "Lq6i-2LY7Ba0ZT6w-Qzu6"
+uri = "file://docs/M13_BC_CM.pdf"
+type = "pdf"
+title = "M13_BC_CM.pdf — Bost–Connes for CM Fields, h=1 (v1.8-BC)"
