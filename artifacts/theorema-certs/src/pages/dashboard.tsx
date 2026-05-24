@@ -14,7 +14,27 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { CheckCircle2, ArrowRight, FileText, ShieldCheck } from "lucide-react";
+import { CheckCircle2, ArrowRight, FileText, ShieldCheck, AlertTriangle, Clock } from "lucide-react";
+
+const STALE_THRESHOLD_DAYS = 30;
+
+function formatAge(ageDays: number | undefined): string {
+  if (ageDays === undefined || Number.isNaN(ageDays)) return "unknown";
+  if (ageDays < 1 / 24) return "just now";
+  if (ageDays < 1) {
+    const hours = Math.max(1, Math.round(ageDays * 24));
+    return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  }
+  const days = Math.round(ageDays);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
+function formatTimestamp(iso: string | undefined): string {
+  if (!iso) return "unknown";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().replace("T", " ").replace(/\.\d+Z$/, "Z");
+}
 
 export default function DashboardPage() {
   const { data: summary, isLoading: isSummaryLoading } = useGetCertificateSummary();
@@ -118,14 +138,58 @@ export default function DashboardPage() {
 
           {leanVerify ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-mono">
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground uppercase">Toolchain</span>
-                  <span data-testid="text-lean-toolchain">{leanVerify.toolchain}</span>
+                  <span
+                    className="inline-flex items-center self-start px-2 py-1 border border-green-500/50 bg-green-500/10 font-bold text-green-700 dark:text-green-400"
+                    data-testid="text-lean-toolchain"
+                  >
+                    {leanVerify.toolchain}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground uppercase">Date verified</span>
                   <span data-testid="text-lean-date">{leanVerify.dateVerified}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground uppercase">Log last refreshed</span>
+                  {(() => {
+                    const stale =
+                      typeof leanVerify.ageDays === "number" &&
+                      leanVerify.ageDays > STALE_THRESHOLD_DAYS;
+                    return (
+                      <span
+                        className={`inline-flex items-center gap-1.5 self-start ${
+                          stale
+                            ? "text-amber-700 dark:text-amber-400 font-bold"
+                            : "text-foreground"
+                        }`}
+                        data-testid="text-lean-last-modified"
+                        title={leanVerify.lastModified ?? ""}
+                      >
+                        {stale ? (
+                          <AlertTriangle className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
+                        <span data-testid="text-lean-age">
+                          {formatAge(leanVerify.ageDays)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          ({formatTimestamp(leanVerify.lastModified)})
+                        </span>
+                        {stale ? (
+                          <span
+                            className="ml-1 px-1.5 py-0.5 border border-amber-500/50 bg-amber-500/10 text-[10px] uppercase tracking-wider"
+                            data-testid="badge-lean-stale"
+                          >
+                            stale &gt; {STALE_THRESHOLD_DAYS}d
+                          </span>
+                        ) : null}
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
 

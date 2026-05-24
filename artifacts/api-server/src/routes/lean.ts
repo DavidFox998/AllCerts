@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 const router: IRouter = Router();
@@ -24,9 +24,10 @@ interface ParsedVerification {
   axiomDebt: string[];
   axiomLines: string[];
   content: string;
+  lastModified: string;
 }
 
-function parseVerification(content: string): ParsedVerification {
+function parseVerification(content: string, lastModified: string): ParsedVerification {
   const toolchainMatch = content.match(/Lean toolchain\s*:\s*(.+)/);
   const dateMatch = content.match(/Date verified\s*:\s*(.+)/);
   const axiomLines = content
@@ -47,6 +48,7 @@ function parseVerification(content: string): ParsedVerification {
     axiomDebt,
     axiomLines,
     content,
+    lastModified,
   };
 }
 
@@ -58,7 +60,8 @@ function load(): ParsedVerification | null {
   if (cachedError) return null;
   try {
     const content = readFileSync(VERIFY_PATH, "utf8");
-    cached = parseVerification(content);
+    const stat = statSync(VERIFY_PATH);
+    cached = parseVerification(content, stat.mtime.toISOString());
     return cached;
   } catch (err) {
     cachedError = err instanceof Error ? err.message : String(err);
@@ -73,7 +76,9 @@ router.get("/lean/verify", (req, res) => {
     res.status(500).json({ error: "Verification log unavailable" });
     return;
   }
-  res.json(parsed);
+  const ageMs = Date.now() - new Date(parsed.lastModified).getTime();
+  const ageDays = ageMs / (1000 * 60 * 60 * 24);
+  res.json({ ...parsed, ageDays });
 });
 
 export default router;

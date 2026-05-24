@@ -114,7 +114,9 @@ export const GetLeanVerificationResponse = zod.object({
   "dateVerified": zod.string().describe('Date the verification log was produced'),
   "axiomDebt": zod.array(zod.string()).describe('List of remaining axioms (empty when fully discharged)'),
   "axiomLines": zod.array(zod.string()).describe('Raw \"does not depend on any axioms\" lines from `lake env lean Verify.lean`'),
-  "content": zod.string().describe('Full raw contents of lean-proof\/VERIFY.txt')
+  "content": zod.string().describe('Full raw contents of lean-proof\/VERIFY.txt'),
+  "lastModified": zod.coerce.date().optional().describe('ISO-8601 timestamp of the VERIFY.txt file\'s last modification (mtime)'),
+  "ageDays": zod.number().optional().describe('Age in days between the file\'s mtime and the time the response was generated')
 })
 
 

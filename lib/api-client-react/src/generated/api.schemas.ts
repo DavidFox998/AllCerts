@@ -80,6 +80,10 @@ export interface LeanVerification {
   axiomLines: string[];
   /** Full raw contents of lean-proof/VERIFY.txt */
   content: string;
+  /** ISO-8601 timestamp of the VERIFY.txt file's last modification (mtime) */
+  lastModified?: string;
+  /** Age in days between the file's mtime and the time the response was generated */
+  ageDays?: number;
 }
 
 export interface UploadUrlRequest {
