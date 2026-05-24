@@ -14,6 +14,8 @@ tags:
     description: Certificate module operations
   - name: storage
     description: Object storage operations
+  - name: lean
+    description: Lean 4 verification log
 paths:
   /healthz:
     get:
@@ -102,6 +104,19 @@ paths:
                 $ref: "#/components/schemas/Certificate"
         "404":
           description: Not found
+
+  /lean/verify:
+    get:
+      operationId: getLeanVerification
+      tags: [lean]
+      summary: Get the Lean 4 verification log (axiom debt status)
+      responses:
+        "200":
+          description: Verification log
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeanVerification"
 
   /storage/uploads/request-url:
     post:
@@ -224,6 +239,30 @@ components:
           type: integer
         pdfTotal:
           type: integer
+
+    LeanVerification:
+      type: object
+      required: [toolchain, dateVerified, axiomDebt, axiomLines, content]
+      properties:
+        toolchain:
+          type: string
+          description: Lean toolchain version string
+        dateVerified:
+          type: string
+          description: Date the verification log was produced
+        axiomDebt:
+          type: array
+          items:
+            type: string
+          description: List of remaining axioms (empty when fully discharged)
+        axiomLines:
+          type: array
+          items:
+            type: string
+          description: Raw "does not depend on any axioms" lines from `lake env lean Verify.lean`
+        content:
+          type: string
+          description: Full raw contents of lean-proof/VERIFY.txt
 
     UploadUrlRequest:
       type: object

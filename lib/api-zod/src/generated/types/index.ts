@@ -11,5 +11,6 @@ export * from './certificateStatus';
 export * from './certificateSummary';
 export * from './certificateUpdate';
 export * from './healthStatus';
+export * from './leanVerification';
 export * from './uploadUrlRequest';
 export * from './uploadUrlResponse';

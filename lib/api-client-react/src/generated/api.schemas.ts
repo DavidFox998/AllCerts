@@ -69,6 +69,19 @@ export interface CertificateSummary {
   pdfTotal?: number;
 }
 
+export interface LeanVerification {
+  /** Lean toolchain version string */
+  toolchain: string;
+  /** Date the verification log was produced */
+  dateVerified: string;
+  /** List of remaining axioms (empty when fully discharged) */
+  axiomDebt: string[];
+  /** Raw "does not depend on any axioms" lines from `lake env lean Verify.lean` */
+  axiomLines: string[];
+  /** Full raw contents of lean-proof/VERIFY.txt */
+  content: string;
+}
+
 export interface UploadUrlRequest {
   name: string;
   size: number;

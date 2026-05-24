@@ -1,13 +1,25 @@
-import { useGetCertificateSummary, useListCertificates } from "@workspace/api-client-react";
+import {
+  useGetCertificateSummary,
+  useListCertificates,
+  useGetLeanVerification,
+} from "@workspace/api-client-react";
 import { ShaChip } from "@/components/sha-chip";
 import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Link } from "wouter";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2, ArrowRight, FileText, ShieldCheck } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: summary, isLoading: isSummaryLoading } = useGetCertificateSummary();
   const { data: certificates, isLoading: isCertsLoading } = useListCertificates();
+  const { data: leanVerify } = useGetLeanVerification();
 
   const isLoading = isSummaryLoading || isCertsLoading;
 
@@ -82,6 +94,87 @@ export default function DashboardPage() {
               Referee Walkthrough <ArrowRight className="w-3 h-3" />
             </span>
           </Link>
+        </div>
+      </Card>
+
+      <Card
+        className="p-6 border-green-500/40 bg-green-500/5"
+        data-testid="card-lean-verification"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <h3 className="text-sm font-mono font-bold uppercase text-green-700 dark:text-green-400 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4" /> Lean 4 Verification
+            </h3>
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 border border-green-500/50 bg-green-500/10 font-mono text-xs font-bold text-green-700 dark:text-green-400"
+              data-testid="badge-axiom-debt"
+            >
+              Lean axiom debt = [
+              {leanVerify?.axiomDebt.join(", ") ?? ""}
+              ]
+            </span>
+          </div>
+
+          {leanVerify ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground uppercase">Toolchain</span>
+                  <span data-testid="text-lean-toolchain">{leanVerify.toolchain}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground uppercase">Date verified</span>
+                  <span data-testid="text-lean-date">{leanVerify.dateVerified}</span>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 border border-border p-3 font-mono text-xs space-y-1">
+                {leanVerify.axiomLines.length === 0 ? (
+                  <span className="text-muted-foreground">No axiom-status lines found.</span>
+                ) : (
+                  leanVerify.axiomLines.map((line, i) => (
+                    <div
+                      key={i}
+                      className="text-green-700 dark:text-green-400"
+                      data-testid={`text-axiom-line-${i}`}
+                    >
+                      {line}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button
+                    type="button"
+                    className="self-start inline-flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-primary hover:underline"
+                    data-testid="button-view-verify-txt"
+                  >
+                    <FileText className="w-3 h-3" /> View VERIFY.txt
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle className="font-mono text-sm uppercase">
+                      lean-proof/VERIFY.txt
+                    </DialogTitle>
+                  </DialogHeader>
+                  <pre
+                    className="bg-muted border border-border p-4 font-mono text-xs whitespace-pre-wrap overflow-auto max-h-[70vh]"
+                    data-testid="text-verify-content"
+                  >
+                    {leanVerify.content}
+                  </pre>
+                </DialogContent>
+              </Dialog>
+            </>
+          ) : (
+            <p className="text-xs font-mono text-muted-foreground">
+              Verification log unavailable.
+            </p>
+          )}
         </div>
       </Card>
 

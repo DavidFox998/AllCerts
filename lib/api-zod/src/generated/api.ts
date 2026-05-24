@@ -107,6 +107,18 @@ export const UpdateCertificateResponse = zod.object({
 
 
 /**
+ * @summary Get the Lean 4 verification log (axiom debt status)
+ */
+export const GetLeanVerificationResponse = zod.object({
+  "toolchain": zod.string().describe('Lean toolchain version string'),
+  "dateVerified": zod.string().describe('Date the verification log was produced'),
+  "axiomDebt": zod.array(zod.string()).describe('List of remaining axioms (empty when fully discharged)'),
+  "axiomLines": zod.array(zod.string()).describe('Raw \"does not depend on any axioms\" lines from `lake env lean Verify.lean`'),
+  "content": zod.string().describe('Full raw contents of lean-proof\/VERIFY.txt')
+})
+
+
+/**
  * @summary Request a presigned upload URL for a PDF
  */
 export const RequestUploadUrlBody = zod.object({

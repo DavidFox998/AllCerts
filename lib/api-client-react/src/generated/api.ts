@@ -24,6 +24,7 @@ import type {
   CertificateSummary,
   CertificateUpdate,
   HealthStatus,
+  LeanVerification,
   UploadUrlRequest,
   UploadUrlResponse
 } from './api.schemas';
@@ -420,6 +421,83 @@ export const useUpdateCertificate = <TError = ErrorType<void>,
       > => {
       return useMutation(getUpdateCertificateMutationOptions(options));
     }
+
+export const getGetLeanVerificationUrl = () => {
+
+
+
+
+  return `/api/lean/verify`
+}
+
+/**
+ * @summary Get the Lean 4 verification log (axiom debt status)
+ */
+export const getLeanVerification = async ( options?: RequestInit): Promise<LeanVerification> => {
+
+  return customFetch<LeanVerification>(getGetLeanVerificationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetLeanVerificationQueryKey = () => {
+    return [
+    `/api/lean/verify`
+    ] as const;
+    }
+
+
+export const getGetLeanVerificationQueryOptions = <TData = Awaited<ReturnType<typeof getLeanVerification>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeanVerification>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetLeanVerificationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLeanVerification>>> = ({ signal }) => getLeanVerification({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLeanVerification>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetLeanVerificationQueryResult = NonNullable<Awaited<ReturnType<typeof getLeanVerification>>>
+export type GetLeanVerificationQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the Lean 4 verification log (axiom debt status)
+ */
+
+export function useGetLeanVerification<TData = Awaited<ReturnType<typeof getLeanVerification>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLeanVerification>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetLeanVerificationQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getRequestUploadUrlUrl = () => {
 
