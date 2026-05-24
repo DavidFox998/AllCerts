@@ -14,12 +14,12 @@ const MASTER_SHA = "5b80b84d1d3d13e216eeecd8155c1edc854d578e7d2dae9c4bc72fcbf7eb
 router.get("/certificates/summary", async (req, res) => {
   try {
     const certs = await db.select().from(certificatesTable).orderBy(certificatesTable.dagPosition);
-    const certifiedCount = certs.filter((c) => c.status === "CERTIFIED").length;
+    const VERIFIED = new Set(["CERTIFIED", "LOCKED", "DISCHARGED"]);
+    const certifiedCount = certs.filter((c) => VERIFIED.has(c.status)).length;
     const awaitingCount = certs.filter((c) => c.status === "AWAITING").length;
     const pdfUploadedCount = certs.filter((c) => c.pdfObjectPath !== null).length;
     const dagSealed =
-      certs.length > 0 &&
-      certs.every((c) => c.status === "CERTIFIED" || c.status === "LOCKED");
+      certs.length > 0 && certs.every((c) => VERIFIED.has(c.status));
 
     res.json({
       masterSha: MASTER_SHA,

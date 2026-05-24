@@ -15,7 +15,7 @@ const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 type CardPatch = {
   moduleId: string;
-  title: string;
+  title?: string;
   claim: string;
   status: "CERTIFIED" | "AWAITING" | "LOCKED" | "DISCHARGED";
   notes: string;
@@ -87,7 +87,6 @@ const patches: CardPatch[] = [
   },
   {
     moduleId: "M8",
-    title: "M8 — Bost-Connes Input Checks — X_0(397)",
     claim:
       "For each N in the 280-level table: |a_p(f)| ≤ 2√p (Deligne 1974) holds, and CM status is read from LMFDB (CM = 0 for 268 N, CM = 1 for 12 N).",
     status: "CERTIFIED",
@@ -96,7 +95,6 @@ const patches: CardPatch[] = [
   },
   {
     moduleId: "M9",
-    title: "M9 — Weil Transfer All (H2 Discharged)",
     claim:
       "M9_WeilTransfer_All : ∀ N ∈ M9_TABLE, 0 < VALOR N → GRH (L_X₀ N). Theorem 3.1 (M24_READY): min VALOR = 1084 at N = 397 (g = 32), so the hypothesis holds for every N in the table.",
     status: "DISCHARGED",
@@ -105,19 +103,33 @@ const patches: CardPatch[] = [
   },
 ];
 
+const { eq } = await import("drizzle-orm");
+
 for (const p of patches) {
+  const set: Record<string, unknown> = {
+    claim: p.claim,
+    status: p.status,
+    notes: p.notes,
+  };
+  if (p.title !== undefined) set.title = p.title;
   await db
     .update(certificatesTable)
-    .set({ title: p.title, claim: p.claim, status: p.status, notes: p.notes })
-    .where(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (await import("drizzle-orm")).eq(certificatesTable.moduleId, p.moduleId),
-    );
+    .set(set)
+    .where(eq(certificatesTable.moduleId, p.moduleId));
   console.log(`Updated ${p.moduleId} → ${p.status}`);
 }
 
+const [m9Row] = await db
+  .select()
+  .from(certificatesTable)
+  .where(eq(certificatesTable.moduleId, "M9"));
+if (!m9Row) {
+  throw new Error("M9 row missing; cannot build M10 parent linkage.");
+}
+const m9ParentSha = m9Row.stdoutSha;
+
 const m10Source =
-  "M10_TheoremaAureum_v1.7|axioms=[]|parent=" + M9_OUT_SHA;
+  "M10_TheoremaAureum_v1.7|axioms=[]|parent=" + m9ParentSha;
 const m10Sha = sha(m10Source);
 const m10Title = "M10 — TheoremaAureum (Package, axioms = [])";
 const m10Claim =
@@ -137,7 +149,7 @@ await db
     sourceFile: "lean-proof/TheoremaAureum.lean",
     sourceSha: m10Sha,
     stdoutSha: m10Sha,
-    parentShas: JSON.stringify([M9_OUT_SHA]),
+    parentShas: JSON.stringify([m9ParentSha]),
     dagPosition: 10,
     pdfObjectPath: null,
     leanBinding: m10LeanBinding,
@@ -152,7 +164,7 @@ await db
       sourceFile: "lean-proof/TheoremaAureum.lean",
       sourceSha: m10Sha,
       stdoutSha: m10Sha,
-      parentShas: JSON.stringify([M9_OUT_SHA]),
+      parentShas: JSON.stringify([m9ParentSha]),
       dagPosition: 10,
       leanBinding: m10LeanBinding,
       notes: m10Notes,
