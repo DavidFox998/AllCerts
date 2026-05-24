@@ -1,0 +1,5 @@
+{"log":
+ [{"message":
+   ".> LEAN_PATH=././.lake/build/lib LD_LIBRARY_PATH= /home/runner/.elan/toolchains/leanprover--lean4---v4.12.0/bin/lean ././././TheoremaAureum/M9_WeilTransfer.lean -R ./././. -o ././.lake/build/lib/TheoremaAureum/M9_WeilTransfer.olean -i ././.lake/build/lib/TheoremaAureum/M9_WeilTransfer.ilean -c ././.lake/build/ir/TheoremaAureum/M9_WeilTransfer.c --json",
+   "level": "trace"}],
+ "depHash": "9872992564064210920"}
