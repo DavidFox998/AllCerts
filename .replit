@@ -32,6 +32,10 @@ args = "morningstar-tamper"
 task = "workflow.run"
 args = "zeta-burst-101-10000"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "zeta-sieve-14159-100000"
+
 [[workflows.workflow]]
 name = "lean-proof"
 author = "agent"
@@ -72,6 +76,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python lab.py -c \"zeta_burst(101, 10000)\""
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "zeta-sieve-14159-100000"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python lab.py -c \"zeta_sieve(14159, 100000)\""
 
 [workflows.workflow.metadata]
 outputType = "console"
