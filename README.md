@@ -85,3 +85,46 @@ python scripts/gematria/gematria_cube.py attached_assets/cube_M0_v2.jpg
 See `CITATION.cff`. v1.8-BC lives on Replit as the public, in-house source of
 truth — no DOI field is carried in the citation file. If a DOI is needed
 later (e.g. for an external archive), add it then.
+
+## MorningStar-Lab v1.0 — Birth certificate (2026-05-25)
+
+A compiled PDF certificate of the first **100 nontrivial zeros of ζ(s)**
+on the critical line, every row backed by a per-line SHA-256 entry in
+the Genesis-sealed ledger `data/hits.txt`. This is a **numerical
+reconnaissance** certificate — it is *not* a proof of the Riemann
+Hypothesis. The Lean 4 axiom-debt-`[]` result that ships in
+`lean-proof/` concerns the M1–M10/M13 BC–CM (h=1) spine and is
+independent of this document.
+
+- PDF: `data/MorningStar_RH_Cert.pdf`
+- TeX source: `data/MorningStar_RH_Cert.tex`
+- Ledger: `data/hits.txt` (Genesis seal
+  `eecbcd9a540aa7a2c90edd23827c73e4d1bb5af641d352f70a5de849b21f875f`)
+- BIRTH-event line in the ledger:
+  `tag=BIRTH cert_pdf_sha256=55ebc8ede1fafa51e3f6dad59c1afef5c11d9d2fea3f2da481fb5f13e845cd8b ...`
+
+### Reproduce from scratch
+
+```bash
+# 1. Verify the immutable Genesis preamble:
+python scripts/check-genesis-seal.py
+
+# 2. Regenerate the LaTeX certificate (re-runs hunt_zeros(1,100) +
+#    bracket_zero(1, 1e-6); appends 100+ probes to the ledger):
+python scripts/generate-rh-cert.py
+
+# 3. Compile to PDF (texlive 2024 or newer):
+( cd data && pdflatex -interaction=nonstopmode MorningStar_RH_Cert.tex \
+                   && pdflatex -interaction=nonstopmode MorningStar_RH_Cert.tex )
+
+# 4. Append a sealed BIRTH event for this compilation:
+python scripts/seal-birth.py
+
+# 5. Full 7-step harness (requires `lake` on PATH for the Lean check):
+bash scripts/validate-morningstar.sh
+```
+
+Anyone can clone the repo, run the five commands above, and obtain
+their own copy of the certificate plus their own ledger SHA chain.
+The Genesis seal and the Lean axiom-debt `[]` result are pinned and
+will fail loudly under tampering.
