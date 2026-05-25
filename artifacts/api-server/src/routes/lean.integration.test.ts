@@ -531,16 +531,27 @@ describe("POST /api/lean/verify/rebuild/stream — auth & error envelopes", () =
     expect(insertedRows).toHaveLength(0);
   });
 
-  it("returns 401 JSON on a wrong bearer token (no Retry-After)", async () => {
+  it("returns 401 JSON on a wrong bearer token (no Retry-After) with the same envelope as the JSON endpoint", async () => {
     process.env["LEAN_REBUILD_TOKEN"] = "shared";
     const res = await openStream({ authorization: "Bearer nope" });
     expect(res.status).toBe(401);
     expect(res.headers.get("retry-after")).toBeNull();
-    await res.body?.cancel();
+    expect(res.headers.get("content-type")).toMatch(/json/);
+    const body = await res.json();
+    expect(body.error).toMatch(/invalid|unauthor/i);
+
+    // Parity check: JSON endpoint returns the same `error` shape on a wrong token.
+    const jsonRes = await call({
+      method: "POST",
+      path: "/api/lean/verify/rebuild",
+      authorization: "Bearer nope",
+    });
+    expect(jsonRes.status).toBe(401);
+    expect(jsonRes.json.error).toBe(body.error);
     expect(insertedRows).toHaveLength(0);
   });
 
-  it("returns 429 + Retry-After after 5 bad-token attempts", async () => {
+  it("returns 429 + Retry-After after 5 bad-token attempts with the same envelope as the JSON endpoint", async () => {
     process.env["LEAN_REBUILD_TOKEN"] = "shared";
     for (let i = 0; i < 5; i++) {
       const r = await openStream({ ip: "3.3.3.3", authorization: "Bearer wrong" });
@@ -549,8 +560,23 @@ describe("POST /api/lean/verify/rebuild/stream — auth & error envelopes", () =
     }
     const blocked = await openStream({ ip: "3.3.3.3", authorization: "Bearer shared" });
     expect(blocked.status).toBe(429);
-    expect(Number(blocked.headers.get("retry-after"))).toBeGreaterThan(0);
-    await blocked.body?.cancel();
+    expect(blocked.headers.get("content-type")).toMatch(/json/);
+    const blockedRetryAfter = Number(blocked.headers.get("retry-after"));
+    expect(blockedRetryAfter).toBeGreaterThan(0);
+    const blockedBody = await blocked.json();
+    expect(blockedBody.error).toMatch(/too many|locked|wait/i);
+
+    // Parity check: JSON endpoint sees the same locked-out IP and returns the same envelope shape.
+    const jsonBlocked = await call({
+      method: "POST",
+      path: "/api/lean/verify/rebuild",
+      ip: "3.3.3.3",
+      authorization: "Bearer shared",
+    });
+    expect(jsonBlocked.status).toBe(429);
+    expect(Number(jsonBlocked.headers.get("retry-after"))).toBeGreaterThan(0);
+    expect(typeof jsonBlocked.json.error).toBe("string");
+    expect(jsonBlocked.json.error).toMatch(/too many|locked|wait/i);
   });
 
   it("streams a successful rebuild and persists a streamed=true history row with the named-token referee", async () => {
@@ -576,6 +602,9 @@ describe("POST /api/lean/verify/rebuild/stream — auth & error envelopes", () =
     expect(result!.data.ok).toBe(true);
     expect(result!.data.exitCode).toBe(0);
     expect(result!.data.stdout).toContain("hello");
+    expect(result!.data.stdout).toContain("world");
+    expect(typeof result!.data.stderr).toBe("string");
+    expect(result!.data.stderr).toContain("warn: foo");
     expect(result!.data.verification).not.toBeNull();
     expect(insertedRows).toHaveLength(1);
     expect(insertedRows[0]).toMatchObject({
