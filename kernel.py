@@ -58,22 +58,77 @@ def kms_beta(re_s: float) -> float:
 
 
 def zero(n: int) -> dict[str, Any]:
-    """Return the n-th nontrivial zero of ζ on the critical line (mpmath).
+    """Find the n-th nontrivial zero of ζ via mpmath.zetazero and probe at it.
 
-    Honest scope: this is mpmath.zetazero, which is the standard
-    arbitrary-precision implementation; it is *not* a Lean-verified
-    statement. Tag: MPMATH_ZETAZERO.
+    The high-precision zero location is computed with mpmath.zetazero,
+    then a regular probe(1, 1, 0.5, float(zero.imag)) is fired so the
+    zero gets a full ledger receipt (SHA-256, L_abs, kms_beta, tag).
+    Float64 rounding of the imaginary part means |L| at the probed
+    point is typically ~1e-15 rather than 0 — small enough that the
+    RH_VANISH_TOL gunsight fires, large enough to be honest about the
+    precision loss.
+
+    Honest scope: this is mpmath, not a Lean-verified statement.
     """
     if int(n) < 1:
         raise ValueError("zero(n): n must be >= 1")
     with mpmath.workdps(50):
         z = mpmath.zetazero(int(n))
+    t0 = float(z.imag)
+    out = probe(1, 1, 0.5, t0)
     return {
-        "tag": "MPMATH_ZETAZERO",
-        "backend": BACKEND,
+        **out,
         "n": int(n),
-        "re": mpmath.nstr(z.real, 20),
-        "im": mpmath.nstr(z.imag, 20),
+        "zero_im_mpmath": mpmath.nstr(z.imag, 20),
+    }
+
+
+def hunt_zeros(n_start: int = 1, n_end: int = 10) -> list[dict[str, Any]]:
+    """Log the n_start..n_end nontrivial ζ zeros via repeated zero(n) calls.
+
+    Each call probes at the zero (so every entry has its own ledger
+    line + SHA). Prints a one-line summary per zero.
+    """
+    if int(n_start) < 1 or int(n_end) < int(n_start):
+        raise ValueError("hunt_zeros: require 1 <= n_start <= n_end")
+    hits: list[dict[str, Any]] = []
+    for n in range(int(n_start), int(n_end) + 1):
+        r = zero(n)
+        hits.append(r)
+        print(
+            f"ZERO {n}: t={r['zero_im_mpmath']} "
+            f"|L|={r['L_abs']} beta={r['kms_beta']} "
+            f"RH_ok={r['RH_ok']} sha={r['sha'][:16]}"
+        )
+    return hits
+
+
+def bracket_zero(n: int, window: float = 1e-6) -> dict[str, Any]:
+    """Tight critical-line sweep around the n-th ζ zero.
+
+    Calls scan_critical_line over [t0-window, t0+window] with step
+    window/5. Note that scan_critical_line uses float steps, so the
+    sweep typically won't actually land within RH_VANISH_TOL (1e-12)
+    of t0 — call zero(n) separately if you want the exact zero logged.
+    The sweep does show |L| dipping toward the zero in the L_abs
+    field of each probed ledger line, which is the "radar coverage"
+    receipt the bracket exists to produce.
+    """
+    if int(n) < 1:
+        raise ValueError("bracket_zero: n must be >= 1")
+    if window <= 0:
+        raise ValueError("bracket_zero: window must be > 0")
+    with mpmath.workdps(50):
+        t0 = float(mpmath.zetazero(int(n)).imag)
+    step = window / 5.0
+    scan = scan_critical_line(1, t0 - window, t0 + window, step, 1)
+    return {
+        "n": int(n),
+        "t0": t0,
+        "window": window,
+        "step": step,
+        "zeros_found": scan,
+        "zeros_count": len(scan),
     }
 
 

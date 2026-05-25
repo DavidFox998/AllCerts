@@ -77,6 +77,16 @@ def run_one(expr: str) -> int:
         )
         print(json.dumps({"zeros": zeros, "count": len(zeros)}, indent=2))
         return 0
+    if s.startswith("hunt_zeros"):
+        n_start, n_end = _parse_args(s, "hunt_zeros", 2)
+        hits = kernel.hunt_zeros(int(n_start), int(n_end))
+        print(json.dumps({"count": len(hits)}, indent=2))
+        return 0
+    if s.startswith("bracket_zero"):
+        n, window = _parse_args(s, "bracket_zero", 2)
+        out = kernel.bracket_zero(int(n), float(window))
+        print(json.dumps(out, indent=2))
+        return 0
     if s.startswith("scan_plane"):
         h, N, re_min, re_max, im_min, im_max, grid = _parse_args(s, "scan_plane", 7)
         summary = kernel.scan_plane(

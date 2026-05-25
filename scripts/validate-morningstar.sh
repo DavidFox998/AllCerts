@@ -2,10 +2,13 @@
 # MorningStar-Lab v1.0 validation harness.
 # Runs (in order):
 #   1. python lab.py -c "probe(1,19,0.5,0)"   — Layer 7 + Layer 4 + Genesis seal
-#   2. python lean_bridge.py                  — Layer 2 (emit AutoLemmas.lean,
+#   2. python lab.py -c "hunt_zeros(1,3)"     — zeta zero reconnaissance
+#   3. python lab.py -c "bracket_zero(1,1e-4)" — tight bracket sweep
+#   4. assert data/MorningStar_RH_Cert.tex exists
+#   5. python lean_bridge.py                  — Layer 2 (emit AutoLemmas.lean,
 #                                                runtime axiom check)
-#   3. cd lean-proof && lake build            — full Lake build
-#   4. lake env lean Verify.lean              — main_theorem axiom debt = []
+#   6. cd lean-proof && lake build            — full Lake build
+#   7. lake env lean Verify.lean              — main_theorem axiom debt = []
 #                                                hit_437 / hit_1094 axiom check
 # On full success, prints:
 #   MorningStar-Lab v1.0 online. 4D stable. W=h Z=N X=Re Y=Im. CERTIFICATE at /data/M13_CERT.txt
@@ -19,11 +22,27 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-echo ">> [1/4] python lab.py -c \"probe(1,19,0.5,0)\""
+echo ">> [1/7] python lab.py -c \"probe(1,19,0.5,0)\""
 python lab.py -c "probe(1,19,0.5,0)"
 
 echo
-echo ">> [2/4] python lean_bridge.py"
+echo ">> [2/7] python lab.py -c \"hunt_zeros(1,3)\""
+python lab.py -c "hunt_zeros(1,3)"
+
+echo
+echo ">> [3/7] python lab.py -c \"bracket_zero(1,1e-4)\""
+python lab.py -c "bracket_zero(1,1e-4)"
+
+echo
+echo ">> [4/7] check data/MorningStar_RH_Cert.tex exists"
+if [ ! -s data/MorningStar_RH_Cert.tex ]; then
+  echo "FATAL: data/MorningStar_RH_Cert.tex missing or empty." >&2
+  exit 1
+fi
+echo "ok: data/MorningStar_RH_Cert.tex present ($(wc -c <data/MorningStar_RH_Cert.tex) bytes)"
+
+echo
+echo ">> [5/7] python lean_bridge.py"
 python lean_bridge.py
 
 if ! command -v lake >/dev/null 2>&1; then
@@ -33,11 +52,11 @@ if ! command -v lake >/dev/null 2>&1; then
 fi
 
 echo
-echo ">> [3/4] cd lean-proof && lake build"
+echo ">> [6/7] cd lean-proof && lake build"
 ( cd lean-proof && lake build )
 
 echo
-echo ">> [4/4] lake env lean Verify.lean + hit_437 / hit_1094 axiom check"
+echo ">> [7/7] lake env lean Verify.lean + hit_437 / hit_1094 axiom check"
 VERIFY_OUT="$(cd lean-proof && lake env lean Verify.lean)"
 echo "$VERIFY_OUT"
 
