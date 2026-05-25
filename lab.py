@@ -33,13 +33,34 @@ def _parse_probe(expr: str) -> tuple[int, int, float, float]:
     return int(h), int(N), float(re_s), float(im_s)
 
 
+def _parse_zero(expr: str) -> int:
+    """Parse 'zero(n)' or 'zero n'."""
+    s = expr.strip()
+    rest = s[len("zero") :].strip()
+    if rest.startswith("(") and rest.endswith(")"):
+        rest = rest[1:-1]
+    parts = [p for p in re.split(r"[,\s]+", rest) if p]
+    if len(parts) != 1:
+        raise ValueError(f"zero needs 1 arg (n); got {len(parts)}")
+    return int(parts[0])
+
+
 def _format_result(out: dict) -> str:
     pretty = {k: v for k, v in out.items() if k != "ledger_line"}
-    return json.dumps(pretty, sort_keys=True, indent=2) + "\n  ledger: " + out["ledger_line"]
+    rendered = json.dumps(pretty, sort_keys=True, indent=2)
+    if "ledger_line" in out:
+        return rendered + "\n  ledger: " + out["ledger_line"]
+    return rendered
 
 
 def run_one(expr: str) -> int:
-    h, N, re_s, im_s = _parse_probe(expr)
+    s = expr.strip()
+    if s.startswith("zero"):
+        n = _parse_zero(s)
+        out = kernel.zero(n)
+        print(_format_result(out))
+        return 0
+    h, N, re_s, im_s = _parse_probe(s)
     out = kernel.probe(h, N, re_s, im_s)
     print(_format_result(out))
     return 0
@@ -47,7 +68,7 @@ def run_one(expr: str) -> int:
 
 def repl() -> int:
     print(BANNER)
-    print("type 'probe h N re_s im_s' or 'quit'")
+    print("type 'probe h N re_s im_s', 'zero n', or 'quit'")
     while True:
         try:
             line = input("> ").strip()

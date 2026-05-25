@@ -44,6 +44,37 @@ SEAL_CHECK = REPO_ROOT / "scripts" / "check-genesis-seal.py"
 BACKEND = "mpmath"
 BACKEND_VERSION = mpmath.__version__
 NONVANISH_TOL = mpmath.mpf("1e-10")
+# RH "gunsight": consider s a zero of the evaluated L-function when its
+# absolute value drops below this. Tighter than NONVANISH_TOL on purpose
+# so the two predicates don't both fire on borderline values.
+RH_VANISH_TOL = mpmath.mpf("1e-12")
+
+
+def kms_beta(re_s: float) -> float:
+    """KMS temperature from M13: β = 1/Re(s). Diverges at Re(s) = 0."""
+    if re_s == 0:
+        return float("inf")
+    return 1.0 / float(re_s)
+
+
+def zero(n: int) -> dict[str, Any]:
+    """Return the n-th nontrivial zero of ζ on the critical line (mpmath).
+
+    Honest scope: this is mpmath.zetazero, which is the standard
+    arbitrary-precision implementation; it is *not* a Lean-verified
+    statement. Tag: MPMATH_ZETAZERO.
+    """
+    if int(n) < 1:
+        raise ValueError("zero(n): n must be >= 1")
+    with mpmath.workdps(50):
+        z = mpmath.zetazero(int(n))
+    return {
+        "tag": "MPMATH_ZETAZERO",
+        "backend": BACKEND,
+        "n": int(n),
+        "re": mpmath.nstr(z.real, 20),
+        "im": mpmath.nstr(z.imag, 20),
+    }
 
 
 def _verify_seal() -> None:
@@ -174,11 +205,25 @@ def probe(h: int, N: int, re_s: float, im_s: float) -> dict[str, Any]:
 
     ev = _evaluate(inputs["h"], inputs["N"], inputs["re_s"], inputs["im_s"])
 
+    # RH "gunsight": when the backend gave us a real |L(s)|, RH_ok is
+    # True iff that value is below RH_VANISH_TOL — i.e. s looks like an
+    # actual zero of the evaluated L-function at mpmath precision.
+    # When the backend bailed (NEEDS_SAGE), RH_ok stays False because we
+    # have no evidence of a zero; the NEEDS_SAGE tag carries the contract.
+    if ev["L_abs"] is not None:
+        rh_ok = bool(mpmath.mpf(ev["L_abs"]) < RH_VANISH_TOL)
+    else:
+        rh_ok = False
+
+    beta = kms_beta(inputs["re_s"])
+    beta_field = "inf" if beta == float("inf") else f"{beta}"
+
     output = {
         "h": inputs["h"],
         "N": inputs["N"],
         "L_nonvanish": ev["L_nonvanish"],
-        "RH_ok": inputs["re_s"] == 0.5,
+        "RH_ok": rh_ok,
+        "kms_beta": beta_field,
         "tag": ev["tag"],
         "backend": ev["backend"],
         "L_real": ev["L_real"],
@@ -198,6 +243,7 @@ def probe(h: int, N: int, re_s: float, im_s: float) -> dict[str, Any]:
         f"probe ts={ts} h={inputs['h']} N={inputs['N']} "
         f"re={inputs['re_s']} im={inputs['im_s']} "
         f"L_nonvanish={output['L_nonvanish']} RH_ok={output['RH_ok']} "
+        f"kms_beta={beta_field} "
         f"{ev['tag']} L_abs={L_abs_field}{reason_field} sha={sha}"
     )
     _append_line(ledger_line)
