@@ -1,289 +1,108 @@
 # Entangled Technologies — The Morning Star Project
 
-Volume I: **Theorema Aureum 143 — Certificate Ledger.** A machine-proof certificate dashboard tracking the M1→M9 cryptographic proof chain (plus the Miegakure 600-cell visualization) for the Riemann Hypothesis pipeline routed through GRH for X_0(143) and the X_0(N) family at N ∈ {143, 199, 311}.
+Volume I: **Theorema Aureum 143 — Certificate Ledger**, plus the
+MorningStar-Lab CLI surface for probing L-functions against a
+Genesis-sealed append-only ledger.
 
-## Run & Operate
+For the version history and full design notes of v1.0 → v1.9 Stage 2A-Prime
+(seven-layer surface, Three Guns CLI, sign-change sieve, etc.) see
+`docs/CHANGELOG.md`. For a 3-command reproducibility recipe see
+`docs/REPRODUCE.md`. For the full architecture write-up see
+`docs/MorningStar_Architecture.pdf`.
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
+## Run & operate
+
+- `pnpm --filter @workspace/api-server run dev` — API server
+- `pnpm run typecheck` — full typecheck
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
-- Required env: `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PUBLIC_OBJECT_SEARCH_PATHS`, `PRIVATE_OBJECT_DIR` — object storage (auto-set by Replit)
-- Optional env: `LEAN_REBUILD_TOKEN` — shared secret enabling the dashboard's "Rebuild Lean log" button. When unset (and `LEAN_REBUILD_TOKENS` is also unset), `POST /api/lean/verify/rebuild` returns 503 (rebuilds disabled). When set, callers send `Authorization: Bearer <token>`; only one rebuild runs at a time (others get 409). Referees paste the token into the dashboard's "Set token" panel (stored in their browser's localStorage only). With a shared token, attribution is opt-in: the dashboard sends the referee's name in the `X-Referee-Name` header (validated server-side as `[A-Za-z0-9 _.-]{1,64}`); rebuilds without a name are recorded as "anonymous".
-- Optional env: `LEAN_REBUILD_TOKENS` — comma-separated **named** tokens (`alice:tokA,bob:tokB`) for real per-referee attribution. Names match `[A-Za-z0-9 _.-]{1,64}`. The server tries named tokens first, then falls back to `LEAN_REBUILD_TOKEN` if set. When a named token matches, the rebuild history records that token's name and the `X-Referee-Name` header is ignored (so a referee with a named token cannot impersonate another). At least one of `LEAN_REBUILD_TOKEN` / `LEAN_REBUILD_TOKENS` must be set to enable rebuilds.
+- `pnpm --filter @workspace/api-spec run codegen` — regen API hooks + Zod from OpenAPI
+- `pnpm --filter @workspace/db run push` — push DB schema (dev only)
+- `python lab.py` — open the MorningStar-Lab REPL
+- `python lab.py -c "zeta_sniper(1)"` — one-shot probe
+- `bash scripts/validate-morningstar.sh` — full kernel→bridge→lake harness
 
-### Brute-force lockout monitoring
+## Environment
 
-The rebuild endpoints have a per-IP brute-force limiter: 5 bad-token attempts within 15 minutes lock that IP out for 15 minutes (`failuresByIp` in `artifacts/api-server/src/routes/lean.ts`). The dashboard surfaces this so a real attack is visible to operators without having to grep server logs:
+- Required: `DATABASE_URL` (Postgres)
+- Required (auto-set by Replit): `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PUBLIC_OBJECT_SEARCH_PATHS`, `PRIVATE_OBJECT_DIR`
+- Optional: `LEAN_REBUILD_TOKEN` — shared rebuild token. Unset ⇒ rebuild endpoint returns 503. Callers send `Authorization: Bearer <token>`. Only one rebuild at a time (others 409). Referees may opt-in attribution via `X-Referee-Name` (`[A-Za-z0-9 _.-]{1,64}`).
+- Optional: `LEAN_REBUILD_TOKENS` — comma-separated named tokens (`alice:tokA,bob:tokB`) for real per-referee attribution. Named tokens take precedence over the shared one; a matched named token wins over any `X-Referee-Name` header. At least one of the two must be set to enable rebuilds.
 
-- `GET /api/lean/lockouts` — returns active lockouts (IP, failed-attempt count, when the lockout expires) and any IPs with recent failed attempts that haven't crossed the threshold yet. Requires the rebuild token, with the **same** per-IP brute-force enforcement as the rebuild endpoints (bad-token attempts count toward the lockout; a locked IP gets 429 here too). Operators on a shared/locked IP must wait out the 15-minute lockout like everyone else — the limiter is deliberately not weakened for admin convenience.
-- `POST /api/lean/lockouts/clear` — body `{ "ip": "..." }`, requires the rebuild token (same enforcement), removes that IP's failure record. Used by the dashboard's per-row "Clear" button.
+### Brute-force lockout
 
-Dashboard surface: the **Lean 4 Verification** card now contains a "Brute-force lockouts" panel that appears once a referee token is set (`panel-lean-lockouts`). It polls `/api/lean/lockouts` every 15s and lists active lockouts in red and pre-lockout failing IPs in amber, each with a Clear/Reset button. If no token is set, the panel is hidden and operators must use the `Set token` action first. The server still emits a `warn` log line on lockout and on manual clear (`"Referee lockout cleared by operator"`), so the audit trail in server logs is unchanged.
+Per-IP limiter on `/api/lean/verify/rebuild`: 5 bad-token attempts / 15
+min ⇒ 15 min lockout (`failuresByIp` in
+`artifacts/api-server/src/routes/lean.ts`). Same limiter applies to
+`/api/lean/lockouts` and `/api/lean/lockouts/clear` — admin endpoints
+don't bypass it.
 
-This is intentionally an in-memory surface only — like the rebuild history, it resets on server restart. There is no email/webhook out of the box; if you need paging, scrape `/api/lean/lockouts` from your alerting tool of choice using the rebuild token.
+Dashboard surface: the **Lean 4 Verification** card has a "Brute-force
+lockouts" panel (`panel-lean-lockouts`) once a referee token is set,
+polling `/api/lean/lockouts` every 15s. Active lockouts shown in red,
+pre-lockout failing IPs in amber, each with a Clear button.
+In-memory only — resets on server restart, no email/webhook out of
+the box.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
-- Frontend: React + Vite, Tailwind CSS, shadcn/ui, wouter, TanStack Query
-- File storage: Replit Object Storage (GCS-backed, presigned URL uploads)
+- pnpm workspaces, Node 24, TypeScript 5.9
+- API: Express 5, PostgreSQL + Drizzle ORM, Zod (`zod/v4`), Orval codegen
+- Frontend: React + Vite, Tailwind, shadcn/ui, wouter, TanStack Query
+- File storage: Replit Object Storage (presigned PUT)
+- Kernel: Python 3, mpmath (arbitrary precision), Lean 4 (`leanprover/lean4:v4.12.0`) + mathlib v4.12.0
 
 ## Where things live
 
 - `lib/api-spec/openapi.yaml` — API contract (source of truth)
-- `lib/db/src/schema/certificates.ts` — Drizzle schema for the certificates table
-- `artifacts/api-server/src/routes/certificates.ts` — certificate CRUD routes
-- `artifacts/api-server/src/routes/storage.ts` — object storage routes (presigned URL + serving)
-- `artifacts/theorema-certs/src/` — React frontend
-  - `pages/dashboard.tsx` — proof chain overview + master manifest + H2 DISCHARGED banner
-  - `pages/certificates/index.tsx` — all modules (M1–M9) with upload buttons
-  - `pages/certificates/[moduleId].tsx` — single certificate detail + inline PDF viewer
-  - `pages/walkthrough.tsx` — Referee Walkthrough: five-stage Q&A capturing the X_0(397) argument, the 280-case M9 extension, and the H2 axiom→theorem swap
-  - `pages/miegakure.tsx` — interactive 600-cell viewer (H₄ root system, Coxeter rotation)
-  - `components/miegakure-viewer.tsx` — react-three-fiber canvas with WebGL fallback
-  - `lib/h4-600cell.ts` — 120-vertex / 720-edge generation, 4D rotation, stereographic projection
-  - `components/sha-chip.tsx` — SHA-256 display with copy-on-click
-  - `components/status-badge.tsx` — CERTIFIED / AWAITING / LOCKED badge
-  - `components/pdf-uploader.tsx` — presigned URL upload flow
+- `lib/db/src/schema/certificates.ts` — Drizzle schema
+- `artifacts/api-server/src/routes/{certificates,storage,lean}.ts` — routes
+- `artifacts/theorema-certs/src/` — React frontend (dashboard, certificate list/detail, walkthrough, Miegakure 600-cell viewer)
+- `kernel.py`, `lab.py`, `lean_bridge.py` — MorningStar-Lab CLI surface
+- `data/hits.txt` — Genesis-sealed append-only probe ledger
+- `data/CASUALTY_LOG.md`, `data/M13_CERT.txt` — incident log + M13 certificate header
+- `lean-proof/` — Lean 4 project (axiom debt = [], drift-guarded)
+- `scripts/check-genesis-seal.py`, `scripts/check-lean-proof.sh`, `scripts/validate-morningstar.sh`, `scripts/post-merge.sh`
+- `tests/test_kernel.py`, `tests/test_morningstar.py`
+- `docs/MorningStar_Architecture.{tex,pdf}`, `docs/SiteMap.md`, `docs/ProofIndex.md`, `docs/CHANGELOG.md`, `docs/REPRODUCE.md`
 
-## Architecture decisions
+## Architecture (one-liners)
 
-- Certificates stored in PostgreSQL; each module's SHA hashes, parent SHA bindings, and Lean theorem names are first-class columns
-- parentShas stored as JSON string in PG (array of 64-char hex strings) to avoid a separate join table
-- PDF upload uses Replit Object Storage presigned URLs — client PUTs directly to GCS, then PATCH updates the certificate's pdfObjectPath
-- Master manifest SHA (M7) is a constant hardcoded in the summary endpoint — it's the sealed SHA of the concatenated module outputs
-- Status field: CERTIFIED = verified, AWAITING = pending, LOCKED = master manifest (M7)
+- Certificates in PostgreSQL; SHA hashes, parent SHAs (JSON string), Lean theorem names are first-class columns.
+- PDF upload = presigned-URL PUT to GCS, then PATCH `pdfObjectPath`.
+- Master manifest SHA (M7) is hardcoded in the summary endpoint.
+- Ledger preamble (lines 1–9 of `data/hits.txt`) is sealed; SHA-256 must match `eecbcd9a…875f` before any append.
+- Lean `main_theorem` axiom debt = [] is re-verified on every merge by `scripts/post-merge.sh` and in CI by the `lean-proof` workflow (`STRICT_LEAN_CHECK=1`).
 
-## Product
+## Tests / validations
 
-- Dashboard: DAG status, master manifest SHA, module chain visualization with SHA chips
-- Certificate list: all M1–M7 with status badges, stdout SHA, parent bindings, PDF upload
-- Certificate detail: full SHA table, mathematical claim, inline PDF viewer, Lean binding, audit notes
+- `kernel-numerics` workflow — `pytest tests/test_kernel.py` (mpmath backend numerics + Three-Guns invariants + sieve dry-run)
+- `morningstar-tamper` workflow — `pytest tests/test_morningstar.py` (Genesis-seal tamper-evidence; also invoked from `post-merge.sh`)
+- `lean-proof` workflow — strict-mode `check-lean-proof.sh`; fails closed if `lake` missing
+
+## Honest-scope guards
+
+- `hit_437` / `hit_1094` are tautologies (`True := trivial`). Their *names* reference the OpenCV cube counts; their *statements* claim nothing about number theory.
+- `probe()` and friends never call SageMath. Out-of-scope inputs are recorded with `NEEDS_SAGE` and a `reason=` field, never silently stubbed.
+- `elliptic_stub` writes a SHA-stamped intent line tagged `ELLIPTIC_STUB`; the returned dict has no `L_*` keys. `test_kernel.py` pins this.
+- `zeta_sieve` is a parallelised sign-change sieve, **not** the Odlyzko-Schönhage 1991 FFT. The docstring says so.
 
 ## User preferences
 
 - One PDF per module (M1–M7), uploaded one at a time
-- All SHA-256 hashes displayed in monospace, truncated with copy-on-click
-- Audit corrections documented and visible in the notes field per module
+- SHA-256 hashes in monospace, truncated with copy-on-click
+- Audit corrections documented in the per-module notes field
+- Public-facing surface stays in the applied-science frame; scripture / personal-meaning notes are not in the repo
 
 ## Gotchas
 
-- After any OpenAPI spec change, run `pnpm --filter @workspace/api-spec run codegen` before touching frontend code
-- parentShas must be JSON-parsed on read (stored as text in PG)
-- The frontend workflow must be restarted after any changes to status-badge.tsx (Vite HMR caches deeply imported types)
-
-## Lean 4 Formal Proof (`lean-proof/`)
-
-Lean 4 project implementing the M1–M9 certificate chain as a formal deductive structure.
-
-**Files:**
-- `lean-proof/lean-toolchain` — pins `leanprover/lean4:v4.12.0`
-- `lean-proof/lakefile.lean` — package config; requires mathlib v4.12.0
-- `lean-proof/TheoremaAureum/Certificates.lean` — M5/M6/M7 certificate records
-- `lean-proof/TheoremaAureum/M9_WeilTransfer.lean` — M9 280-case discharge (`M9_WeilTransfer_All`)
-- `lean-proof/TheoremaAureum/C_Chain.lean` — deductive chain + unconditional `main_theorem`
-- `lean-proof/TheoremaAureum.lean` — root module (imports all three)
-- `lean-proof/Verify.lean` — axiom check script
-
-**Verified result:**
-```
-$ lake build          # succeeds
-$ lake env lean Verify.lean
-'TheoremaAureum.main_theorem' depends on axioms: []
-```
-
-**Regenerating VERIFY.txt:** run `./lean-proof/regenerate.sh` to rebuild `lean-proof/VERIFY.txt` from a fresh `lake build` + `lake env lean Verify.lean`. The script fails loudly (and leaves VERIFY.txt unchanged) if any of `main_theorem`, `H2_WeilTransfer`, or `M9_WeilTransfer_All` no longer report "does not depend on any axioms", so the dashboard's "axiom debt = []" claim is self-checking. Requires `lake` on PATH.
-
-**Automated drift guard:** `scripts/check-lean-proof.sh` wraps `regenerate.sh` and fails if the Lean axiom-debt check no longer passes (i.e. the proof has drifted). It is wired up two ways so a broken proof can't silently ship:
-- registered as the `lean-proof` validation command/workflow (run via the validation skill / CI-style checks). The validation workflow runs with `STRICT_LEAN_CHECK=1`, so it fails closed if `lake` is missing — the dashboard's "axiom debt = []" claim is never allowed through unverified in CI.
-- invoked from `scripts/post-merge.sh`, so every merge re-verifies the proof. The post-merge invocation runs in non-strict (default) mode: if `lake` isn't installed locally it prints a clearly visible warning to stderr and exits 0 so merges aren't blocked, but the warning still surfaces in the post-merge log.
-
-Set `STRICT_LEAN_CHECK=1` when invoking the script manually to require an actual `lake` run.
-
-**Axiom debt = [] (zero axioms).** All hard rules satisfied:
-- H1_ArakelovPositivity: THEOREM (by decide, M5 certificate)
-- C05_Descent: THEOREM (True.intro, M6 certificate)
-- H2_WeilTransfer: THEOREM (= `M9_WeilTransfer_All`, M9 280-case discharge; m9.out SHA `624b93f7…`)
-
-**Structural note:** Both `RiemannHypothesis` and `GRH_E_143a1` are Prop stubs defined in `Certificates.lean` (the spec's original layout had a circular import). With M9 in place, `axiom H2_WeilTransfer` is replaced by `theorem H2_WeilTransfer := M9_WeilTransfer_All` and `main_theorem` is rewritten as the unconditional `C05_Descent (H2_WeilTransfer H1_ArakelovPositivity) : RiemannHypothesis`.
-
-**Full mathlib build:** run `lake exe cache get && lake build` to compile with real `riemannZeta`/`riemannXi` semantics (requires ~2 GB download of prebuilt mathlib oleans). The structural proof above is correct without it.
-
-## Release v1.8-BC (honest scope)
-
-- Frozen spine: M1–M10 + M13 (BC–CM, h = 1). Lean `main_theorem` axiom debt = [].
-- `README.md` is the public-facing summary; `CITATION.cff` ships without a DOI field — v1.8-BC is hosted publicly on Replit as the source of truth. A DOI can be added later if the release is archived elsewhere.
-- `README.md` Appendix A records the OpenCV square counts (`437 = 19 × 23`, `1094 = 2 × 547`) from `cube_M0_v1.jpg` / `cube_M0_v2.jpg` as **observations only**. They motivate possible future M17 / M18 work but are not used in any certificate, theorem, or Lean file in v1.8-BC.
-- No `sorry` and no `axiom` is allowed in `lean-proof/`. The CI drift guard (`scripts/check-lean-proof.sh`, strict mode in the `lean-proof` workflow) enforces this on every merge.
-
-## MorningStar-Lab v1.0 — seven-layer 4D research surface
-
-A standalone CLI surface at the repo root that lets a researcher type
-`probe(h, N, Re(s), Im(s))` in a REPL, records every probe as an
-append-only line in a genesis-sealed ledger, and emits Lean lemmas that
-compile inside the existing `lean-proof/` Lake project with axiom debt `[]`.
-
-- `data/hits.txt` — append-only ledger. Lines 1–4 are a header comment
-  documenting the append-only contract; lines 5–9 are the five frozen
-  Genesis lines (`437`, `1094`, `axioms=[] 2026-05-24`,
-  `M13_CERT_SHA256=d99b0df4…` = SHA-256 of `lean-proof/VERIFY.txt`,
-  `--- GENESIS SEAL ---`). The whole preamble (lines 1–9) is sealed.
-  Line 10+ are probe outputs; existing lines are never rewritten.
-- `data/M13_CERT.txt` — human-readable M13 certificate header.
-- `kernel.py` — Layer 4. `probe(h, N, re_s, im_s)`. Verifies the Genesis
-  seal before every append. L-function backend is **mpmath**
-  (arbitrary-precision, `workdps=50`):
-  - `h=1, N=1` → Riemann ζ(s); ledger tag `MPMATH_ZETA`, `L_nonvanish`
-    reflects `|ζ(s)| > 1e-10`.
-  - `h=1, N>1` → principal Dirichlet character χ₀ mod N, computed as
-    `ζ(s)·∏_{p|N}(1 - p^{-s})`; ledger tag `MPMATH_DIRICHLET_TRIVIAL`.
-  - `h>=2` → out of scope for mpmath; ledger tag stays `NEEDS_SAGE`
-    with `reason=h>=2_out_of_scope_for_mpmath_backend` and
-    `L_nonvanish` is the deterministic stub (True).
-  - Any backend exception also falls back to `NEEDS_SAGE` with a
-    `reason=` field. The ledger never silently lies about a backend
-    result.
-- `lab.py` — Layer 7. Banner + REPL + `-c "probe(...)"` one-shot.
-- `lean_bridge.py` — Layer 2. Reads only the five Genesis lines, emits
-  `lean-proof/TheoremaAureum/AutoLemmas.lean` (`theorem hit_<n> : True := trivial`),
-  ensures `TheoremaAureum.lean` imports it, then `lake build` + runtime
-  `#print axioms` check that each `hit_<n>` is axiom-free. Refuses to
-  write `sorry`/`axiom `/`admit ` in non-comment code.
-- `scripts/check-genesis-seal.py` — verifies SHA-256 of the immutable
-  preamble (everything up through `--- GENESIS SEAL ---`) against the
-  baked-in seal `eecbcd9a…875f`. Called by `kernel.py` before any append.
-- `scripts/validate-morningstar.sh` — full harness. Runs probe → bridge
-  → `lake build` → `Verify.lean` + `hit_437`/`hit_1094` axiom check.
-  Prints the v1.0-online line on success. **Not** wired into
-  `scripts/post-merge.sh` or the `lean-proof` validation workflow — the
-  v1.8-BC drift guard keeps running unchanged.
-
-Run: `python lab.py -c "probe(1,19,0.5,0)"` for a single probe, or
-`bash scripts/validate-morningstar.sh` for the full chain. On success the
-harness prints `MorningStar-Lab v1.0 online. 4D stable. W=h Z=N X=Re Y=Im.
-CERTIFICATE at /data/M13_CERT.txt`.
-
-**Honest-scope guards:** `hit_437`/`hit_1094` are tautologies
-(`True := trivial`). Their *names* reference the OpenCV cube counts from
-README Appendix A; their *statements* claim nothing about number theory.
-`probe()` never calls SageMath — every ledger line carries `NEEDS_SAGE`
-so the stubbed `L_nonvanish=True` cannot be mistaken for a real
-L-function evaluation.
-
-## MorningStar-Lab v1.9 — "Three Guns" surface (lab.py)
-
-The single `probe(h, N, re, im)` entry point conflated three different
-intents — Riemann sniping, Dirichlet evaluation, and "I want an
-elliptic L but the kernel can't compute it". v1.9 splits them into
-three explicitly-typed CLI commands so the *intent* of a probe is
-visible in the ledger and on the command line, not inferred from
-`(h, N)`. All three still write through the same seal-verify-then-
-append discipline as `probe()`.
-
-- **Gun 1 — Zeta sniper** (`zeta_sniper(n)`, `zeta_burst(a,b)`,
-  `bracket_riemann_zero(n, eps)`): thin wrappers over `kernel.zero` /
-  `hunt_zeros` / `bracket_zero`. Uses `mpmath.zetazero(n)` directly,
-  so we hit the exact n-th nontrivial ζ zero (no sweep). axiom debt
-  []. Verified on the Lehmer pair: `zeta_sniper(6709)` →
-  t=7005.0628661749…, |L|=7.85×10⁻¹⁵, RH_ok=True;
-  `zeta_sniper(6710)` → t=7005.1005646726…, |L|=1.72×10⁻¹³,
-  RH_ok=True (Δt ≈ 0.0377, the famous near-collision).
-- **Gun 2 — Dirichlet radar** (`dirichlet_probe(N, re, im[, char])`):
-  routes principal χ₀ to `probe(1, N, re, im)`. Non-principal `char`
-  is rejected with `NEEDS_SAGE` **without** writing a ledger line —
-  same contract as `hunt_zeros(37, 1, 5)` failing before
-  `_append_line`: failures don't append.
-- **Gun 3 — Elliptic stub** (`elliptic_probe(label, re, im)` →
-  `kernel.elliptic_stub`): does **not** evaluate. Writes a
-  SHA-stamped intent line tagged `ELLIPTIC_STUB` with
-  `reason=elliptic_L_requires_sage`. Label is validated against
-  `ELLIPTIC_LABEL_RE` (`^[A-Za-z0-9._-]{1,32}$`) before any seal
-  check, so a malformed label can never reach the ledger. When
-  SageMath is wired in, the hash chain proves we asked for this
-  label at this `s` first. Critically, `elliptic_stub` does **not**
-  route through `probe(1, conductor, ...)` — that would compute a
-  Dirichlet L, not an elliptic L. The returned dict has no
-  `L_real`/`L_imag`/`L_abs` keys at all, and `test_kernel.py` pins
-  that invariant so a future refactor can't silently start lying.
-
-The legacy commands (`probe`, `zero`, `hunt_zeros`, `bracket_zero`,
-`scan_critical_line`, `scan_line`, `scan_plane`) all still work
-unchanged — Three-Guns is additive.
-
-## MorningStar-Lab v1.9 Stage 2A-Prime — `zeta_sieve` (sign-change sieve)
-
-`zeta_sniper`/`zeta_burst` go one zero at a time via `mpmath.zetazero`,
-which pays a grampoint search per zero. Stage 2A-Prime adds a
-range-oriented entry point that amortises a single grid of
-`mpmath.siegelz` evaluations across every zero in a window:
-
-- `kernel.sieve_zeros(t_start, t_end, dps=50, grid_density=4, write=True, pool_workers=None, flush_every=100)`
-  — Builds a grid of `N = 2^k ≥ M` points with spacing
-  `avg_gap / grid_density`, where `avg_gap = 2π / log(t_mid / 2π)`;
-  batches `siegelz(t_i)` via `multiprocessing.Pool` (fork context,
-  workers default to `min(cpu_count, 8)`); sieves consecutive pairs
-  with `Z(t_i)·Z(t_{i+1}) < 0`; Brent-refines each bracket via
-  `mpmath.findroot(siegelz, (a,b), solver="anderson")`. When
-  `write=True`, every refined zero is logged via
-  `probe(1, 1, 0.5, t0)` (so `_verify_seal()` runs before the
-  `_append_line()` and the resulting SHA is part of the same
-  Three-Guns hash chain). `flush_every=100` is a progress-print
-  cadence — `_append_line` already flushes+fsyncs per line, so the
-  ledger is strictly stronger than the brief's "flush every 100"
-  contract.
-- `lab.py` CLI: `zeta_sieve(t_start, t_end[, write=True|False])`.
-  `_parse_zeta_sieve` rejects any other keyword *before* the kernel
-  runs, so a typo can't leak into the live ledger.
-
-**Honest scope (important).** This is NOT the full Odlyzko-Schönhage
-1991 FFT trick (which evaluates Z on the full grid in O(M log M) via
-a re-expansion of the Riemann-Siegel main sum). It is a parallelised
-sign-change sieve over per-point `siegelz` calls plus a Brent
-refinement pass. The speed win over `zetazero(n)` sniping comes from
-(a) skipping the per-zero grampoint search, (b) batching `Z`
-evaluations across cores, and (c) reusing one grid for all zeros in
-the window — a real constant-factor improvement, NOT an asymptotic
-one. The docstring on `sieve_zeros` calls this out explicitly so
-future readers can't mistake the implementation for the full O-S
-algorithm.
-
-**Concurrency contract.** `_append_line` still has no file lock. The
-parent process is the SOLE writer to `data/hits.txt`; the Pool
-workers only compute `Z(t)` and return floats, they never touch the
-ledger. "One gun at a time" remains engineering, not preference —
-running a second appender (e.g. a second sieve workflow against the
-same file) would interleave bytes mid-line and corrupt the chain.
-
-**Dry-run guarantee.** `zeta_sieve(t_start, t_end, write=False)`
-prints every refined zero but does NOT call `_append_line` and does
-NOT call `_verify_seal`. The CLI surfaces this as `ZETA SIEVE
-DRY-RUN: [...] → N zeros (NOT appended (write=False))`. This is the
-only safe way to test the sieve while the live ledger is being
-appended to by another workflow.
-
-**Verified on [0, 100]:** the dry-run finds exactly **29 nontrivial
-ζ zeros** in ~1.07s on the workspace container (default 4-worker
-pool, default grid_density=4, default dps=50). Every returned `t`
-satisfies `|ζ(½ + it)| < 1e-49` — machine-zero at dps=50. The test
-`test_sieve_zeros_dry_run_does_not_write` in `tests/test_kernel.py`
-pins both the count window (25 ≤ found ≤ 35) and the
-non-write invariant (the ledger is byte-identical before and
-after).
-
-## MorningStar-Lab tests
-
-- `python -m pytest tests/test_kernel.py -q` (registered as the `kernel-numerics` validation) pins the mpmath L-function backend numerics for `kernel.probe()`: tag `MPMATH_ZETA` with `|L|<1e-6` at the first nontrivial ζ zero, `|ζ(2) - π²/6| < 1e-10`, tag `MPMATH_DIRICHLET_TRIVIAL` for `(h=1, N=19, s=0.5)` matching `ζ(0.5)·(1 - 19^{-0.5})`, and tag `NEEDS_SAGE` with `reason=h>=2_out_of_scope_for_mpmath_backend` for `h=2`. Each test monkeypatches `kernel.HITS` to a `tmp_path` file so the real append-only ledger is untouched. v1.9 adds three `elliptic_stub` tests: (1) one ELLIPTIC_STUB line is written with the right tag/reason/sha and *no* L value; (2) a malformed label raises `ValueError` before any seal check or append (no partial state); (3) even with a real-looking label and a well-defined `s`, no `L_real`/`L_imag`/`L_abs` key is ever populated — the stub can't be silently rerouted to the mpmath backend.
-- `python -m pytest tests/test_morningstar.py -q` (registered as the `morningstar-tamper` validation, and also invoked from `scripts/post-merge.sh` so every merge re-verifies the tamper-evidence guarantees) runs the Genesis-seal tamper-evidence suite. It asserts that `scripts/check-genesis-seal.py` exits non-zero on byte-flips, line-swaps, and pre-marker insertions in `data/hits.txt`; that the unmodified file still passes; that `lean_bridge._guard` refuses rendered Lean containing `axiom `, `sorry`, or `admit `; that `_genesis_integers` never lifts non-numeric lines like `axiom foo` into emitted Lean; and that `kernel.probe()` raises before appending when the Genesis preamble is tampered. A pytest fixture backs up and restores `data/hits.txt` so a mid-test crash cannot leave the ledger corrupted.
+- After any OpenAPI change, run `pnpm --filter @workspace/api-spec run codegen` before touching frontend.
+- `parentShas` is stored as text — JSON-parse on read.
+- Restart the `theorema-certs` workflow after `status-badge.tsx` changes (Vite HMR caches the type).
+- Don't run a second appender against `data/hits.txt`. `_append_line` has no file lock; one writer at a time.
+- `replit.md` is operational only. History lives in `docs/CHANGELOG.md`. Don't grow this file with version notes.
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
-- See `.local/skills/object-storage/SKILL.md` for the presigned URL upload architecture
+- `pnpm-workspace` skill — workspace structure, TS setup
+- `.local/skills/object-storage/SKILL.md` — presigned-URL upload architecture
+- `docs/MorningStar_Architecture.pdf` — the full write-up (Part I Math Kernel, Part II Engineering Manifest, Appendices A–D)
