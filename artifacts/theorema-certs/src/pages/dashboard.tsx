@@ -313,18 +313,50 @@ export default function DashboardPage() {
       setCooldownRemainingMs(0);
       return;
     }
+    let intervalId: number | null = null;
     const tick = () => {
       const remaining = cooldownUntilMs - Date.now();
       if (remaining <= 0) {
         setCooldownRemainingMs(0);
         setCooldownUntilMs(null);
+        if (intervalId != null) {
+          window.clearInterval(intervalId);
+          intervalId = null;
+        }
       } else {
         setCooldownRemainingMs(remaining);
       }
     };
+    const startInterval = () => {
+      if (intervalId == null) {
+        intervalId = window.setInterval(tick, 250);
+      }
+    };
+    const stopInterval = () => {
+      if (intervalId != null) {
+        window.clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopInterval();
+      } else {
+        tick();
+        if (cooldownUntilMs != null) {
+          startInterval();
+        }
+      }
+    };
     tick();
-    const id = window.setInterval(tick, 250);
-    return () => window.clearInterval(id);
+    if (!document.hidden) {
+      startInterval();
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stopInterval();
+    };
   }, [cooldownUntilMs]);
 
   const cooldownActive = cooldownRemainingMs > 0;
