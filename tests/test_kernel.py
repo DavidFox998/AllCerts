@@ -31,9 +31,31 @@ import kernel
 
 @pytest.fixture
 def tmp_hits(tmp_path, monkeypatch):
-    """Redirect `kernel.HITS` to a throwaway file under tmp_path."""
+    """Redirect `kernel.HITS` to a throwaway file under tmp_path, and
+    stub `kernel._verify_seal` to a no-op for the duration of the test.
+
+    Why stub the seal check: `_verify_seal` shells out to
+    `scripts/check-genesis-seal.py`, which hardcodes
+    `REPO_ROOT/data/hits.txt` (it cannot be redirected via the
+    `kernel.HITS` monkeypatch). When the validation harness runs
+    `kernel-numerics` in parallel with `morningstar-tamper`, the
+    tamper suite mutates `data/hits.txt` mid-test (byte-flips,
+    line-swaps) and restores it after each case via a backup
+    fixture. If the seal subprocess fires during a tampered window,
+    these tests fail with a spurious "Genesis seal mismatch" that
+    has nothing to do with what they're actually pinning (mpmath
+    numerics + ledger-line format).
+
+    Seal verification is fully covered elsewhere — `test_morningstar.py`
+    drives `_verify_seal` against the real file in a fixture-protected,
+    serialized way, and `scripts/check-genesis-seal.py` is invoked
+    directly by `scripts/post-merge.sh` on every merge. Stubbing it
+    here removes the cross-workflow race without weakening the
+    end-to-end tamper-evidence guarantee.
+    """
     fake = tmp_path / "hits.txt"
     monkeypatch.setattr(kernel, "HITS", fake)
+    monkeypatch.setattr(kernel, "_verify_seal", lambda: None)
     return fake
 
 
