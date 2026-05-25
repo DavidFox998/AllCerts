@@ -45,6 +45,17 @@ def _parse_zero(expr: str) -> int:
     return int(parts[0])
 
 
+def _parse_args(expr: str, head: str, n: int) -> list[str]:
+    s = expr.strip()
+    rest = s[len(head) :].strip()
+    if rest.startswith("(") and rest.endswith(")"):
+        rest = rest[1:-1]
+    parts = [p for p in re.split(r"[,\s]+", rest) if p]
+    if len(parts) != n:
+        raise ValueError(f"{head} needs {n} args; got {len(parts)}")
+    return parts
+
+
 def _format_result(out: dict) -> str:
     pretty = {k: v for k, v in out.items() if k != "ledger_line"}
     rendered = json.dumps(pretty, sort_keys=True, indent=2)
@@ -57,8 +68,27 @@ def run_one(expr: str) -> int:
     s = expr.strip()
     if s.startswith("zero"):
         n = _parse_zero(s)
-        out = kernel.zero(n)
-        print(_format_result(out))
+        print(_format_result(kernel.zero(n)))
+        return 0
+    if s.startswith("scan_line"):
+        N, im_start, im_end, step, h = _parse_args(s, "scan_line", 5)
+        zeros = kernel.scan_critical_line(
+            int(N), float(im_start), float(im_end), float(step), int(h)
+        )
+        print(json.dumps({"zeros": zeros, "count": len(zeros)}, indent=2))
+        return 0
+    if s.startswith("scan_plane"):
+        h, N, re_min, re_max, im_min, im_max, grid = _parse_args(s, "scan_plane", 7)
+        summary = kernel.scan_plane(
+            int(h),
+            int(N),
+            float(re_min),
+            float(re_max),
+            float(im_min),
+            float(im_max),
+            float(grid),
+        )
+        print(json.dumps(summary, indent=2))
         return 0
     h, N, re_s, im_s = _parse_probe(s)
     out = kernel.probe(h, N, re_s, im_s)
@@ -68,7 +98,11 @@ def run_one(expr: str) -> int:
 
 def repl() -> int:
     print(BANNER)
-    print("type 'probe h N re_s im_s', 'zero n', or 'quit'")
+    print(
+        "commands: 'probe h N re_s im_s' | 'zero n' | "
+        "'scan_line N im_start im_end step h' | "
+        "'scan_plane h N re_min re_max im_min im_max grid' | 'quit'"
+    )
     while True:
         try:
             line = input("> ").strip()

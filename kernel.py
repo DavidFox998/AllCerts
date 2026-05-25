@@ -77,6 +77,99 @@ def zero(n: int) -> dict[str, Any]:
     }
 
 
+def scan_critical_line(
+    N: int,
+    im_start: float,
+    im_end: float,
+    step: float = 0.01,
+    h: int = 1,
+) -> list[dict[str, Any]]:
+    """Sweep the critical line Re(s) = 0.5 for L-function (h, N).
+
+    Every grid point is probed and appended to data/hits.txt (so the
+    sweep is fully audit-trailed). Points where the gunsight fires
+    (RH_ok and not L_nonvanish — i.e. |L(s)| < RH_VANISH_TOL) are
+    returned as "zero hits".
+
+    Honest scope: a fixed-step sweep almost never lands within
+    RH_VANISH_TOL (1e-12) of an actual zero, so this function will
+    typically return []. It is a coverage tool, not a zero finder —
+    use `kernel.zero(n)` (mpmath.zetazero) for actual zeros.
+    """
+    if step <= 0:
+        raise ValueError("scan_critical_line: step must be > 0")
+    if im_end < im_start:
+        raise ValueError("scan_critical_line: im_end must be >= im_start")
+    zeros: list[dict[str, Any]] = []
+    n_steps = int((im_end - im_start) / step) + 1
+    for k in range(n_steps):
+        im = im_start + k * step
+        if im > im_end:
+            break
+        out = probe(int(h), int(N), 0.5, float(im))
+        if out["RH_ok"] and not out["L_nonvanish"]:
+            zeros.append(
+                {
+                    "im": im,
+                    "sha": out["sha"],
+                    "L_abs": out["L_abs"],
+                    "kms_beta": out["kms_beta"],
+                    "tag": out["tag"],
+                }
+            )
+            print(
+                f"ZERO: Im={im:.6f} sha={out['sha']} "
+                f"kms_beta={out['kms_beta']} tag={out['tag']}"
+            )
+    return zeros
+
+
+def scan_plane(
+    h: int,
+    N: int,
+    re_min: float,
+    re_max: float,
+    im_min: float,
+    im_max: float,
+    grid: float = 0.1,
+    max_probes: int = 10000,
+) -> dict[str, Any]:
+    """Full 2D sweep of the (Re(s), Im(s)) rectangle for L-function (h, N).
+
+    Every grid point is probed and appended to data/hits.txt. Useful
+    for documenting that an entire region was inspected (off-line zero
+    hunt, KMS-temperature region surveys, etc.).
+
+    `max_probes` is a hard safety cap to keep the ledger from
+    exploding; the function raises if the grid would exceed it.
+    """
+    if grid <= 0:
+        raise ValueError("scan_plane: grid must be > 0")
+    if re_max < re_min or im_max < im_min:
+        raise ValueError("scan_plane: max must be >= min on both axes")
+    n_re = int((re_max - re_min) / grid) + 1
+    n_im = int((im_max - im_min) / grid) + 1
+    n_total = n_re * n_im
+    if n_total > max_probes:
+        raise ValueError(
+            f"scan_plane: would emit {n_total} probes (cap is {max_probes}); "
+            "raise max_probes explicitly to proceed"
+        )
+    hits = 0
+    for i in range(n_re):
+        re_s = re_min + i * grid
+        if re_s > re_max:
+            break
+        for j in range(n_im):
+            im_s = im_min + j * grid
+            if im_s > im_max:
+                break
+            out = probe(int(h), int(N), float(re_s), float(im_s))
+            if out["RH_ok"] and not out["L_nonvanish"]:
+                hits += 1
+    return {"probed": n_total, "gunsight_hits": hits, "grid": grid}
+
+
 def _verify_seal() -> None:
     """Run check-genesis-seal.py; raise if it fails."""
     result = subprocess.run(
