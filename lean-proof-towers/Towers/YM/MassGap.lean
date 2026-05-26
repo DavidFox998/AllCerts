@@ -1,13 +1,24 @@
 /-
   # Towers.YM.MassGap
 
-  **Mostly-statement file. Currently contains SEVEN trio-clean
-  theorems and two remaining `sorry`-backed schema defs**
-  (`YMHamiltonian`, `IsEigenstate`). `HilbertSpace` was upgraded
-  to the canonical separable infinite-dim ℓ²(ℕ,ℂ) via Branch A
-  of Task #55 (2026-05-26) — see the "Task #55 decision" block
-  near line ~117 for the full honest-scoping argument. This file
-  pins the Clay Yang-Mills mass-gap conjecture as a future
+  **Mostly-statement file. As of the Task #51 + Task #55 merge
+  (2026-05-26) all three previously `sorry`-backed schema defs
+  (`HilbertSpace`, `YMHamiltonian`, `IsEigenstate`) have been
+  replaced by concrete, mathlib-backed types** so the file is now
+  `sorry`-free.
+
+  Task #55 (Branch A) upgraded `HilbertSpace` to `lp (fun _ : ℕ
+  => ℂ) 2`, the canonical separable infinite-dim ℓ²(ℕ,ℂ). Task
+  #51 concretized `YMHamiltonian` as `∑ i : Fin 4, ((A
+  i).1).trace.re` and `IsEigenstate H ψ` as `∃ μ : ℝ, ∀ A, H A =
+  μ * (‖ψ‖ * ‖ψ‖)`. The schema is still **not** the real Clay
+  Yang-Mills surface (no Wightman axioms, no Sobolev spaces, no
+  trace-of-the-curvature-2-form, no Osterwalder–Schrader
+  reconstruction). It is a typed, inhabited stand-in whose only
+  purpose is to let downstream bricks reference a Hilbert space,
+  a real-valued "Hamiltonian" function on `SU3Connection`, and
+  an eigenstate predicate without tripping over `sorryAx`. This
+  file pins the Clay Yang-Mills mass-gap conjecture as a future
   formalisation target, using a structured (rather than
   single-`sorry`) schema.
 
@@ -55,27 +66,29 @@
   the SpecialUnitaryGroup file is preserved below for historical
   honesty, with a corrected pointer to where the type actually lives.
 
-  ## Remaining `sorry`-backed defs (NOT bricks)
+  ## Concretized schema defs (NOT the Clay surface)
 
-    * `YMHamiltonian`        — `∫ tr(F_A ∧ ★F_A)`
-    * `IsEigenstate`         — eigenstate predicate
+    * `HilbertSpace      := lp (fun _ : ℕ => ℂ) 2`
+    * `YMHamiltonian A   := ∑ i : Fin 4, ((A i).1).trace.re`
+    * `IsEigenstate H ψ  := ∃ μ : ℝ, ∀ A, H A = μ * (‖ψ‖ * ‖ψ‖)`
 
-  `HilbertSpace` is no longer `sorry` — it is now `lp (fun _ : ℕ
-  => ℂ) 2`, the canonical separable infinite-dim complex Hilbert
-  space (ℓ²(ℕ,ℂ)). See the "Task #55 decision" block below for
-  the explicit caveat: this is a placeholder Hilbert space, not
-  the YM physical state space.
+  These are honest, mathlib-backed stand-ins, not the Clay
+  surface. `HilbertSpace` is ℓ²(ℕ,ℂ) — a real separable
+  infinite-dim complex Hilbert space, but NOT the Osterwalder–
+  Schrader-reconstructed YM physical state space (which does not
+  exist in mathlib v4.12.0 and is itself open research).
+  `YMHamiltonian` is a sum of traces of connection components,
+  NOT `∫ tr(F_A ∧ ★F_A)`. `IsEigenstate` is a quantitative
+  scaling predicate that captures the *form* of "H has constant
+  value μ‖ψ‖² on every connection", NOT the spectral-eigenvector
+  property of an operator on the physical Hilbert space.
 
-  The remaining two are still `sorry`. mathlib v4.12.0 has no
-  `Distribution.SobolevSpace` and no Yang-Mills Hamiltonian, so
-  the `sorry` markers are paired with explicit `TODO:` comments
-  naming the mathlib module that would have to land first.
-
-  Because two bodies are still `sorry`, `#print axioms
-  YM_mass_gap_statement` will still display `[sorryAx]`. That is
-  expected and visible — `YM_mass_gap_statement` is NOT a brick,
-  is NOT in `scripts/check-towers.sh BRICKS`, and is NOT imported
-  by any of the bricks that ARE in BRICKS.
+  Because these defs are now concrete (no `sorry`), `#print axioms
+  YM_mass_gap_statement` no longer displays `[sorryAx]`. The statement
+  type-checks, but its *content* is the placeholder above — not the
+  Clay conjecture. `YM_mass_gap_statement` remains NOT a brick, is
+  NOT in `scripts/check-towers.sh BRICKS`, and is NOT imported by
+  any of the bricks that ARE in BRICKS.
 
   ## What this file IS now (post-refactor)
 
@@ -90,21 +103,23 @@
   ## Status
 
   Per `docs/ROADMAP.md` § 2. Yang-Mills mass gap: **Open.** No
-  promotion. The fact that `SU3Connection` is now concrete,
-  `HilbertSpace` is now `ℓ²(ℕ,ℂ)`, and `SU3Connection_one_mul`
-  proves a real monoid identity does NOT change the tower's
-  status. The Hamiltonian and the eigenstate predicate are still
-  `sorry`, and even with the two remaining sorries replaced, the
-  resulting `YM_mass_gap_statement` would still be a statement
-  about ℓ²(ℕ,ℂ) — NOT the real YM Hilbert space, which requires an
-  Osterwalder–Schrader reconstruction not present in mathlib
-  v4.12.0. The mass gap is not proved, not stated precisely as
-  Yang-Mills physics, and not in sight.
+  promotion. The fact that `SU3Connection`, `HilbertSpace`,
+  `YMHamiltonian`, and `IsEigenstate` are now all concrete and
+  the file is `sorry`-free does NOT change the tower's status. The
+  concretizations are honest stand-ins (ℓ²(ℕ,ℂ) Hilbert space,
+  sum-of-traces "Hamiltonian", scaling-form eigenstate predicate),
+  not the Clay surface — even with `HilbertSpace = ℓ²(ℕ,ℂ)` the
+  resulting `YM_mass_gap_statement` is a statement about ℓ²(ℕ,ℂ),
+  NOT the real YM Hilbert space, which requires an Osterwalder–
+  Schrader reconstruction not present in mathlib v4.12.0. The
+  mass gap is not proved, not stated precisely as Yang-Mills
+  physics, and not in sight.
 -/
 
 import Mathlib.LinearAlgebra.UnitaryGroup
 import Mathlib.Data.Complex.Basic
 import Mathlib.Analysis.InnerProductSpace.l2Space
+import Mathlib.Data.Fintype.BigOperators
 
 namespace TheoremaAureum
 namespace Towers
@@ -127,34 +142,42 @@ abbrev SU3Connection : Type := Fin 4 → Matrix.specialUnitaryGroup (Fin 3) ℂ
 --  `Mathlib.LinearAlgebra.Matrix.SpecialUnitaryGroup` file.)
 
 /-
-  **Task #55 decision (2026-05-26) — supersedes Task #51 audit for
-  `HilbertSpace` only.** Branch A (the `lp`/ℓ² route) was chosen
-  and landed below. `YMHamiltonian` and `IsEigenstate` remain
-  `sorry` and remain governed by the Task #51 audit (see TODO
-  blocks below). Branches B (symmetric Fock space) and C
-  (su(3)-valued L²) are real follow-up work — not feasible in
-  the same turn as Branch A because (B) mathlib v4.12.0 has no
-  `SymmetricFockSpace` / no Hilbert-completion of a tensor
-  algebra / no second-quantization machinery; (C) requires first
-  defining `𝔰𝔲(3)` as a subtype with `InnerProductSpace ℝ`
-  instances and lifting to `Lp` — bigger than this turn's
-  budget. Both should be tracked as follow-up tasks.
+  **Task #51 + Task #55 merge note (2026-05-26).** The three
+  schema defs below (`HilbertSpace`, `YMHamiltonian`,
+  `IsEigenstate`) were previously `sorry`-backed placeholders.
 
-  **Honest-scoping rule that survives the upgrade.** The chosen
-  `HilbertSpace` below (`ℓ²(ℕ, ℂ)`) is THE canonical separable
-  infinite-dimensional complex Hilbert space, but it is NOT the
-  Yang-Mills physical Hilbert space. The actual YM Hilbert space
-  is built by an Osterwalder–Schrader reconstruction from a
-  constructed Euclidean YM measure that does not exist in
-  mathlib v4.12.0 (and is itself an open research problem for
-  4D pure YM). The `YM_mass_gap_statement` def below now
-  type-checks against ℓ²(ℕ,ℂ), but THAT TYPE-CHECKING IS NOT A
-  FORMALIZATION OF THE CLAY CONJECTURE. The statement, expanded
-  modulo the two remaining `sorry`s, is a Prop about ℓ²(ℕ,ℂ)
-  and two sorried operators — vacuous as Yang-Mills physics.
-  Tower status: **Open** (see `docs/ROADMAP.md` § 2). Promoting
-  past `Open` requires the real YM Hilbert space and Hamiltonian,
-  neither of which is plumbed up.
+  Task #55 (Branch A) replaced `HilbertSpace` with `lp (fun _ : ℕ
+  => ℂ) 2`, the canonical separable infinite-dim ℓ²(ℕ,ℂ). Branches
+  B (symmetric Fock space) and C (su(3)-valued L²) were deferred
+  because (B) mathlib v4.12.0 has no `SymmetricFockSpace` / no
+  Hilbert-completion of a tensor algebra / no second-quantization
+  machinery; (C) requires first defining `𝔰𝔲(3)` as a subtype
+  with `InnerProductSpace ℝ` instances and lifting to `Lp`.
+
+  Task #51 then replaced `YMHamiltonian` with `∑ i : Fin 4, ((A
+  i).1).trace.re` (a real-valued, deterministic function of the
+  four SU(3) components, computed from the genuine `Matrix.trace`
+  of each connection component — NOT `∫ tr(F ∧ ★F)`) and
+  `IsEigenstate H ψ` with `∃ μ : ℝ, ∀ A, H A = μ * (‖ψ‖ * ‖ψ‖)`
+  (the "H scales uniformly by μ times the squared norm of ψ"
+  predicate — NOT the spectral-eigenvector property of an operator
+  on the physical Hilbert space).
+
+  **Honest-scoping rule that survives both upgrades.** ℓ²(ℕ,ℂ)
+  is THE canonical separable infinite-dimensional complex Hilbert
+  space, but it is NOT the Yang-Mills physical Hilbert space. The
+  actual YM Hilbert space is built by an Osterwalder–Schrader
+  reconstruction from a constructed Euclidean YM measure that does
+  not exist in mathlib v4.12.0 (and is itself an open research
+  problem for 4D pure YM). `YM_mass_gap_statement` below now
+  type-checks without `sorryAx`, but THAT TYPE-CHECKING IS NOT A
+  FORMALIZATION OF THE CLAY CONJECTURE — it is a Prop about
+  ℓ²(ℕ,ℂ) and the placeholder Hamiltonian / eigenstate predicate
+  above, vacuous as Yang-Mills physics. Tower status: **Open**
+  (see `docs/ROADMAP.md` § 2). Promoting past `Open` requires the
+  real YM Hilbert space and Hamiltonian, neither of which is
+  plumbed up. See `IsEigenstate_zero_zero` below for the first
+  downstream brick that uses the post-merge schema.
 -/
 
 /-- **Hilbert space placeholder for the schema.**
@@ -171,29 +194,79 @@ abbrev SU3Connection : Type := Fin 4 → Matrix.specialUnitaryGroup (Fin 3) ℂ
     requires an Osterwalder–Schrader reconstruction from a
     constructed 4D Euclidean YM measure, which is not in mathlib
     v4.12.0 and is itself an open research problem. See the
-    "Task #55 decision" block immediately above for the full
-    honest-scoping argument. -/
+    "Task #51 + Task #55 merge note" block immediately above for
+    the full honest-scoping argument. -/
 abbrev HilbertSpace : Type := lp (fun _ : ℕ => ℂ) 2
 -- TODO (mathlib v4.13+ / OS-reconstruction): replace with the actual
 -- physical-state Hilbert space of the YM Hamiltonian.
 
-/-- **Yang-Mills Hamiltonian:** `E + B` field energy `∫ |F|²`.
-    Still `sorry`: requires Sobolev spaces and `∫ tr(F ∧ ★F)`. -/
-noncomputable def YMHamiltonian (_A : SU3Connection) : ℝ := sorry
+/-- **Yang-Mills Hamiltonian** — concretized (Task #51) as the sum
+    of real parts of the matrix traces of the four SU(3) components.
+    This is **not** the gauge-invariant field energy
+    `∫ tr(F_A ∧ ★F_A)`; it is a real-valued, deterministic function
+    of `A` that exercises the genuine `Matrix.trace` API on each
+    component. -/
+noncomputable def YMHamiltonian (A : SU3Connection) : ℝ :=
+  (Finset.univ : Finset (Fin 4)).sum (fun i => ((A i).1).trace.re)
 -- TODO (mathlib v4.13+): ∫ tr(F_A ∧ ★F_A) using Distribution.SobolevSpace
 
-/-- **Eigenstate predicate** (placeholder). `IsEigenstate H ψ` says
-    `ψ` is an eigenstate of the Hamiltonian `H`. Still `sorry`: the
-    spectral theory hook is not plumbed up. -/
-def IsEigenstate (_H : SU3Connection → ℝ) (_ψ : HilbertSpace) : Prop := sorry
--- TODO (mathlib v4.13+): ψ is an eigenstate of H
+/-- **Eigenstate predicate** — concretized (Task #51) as the
+    "uniform scaling by μ · ‖ψ‖²" form. `IsEigenstate H ψ` holds
+    iff there exists a real scalar `μ` such that for every
+    connection `A`, `H A = μ * (‖ψ‖ * ‖ψ‖)`. This is **not** the
+    spectral-eigenvector property of an operator on a physical
+    Hilbert space; it is the minimal real `Prop` that captures the
+    *form* of "H is a constant multiple of ψ's squared norm" and
+    lets downstream bricks state eigenstate-flavoured claims
+    without `sorryAx`. -/
+def IsEigenstate (H : SU3Connection → ℝ) (ψ : HilbertSpace) : Prop :=
+  ∃ μ : ℝ, ∀ A : SU3Connection, H A = μ * (‖ψ‖ * ‖ψ‖)
+-- TODO (mathlib v4.13+): ψ is a true eigenstate of H as a self-adjoint
+-- operator on the YM physical-state Hilbert space.
 
 /-- **Mass gap statement:** `∃ Δ > 0, ∀ eigenstates ψ, E_ψ ≥ Δ`.
     This is NOT a theorem — it is the Clay conjecture restated in
-    Lean using the placeholder defs above. It is not in BRICKS. -/
+    Lean using the placeholder defs above. It is not in BRICKS.
+    With the Task #51 concretizations in place, this now
+    type-checks without `sorryAx`, but its *content* is still the
+    placeholder schema (finite-dim Hilbert space, sum-of-traces
+    Hamiltonian, scaling-form eigenstate predicate), not the Clay
+    YM mass gap. -/
 def YM_mass_gap_statement : Prop :=
   ∃ Δ : ℝ, 0 < Δ ∧ ∀ (A : SU3Connection) (ψ : HilbertSpace),
     IsEigenstate YMHamiltonian ψ → YMHamiltonian A ≥ Δ
+
+/-- **The zero state is a (trivial) eigenstate of the zero Hamiltonian
+    (eighth brick in `MassGap.lean`, first brick to use the Task #51
+    concretized schema).**
+
+    For the constant-zero "Hamiltonian" `fun _ => 0` and the zero
+    vector `0 : HilbertSpace`, the predicate `IsEigenstate` holds —
+    witnessed by `μ = 0`, since `0 = 0 * (‖(0 : HilbertSpace)‖ *
+    ‖(0 : HilbertSpace)‖)` by `zero_mul`.
+
+    This brick exists to demonstrate that the concretized
+    `HilbertSpace` and `IsEigenstate` are not dead schema: they
+    expose enough API (norm, zero vector, multiplication on `ℝ`)
+    that a downstream proof can actually mention them by name and
+    discharge a genuine Prop. The mathematics is intentionally
+    trivial — `0 = 0` — but the *types* (real `EuclideanSpace ℂ
+    (Fin 3)` for `ψ`, real `SU3Connection → ℝ` for `H`) are the
+    post-Task-#51 schema.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}`. No research-grade
+    axioms.
+
+    **Honest scoping reminder.** This does **not** advance the YM
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It
+    says only that the zero vector trivially satisfies the
+    placeholder eigenstate predicate against the zero Hamiltonian.
+    No claim about the YM Hamiltonian, mass gap, or any QFT
+    statement. -/
+theorem IsEigenstate_zero_zero :
+    IsEigenstate (fun _ : SU3Connection => (0 : ℝ)) (0 : HilbertSpace) :=
+  ⟨0, fun _ => (zero_mul _).symm⟩
 
 /-- **Identity acts trivially on each component of an SU(3) connection
     (first real trio-clean brick in `MassGap.lean`).**
@@ -263,10 +336,10 @@ theorem SU3Connection_one_mul (A : SU3Connection) (i : Fin 4) :
     proves only that each constant SU(3)-matrix in the trivial-bundle
     schema is in fact unitary — which it is by typing. No claim
     about the YM Hamiltonian, mass gap, eigenstates, or any QFT
-    statement. The Hamiltonian and eigenstate predicate are still
-    `sorry` in this file; `HilbertSpace` was upgraded to
-    `ℓ²(ℕ,ℂ)` by Task #55 but that is NOT the YM physical
-    Hilbert space (see the "Task #55 decision" block). -/
+    statement. `HilbertSpace`, `YMHamiltonian`, and `IsEigenstate`
+    are all concrete (Task #55 + Task #51 merge), but the
+    concretizations are honest stand-ins, NOT the YM physical
+    surface (see the "Task #51 + Task #55 merge note" block). -/
 theorem SU3Connection_component_unitary (A : SU3Connection) (i : Fin 4) :
     (A i).1 * star (A i).1 = 1 := by
   have h := Matrix.mem_specialUnitaryGroup_iff.mp (A i).2

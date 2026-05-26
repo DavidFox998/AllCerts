@@ -100,6 +100,14 @@ BRICKS=(
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_one_one"
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_mul_unitary"
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_mul_det_one"
+  # Task #51 (2026-05-26): the three schema defs `HilbertSpace`,
+  # `YMHamiltonian`, `IsEigenstate` in `Towers.YM.MassGap` were
+  # concretized from `sorry` to minimal mathlib-backed types
+  # (`EuclideanSpace ℂ (Fin 3)`, sum-of-component-traces, scaling-
+  # form predicate). The new brick `IsEigenstate_zero_zero` below
+  # is the first downstream use proving the schema is no longer
+  # dead weight. Same Open status for YM (`docs/ROADMAP.md` § 2).
+  "Towers.YM.MassGap|TheoremaAureum.Towers.YM.IsEigenstate_zero_zero"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

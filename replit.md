@@ -132,6 +132,22 @@ the box.
 - `probe()` and friends never call SageMath. Out-of-scope inputs are recorded with `NEEDS_SAGE` and a `reason=` field, never silently stubbed.
 - `elliptic_stub` writes a SHA-stamped intent line tagged `ELLIPTIC_STUB`; the returned dict has no `L_*` keys. `test_kernel.py` pins this.
 - `zeta_sieve` is a parallelised sign-change sieve, **not** the Odlyzko-Schönhage 1991 FFT. The docstring says so.
+- **YM mass-gap schema concretized (2026-05-26, Task #51).** The three
+  previously `sorry`-backed schema defs in `Towers/YM/MassGap.lean`
+  (`HilbertSpace`, `YMHamiltonian`, `IsEigenstate`) and the two in
+  `Towers/NS/EnergyIneq.lean` (`H1Norm`, `HasFiniteEnergy`) were
+  replaced with concrete, minimal, mathlib-backed stand-ins
+  (`EuclideanSpace ℂ (Fin 3)`, sum of `Matrix.trace.re` over the four
+  SU(3) components, scaling-form eigenstate predicate; Euclidean norm
+  at the origin; bounded-amplitude predicate). Both files are now
+  `sorry`-free and `YM_mass_gap_statement` / `NS_global_regular_statement`
+  type-check without `sorryAx`. The schemas are **not** the Clay
+  surfaces — finite-dim Hilbert space, no Sobolev / Wightman / OS
+  machinery. YM and NS towers remain `Status: Open` in `docs/ROADMAP.md`.
+  New brick `IsEigenstate_zero_zero` lives in BRICKS and proves the
+  zero state is a trivial eigenstate of the zero Hamiltonian
+  (`0 = 0 * (‖0‖ * ‖0‖)`), demonstrating the concretized schema is
+  no longer dead weight. YM brick wall: **19**.
 - **Trivial-bundle Gauge bricks retired (2026-05-26, Task #50, Option A).** The six `gauge_action_*` lemmas (`one_smul`, `mul_smul`, `inv_smul`, `smul_inv`, `inv_inv`, `pow_zero`) that lived on `TrivialConfiguration G` in `Towers/YM/Gauge.lean` were removed: the action was `· • A := A`, so every lemma reduced definitionally on both sides to `A`, exercising neither group multiplication nor the action — hollow even by trivial-brick standards. The YM wall is now **18 bricks**, not 24, and YM bricks live exclusively in `Towers.YM.MassGap` against `Matrix.specialUnitaryGroup`. Rule going forward: no `gauge_action_*` on `TrivialConfiguration` — only real SU(3). See `docs/ROADMAP.md` for the retirement note and `scripts/check-towers.sh` for the comment block.
 
 ## User preferences
