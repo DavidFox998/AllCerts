@@ -238,6 +238,38 @@ theorem SU3Connection_component_det_one (A : SU3Connection) (i : Fin 4) :
     (A i).1.det = 1 :=
   (Matrix.mem_specialUnitaryGroup_iff.mp (A i).2).2
 
+/-- **Right-identity for SU(3) connection components
+    (fourth brick in `MassGap.lean`).**
+
+    For any `SU3Connection` `A` and any spacetime direction
+    `i : Fin 4`,
+
+      `A i * (1 : Matrix.specialUnitaryGroup (Fin 3) ℂ) = A i`.
+
+    The proof is a one-line delegation to mathlib's `mul_one` on
+    the monoid structure of `Matrix.specialUnitaryGroup (Fin 3) ℂ`.
+    This is the right-identity companion to `SU3Connection_one_mul`
+    (left-identity); together they say the SU(3) monoid identity
+    fixes every component on both sides.
+
+    This is **not** new mathematics — it is the trivial right-identity
+    law of the SU(3) monoid, applied to one component of the
+    trivial-bundle SU(3) connection schema.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}` (verified by
+    `scripts/check-towers.sh`). No research-grade axioms.
+
+    **Honest scoping reminder.** This still does **not** advance the
+    YM tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It
+    proves *nothing* about the Yang-Mills mass gap, the YM
+    Hamiltonian, the physical-state Hilbert space, or any QFT
+    statement. It says only that `x * 1 = x` in the SU(3) monoid,
+    on one component of a placeholder connection. -/
+theorem SU3Connection_mul_one (A : SU3Connection) (i : Fin 4) :
+    A i * (1 : Matrix.specialUnitaryGroup (Fin 3) ℂ) = A i :=
+  mul_one (A i)
+
 end YM
 end Towers
 end TheoremaAureum

@@ -244,6 +244,35 @@ theorem divergence_sub (v w : V → V)
   rw [heq, divergence_add v (-w) hv hw.neg, divergence_neg]
   ring
 
+/-- **Divergence of any constant vector field is zero (trivial sixth brick).**
+
+    For any constant vector `c : V` and any point `x : V`,
+
+      `div (fun _ : V => c) (x) = 0`.
+
+    The proof is a two-line reduction: rewrite with `fderiv_const`
+    (the Fréchet derivative of a constant function is the zero
+    continuous-linear-map), then let `simp` collapse the
+    component-wise sum of zeros. This lemma is **not** new
+    mathematics — it is the trivial constancy case of the
+    divergence operator, generalising `divergence_zero` (which is
+    the `c = 0` specialisation) and named so future NS plans have
+    a stable hook for combining constant offsets with other
+    divergence identities (e.g. `divergence_add_const`).
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}` (verified by
+    `scripts/check-towers.sh`). No research-grade axioms.
+
+    **Honest scoping reminder.** This still does **not** advance the
+    NS tower past `Status: Open` (see `docs/ROADMAP.md` § 3). It is
+    the sixth trio-clean divergence identity in Lean, nothing more.
+    No claim of any PDE result, regularity, or energy bound. -/
+theorem divergence_const (c : V) (x : V) :
+    divergence (fun _ : V => c) x = 0 := by
+  simp only [divergence]
+  simp [fderiv_const]
+
 end NS
 end Towers
 end TheoremaAureum

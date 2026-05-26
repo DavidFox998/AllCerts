@@ -261,6 +261,34 @@ theorem gauge_action_pow_zero {G : Type _} [Group G]
     g^0 • A = A := by
   rw [pow_zero, one_smul]
 
+/-- **First power of a gauge transformation acts as itself
+    (trivial seventh brick).**
+
+    For any group `G`, any gauge transformation `g : G`, and any
+    configuration `A : TrivialConfiguration G`,
+
+      `g^1 • A = g • A`.
+
+    The proof is a one-line rewrite via mathlib's `pow_one`
+    (`g^1 = g` in any monoid). This lemma is **not** new mathematics
+    — it is the trivial unit-exponent case of iterated gauge-action
+    exponentiation, the successor of `gauge_action_pow_zero` in the
+    `g^n`-action family, named so future YM plans have a stable
+    hook for inductive `g^n`-style proofs.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}` (verified by
+    `scripts/check-towers.sh`). No research-grade axioms.
+
+    **Honest scoping reminder.** This still does **not** advance the
+    YM tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It is
+    the seventh trio-clean gauge-action identity in Lean, nothing
+    more. No claim of any QFT result, mass gap, or energy bound. -/
+theorem gauge_action_pow_one {G : Type _} [Group G]
+    (g : G) (A : TrivialConfiguration G) :
+    g^1 • A = g • A := by
+  rw [pow_one]
+
 end YM
 end Towers
 end TheoremaAureum
