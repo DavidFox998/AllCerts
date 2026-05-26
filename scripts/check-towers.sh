@@ -45,8 +45,32 @@ if ! command -v lake >/dev/null 2>&1; then
   exit 127
 fi
 
-echo ">> lake update (resolve mathlib v4.12.0 manifest)" >&2
-lake update
+# `lake update` is INTENTIONALLY skipped when the manifest + package
+# working trees are already in place. In this environment the mathlib
+# (and batteries / aesop / Qq / proofwidgets / ...) packages under
+# `.lake/packages/` are committed as plain working trees WITHOUT their
+# own `.git/` directories (Lake's git-dep clones were checked into the
+# repo as files, not as nested git repos). Running `lake update` against
+# such a tree makes Lake try to `git fetch` / `git checkout` inside a
+# directory that has no `.git`, which in practice wipes
+# `lakefile.lean` and leaves `HEAD` dangling — every subsequent
+# `lake build` then fails with "could not resolve 'HEAD'".
+#
+# `lake-manifest.json` is committed and pins every transitive dep to
+# an exact revision, so as long as the package directories exist we
+# do NOT need `lake update` to resolve anything; `lake build` reads
+# the manifest directly. Only fall back to `lake update` if mathlib
+# is genuinely missing (fresh checkout that, for whatever reason,
+# does not have the vendored package trees).
+if [ -f ".lake/packages/mathlib/lakefile.lean" ]; then
+  echo ">> lake update: SKIPPED (vendored mathlib working tree already present;" >&2
+  echo "   manifest is pinned at lake-manifest.json. Running \`lake update\` here" >&2
+  echo "   would wipe the .git-less mathlib working tree — see comment in" >&2
+  echo "   scripts/check-towers.sh for the full story.)" >&2
+else
+  echo ">> lake update (resolve mathlib v4.12.0 manifest — vendored tree missing)" >&2
+  lake update
+fi
 
 echo ">> lake exe cache get (fetch ~2 GB prebuilt mathlib oleans)" >&2
 lake exe cache get
