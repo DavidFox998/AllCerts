@@ -170,6 +170,92 @@ def _verify_seal() -> None:
     raise last_err
 
 
+def _verify_checkpoint() -> None:
+    """Verify the at-rest checkpoint against the live ledger BEFORE
+    appending. Complements `_verify_seal` (which only covers the 9-line
+    Genesis preamble).
+
+    Reads `data/hits.txt.checkpoint` (written by `_update_checkpoint`
+    after every legitimate append) and confirms:
+      - the live ledger is at least as long as the checkpoint records,
+      - SHA-256 of the live ledger's first `expected_size` bytes matches
+        the recorded hash.
+
+    Because the ledger is append-only, any legitimate growth above the
+    recorded size still validates against the recorded prefix SHA — a
+    stale checkpoint is *safe*; only a *shrunken* or *in-place
+    rewritten* file is a tamper. This is the in-process twin of
+    `scripts/check-ledger-integrity.py`, called per-append so a
+    body-truncation between `post-merge.sh` runs is caught immediately
+    instead of compounding across thousands of appends. Task #57.
+
+    No-op if the checkpoint file is absent: that is a legitimate
+    bootstrap state (e.g. test fixtures pointing `HITS` at a throwaway
+    tmp file with no prior checkpoint). The committed checkpoint is
+    always present in production, so this branch only fires for
+    fixtures that have already monkeypatched `kernel.CHECKPOINT`
+    accordingly.
+
+    Raises RuntimeError on truncation or in-place rewrite. Callers
+    (`_append_line`) must propagate the exception without appending —
+    the whole point is to refuse to grow a corrupted ledger.
+    """
+    if not CHECKPOINT.exists():
+        return
+    try:
+        raw = CHECKPOINT.read_text(encoding="utf-8").strip()
+    except OSError as e:
+        raise RuntimeError(
+            f"Ledger integrity check failed: cannot read {CHECKPOINT}: {e}"
+        ) from e
+    parts = raw.split()
+    if len(parts) != 2:
+        raise RuntimeError(
+            f"Ledger integrity check failed: {CHECKPOINT} malformed "
+            f"(expected '<size> <sha256>', got {raw!r})."
+        )
+    try:
+        expected_size = int(parts[0])
+    except ValueError as e:
+        raise RuntimeError(
+            f"Ledger integrity check failed: {CHECKPOINT} size field "
+            f"not an integer: {parts[0]!r}."
+        ) from e
+    expected_sha = parts[1].lower()
+    if len(expected_sha) != 64 or any(c not in "0123456789abcdef" for c in expected_sha):
+        raise RuntimeError(
+            f"Ledger integrity check failed: {CHECKPOINT} sha256 field "
+            f"malformed: {expected_sha!r}."
+        )
+    try:
+        with HITS.open("rb") as fh:
+            prefix = fh.read(expected_size)
+    except FileNotFoundError as e:
+        raise RuntimeError(
+            f"Ledger integrity check failed: {HITS} missing while "
+            f"checkpoint expects {expected_size} bytes."
+        ) from e
+    actual_prefix_size = len(prefix)
+    if actual_prefix_size < expected_size:
+        raise RuntimeError(
+            f"Ledger integrity check failed: {HITS} SHRUNK — expected "
+            f"at least {expected_size} bytes, got {actual_prefix_size}. "
+            "TRUNCATION or in-place rewrite suspected. Refusing to "
+            "append; recover the ledger before continuing (see "
+            "docs/REPRODUCE.md)."
+        )
+    prefix_sha = hashlib.sha256(prefix).hexdigest()
+    if prefix_sha != expected_sha:
+        raise RuntimeError(
+            f"Ledger integrity check failed: {HITS} first "
+            f"{expected_size} bytes have been rewritten in place.\n"
+            f"  expected sha256: {expected_sha}\n"
+            f"  got sha256:      {prefix_sha}\n"
+            "The ledger is append-only; in-place edits are not "
+            "permitted. Refusing to append."
+        )
+
+
 def _update_checkpoint() -> None:
     """Refresh data/hits.txt.checkpoint with the current (size, sha256).
 
@@ -222,6 +308,13 @@ def _append_line(line: str) -> None:
         if fcntl is not None:
             fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
+            # Task #57: verify at-rest checkpoint while holding the
+            # exclusive lock, so a body-truncation or in-place rewrite
+            # that occurred between probes is caught BEFORE we commit
+            # another line to a corrupted ledger. The Genesis seal
+            # (checked by `_verify_seal` in `probe`) only covers the
+            # 9-line preamble; this catches the rest of the file.
+            _verify_checkpoint()
             f.write(line + "\n")
             f.flush()
             os.fsync(f.fileno())

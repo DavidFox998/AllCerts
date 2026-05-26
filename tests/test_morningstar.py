@@ -482,6 +482,42 @@ def test_no_non_append_writes_to_hits_txt():
 
 # ---------- kernel.probe must abort on tampered Genesis ----------
 
+def test_probe_refuses_to_append_when_body_truncated(hits_backup, fresh_checkpoint):
+    """Task #57: an in-process integrity guard must abort an append
+    when the at-rest checkpoint says the ledger has been body-truncated
+    (preamble kept, probe lines wiped). The Genesis seal alone would
+    PASS on a preamble-only file, so the long-running workflows
+    (`zeta-burst-101-10000`, `zeta-sieve-14159-100000`) would happily
+    keep appending to a truncated ledger until the next `post-merge.sh`
+    run. The checkpoint check inside `_append_line` (added in task #57)
+    must catch it on the very next probe.
+    """
+    import kernel
+
+    # Truncate hits.txt to the 9-line Genesis preamble + marker only,
+    # exactly the failure mode task #53 was created to catch.
+    text = hits_backup.decode("utf-8")
+    lines = text.split("\n")
+    marker_idx = lines.index(SEAL_MARKER)
+    preamble_only = "\n".join(lines[: marker_idx + 1]) + "\n"
+    _atomic_write_bytes(HITS, preamble_only.encode("utf-8"))
+
+    # Sanity: Genesis seal still verifies on the preamble-only file —
+    # the integrity guard is the only thing that can catch this.
+    kernel._verify_seal()
+
+    size_before = HITS.stat().st_size
+
+    with pytest.raises(RuntimeError, match="Ledger integrity check failed"):
+        kernel.probe(1, 1, 0.5, 0.0)
+
+    size_after = HITS.stat().st_size
+    assert size_after == size_before, (
+        "probe must not append to a body-truncated hits.txt; "
+        f"size grew from {size_before} to {size_after}"
+    )
+
+
 def test_probe_refuses_to_append_when_seal_fails(hits_backup):
     """kernel.probe() runs the seal check before any append. A tampered
     Genesis must raise RuntimeError *before* hits.txt grows by even one

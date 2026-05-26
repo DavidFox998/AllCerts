@@ -84,6 +84,7 @@ def tmp_hits(tmp_path, monkeypatch):
     """
     fake = tmp_path / "hits.txt"
     monkeypatch.setattr(kernel, "HITS", fake)
+    monkeypatch.setattr(kernel, "CHECKPOINT", tmp_path / "hits.txt.checkpoint")
     monkeypatch.setattr(kernel, "_verify_seal", lambda: None)
     return fake
 
