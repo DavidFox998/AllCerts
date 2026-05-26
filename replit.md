@@ -156,6 +156,7 @@ solution. For per-batch prose and tactic notes see
 | 2026-05-26 | #56 / Path B 3 | YM/SU3Basis | +6 (`inner_su3`, `norm_su3`, conj_symm, add_left, smul_left, Core instance) | 65 | `InnerProductSpace.Core` on `↥su3` |
 | 2026-05-26 | #56 / Path B 4 | YM/GaugeField | +6 (`GaugeField n := PiLp 2 …`, trivial-id curvature, `YMHamiltonian_eq_norm_sq`) | 71 | discrete lattice gauge field schema |
 | 2026-05-26 | #56 / Path B 5 | YM/RealCurvature | +5 (`structure_constants_su3`, `lie_bracket`, `lattice_deriv`, `curvature`, `YMEnergy_nonneg`) | 76 | placeholder `f^{abc}=0`, schema composes |
+| 2026-05-26 | #56 / Path B 6 | YM/RealCurvatureV2 | +5 (`structure_constants_su3_def`, `lie_bracket_su3_def`, `lattice_deriv_forward_diff`, `curvature_su3_def`, `YMEnergy_nonneg`) | 81 | `f^{012}=1` + cyclic `D_μ A := A(i+1)−A i` |
 
 **Hardening notes:**
 

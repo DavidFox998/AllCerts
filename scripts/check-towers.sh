@@ -468,6 +468,36 @@ BRICKS=(
   "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.lattice_deriv_id"
   "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.curvature_eq_zero"
   "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.YMEnergy_nonneg"
+
+  # Task #56 Path B batch 6 (2026-05-26): non-trivial successor to
+  # Batch 5. Two real upgrades land at once:
+  # (a) `structure_constants_su3` lifts from the all-zero placeholder
+  #     to the canonical first Gell-Mann entry `f^{012} = 1` (zero
+  #     elsewhere). Honors the architect's Batch-4 recommendation to
+  #     introduce non-identity content.
+  # (b) `lattice_deriv` is the GENUINE cyclic forward difference
+  #     `(D_μ A)(i) := A(i+1) − A i` on `Fin n` with `[NeZero n]`,
+  #     replacing Batch 5's identity stand-in.
+  # The composition
+  #     `curvature_su3 A i := lie_bracket_su3 (D_0 A i) (D_1 A i)`
+  # is now genuinely non-trivial: for a generic gauge field `A` the
+  # curvature is NOT identically zero, and `YMHamiltonian A := ∑ ‖curv i‖²`
+  # is a real sum of squared norms. Five bricks, one per user-spec
+  # item: (1) `structure_constants_su3_def` (`f^{012} = 1`, decidable);
+  # (2) `lie_bracket_su3_def` (apply formula, rfl); (3)
+  # `lattice_deriv_forward_diff` (`= A (i+1) − A i`, rfl — the headline
+  # upgrade); (4) `curvature_su3_def` (composition formula, rfl);
+  # (5) `YMEnergy_nonneg` (Finset.sum_nonneg + sq_nonneg, robust).
+  # Honest scope: this is ONE entry of the antisymmetric f^{abc}
+  # table — Jacobi, antisymmetry, the five other independent rationals
+  # plus the two √3/2 entries are still missing. NOT the full SU(3)
+  # Lie algebra; NOT a gauge-covariant derivative; NOT the YM action;
+  # NOT mass-gap. YM tower status unchanged: Open (`docs/ROADMAP.md` § 2).
+  "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.structure_constants_su3_def"
+  "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.lie_bracket_su3_def"
+  "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.lattice_deriv_forward_diff"
+  "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.curvature_su3_def"
+  "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.YMEnergy_nonneg"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
