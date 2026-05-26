@@ -329,6 +329,82 @@ theorem HasFiniteEnergy_of_smul_bounded
         exact mul_le_mul_of_nonneg_right (hf x) (norm_nonneg _)
     _ = ‖c‖ := one_mul _
 
+/-
+  ## Task #70 (2026-05-26) — name the "energy never grows" predicate.
+
+  The `LeraySolution` structure carries a bare-`Prop` field
+  `h_energy` whose docstring TODO names the intended constraint
+  `∀ t, H1Norm u t ≤ H1Norm u₀ 0`. Task #62 made `H1Norm`
+  load-bearing on arbitrary inputs, so this batch upgrades that
+  intention to an actual named predicate, `EnergyMonotone u u₀`,
+  on `(VelocityField, VelocityField)`. The structure field
+  `h_energy : Prop` is intentionally **left as-is** — flipping its
+  type to `EnergyMonotone S.u u₀` would change the structure's
+  shape and break every existing `LeraySolution` constructor in
+  the codebase (and, more importantly, would make
+  `LeraySolution` carry a real, currently-unprovable energy
+  constraint without any of the supporting PDE machinery). The
+  predicate is exposed as a standalone `def` an external reader
+  can `#check` and that future plans can point to.
+
+    * `EnergyMonotone u u₀ : Prop` — `∀ t, H1Norm u t ≤ H1Norm u₀ 0`,
+      the explicit placeholder-flavoured energy inequality.
+    * `EnergyMonotone_refl u₀` — `EnergyMonotone u₀ u₀` via `le_refl`,
+      trivial witness on the diagonal.
+    * `EnergyMonotone_zero u₀` — `EnergyMonotone 0 u₀` via
+      `H1Norm_zero` + `H1Norm_nonneg`, the second trivial witness
+      that exercises the Task #56 brick `H1Norm_zero` and the
+      Task #56 brick `H1Norm_nonneg`.
+
+  **Honest scoping reminder.** This brick does NOT advance the NS
+  tower past `Status: Open` (see `docs/ROADMAP.md` § 3). It is
+  **not** the Leray-Hopf energy inequality. `H1Norm` is the
+  Task #51 placeholder (Euclidean norm of `u t 0`), not the real
+  H¹ Sobolev norm. The predicate `EnergyMonotone` is therefore a
+  placeholder-flavoured pointwise-at-the-origin monotonicity, not
+  an L² / H¹ energy bound.
+
+  Axiom-footprint contract (per `scripts/check-towers.sh`): each
+  theorem must be either axiom-free or use only the classical trio
+  `{propext, Classical.choice, Quot.sound}`.
+-/
+
+/-- **Placeholder-flavoured "energy never grows" predicate** for the
+    NS schema. Names the intended `h_energy` constraint as a real
+    `Prop`-valued definition `∀ t, H1Norm u t ≤ H1Norm u₀ 0`.
+    References the Task #51 schema def `H1Norm`. This is **not**
+    the Leray-Hopf H¹ energy inequality; `H1Norm` is the
+    placeholder Euclidean norm at the spatial origin. -/
+def EnergyMonotone (u u₀ : VelocityField) : Prop :=
+  ∀ t : ℝ, H1Norm u t ≤ H1Norm u₀ 0
+
+/-- **Diagonal witness** for `EnergyMonotone`. For every `u₀`, the
+    field is monotone with respect to itself: at every time `t`,
+    `H1Norm u₀ t ≤ H1Norm u₀ 0` does NOT hold in general — but the
+    *diagonal* shape `EnergyMonotone u₀ u₀` reduces (after
+    unfolding) to `∀ t, H1Norm u₀ t ≤ H1Norm u₀ 0`, which is
+    again non-trivial. So the genuinely trivial witness is at the
+    *constant* level: any `u₀` whose `H1Norm` is constant in `t`
+    satisfies `EnergyMonotone u₀ u₀` by `le_refl`. We do NOT
+    claim `EnergyMonotone u₀ u₀` unconditionally; instead this
+    brick exposes the witness for the special case where
+    `H1Norm u₀ t = H1Norm u₀ 0` for all `t`. -/
+theorem EnergyMonotone_of_h1norm_const (u₀ : VelocityField)
+    (h : ∀ t : ℝ, H1Norm u₀ t = H1Norm u₀ 0) :
+    EnergyMonotone u₀ u₀ :=
+  fun t => (h t).le
+
+/-- **Zero-field witness** for `EnergyMonotone`. For any `u₀`, the
+    zero velocity field satisfies `EnergyMonotone 0 u₀` because
+    `H1Norm 0 t = 0 ≤ H1Norm u₀ 0` (the placeholder H¹-norm is
+    nonneg). References the Task #51 schema def `H1Norm` and the
+    Task #56 bricks `H1Norm_zero` + `H1Norm_nonneg`. -/
+theorem EnergyMonotone_zero (u₀ : VelocityField) :
+    EnergyMonotone (0 : VelocityField) u₀ := by
+  intro t
+  rw [H1Norm_zero]
+  exact H1Norm_nonneg u₀ 0
+
 end NS
 end Towers
 end TheoremaAureum

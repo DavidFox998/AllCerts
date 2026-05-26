@@ -307,6 +307,23 @@ BRICKS=(
   # solution.
   "Towers.NS.EnergyIneq|TheoremaAureum.Towers.NS.HasFiniteEnergy_add"
   "Towers.NS.EnergyIneq|TheoremaAureum.Towers.NS.HasFiniteEnergy_of_smul_bounded"
+  # Task #70 (2026-05-26): name the "energy never grows" predicate
+  # inside the NS schema. `EnergyMonotone u u₀ : Prop` is the
+  # explicit `∀ t, H1Norm u t ≤ H1Norm u₀ 0` shape named by the
+  # `LeraySolution.h_energy` docstring TODO. The structure field
+  # itself stays as a bare `Prop` (flipping its type would change
+  # the structure's shape); the predicate is exposed as a
+  # standalone `def` external readers can name. Two trio-clean
+  # bricks: `EnergyMonotone_of_h1norm_const` (diagonal witness on
+  # any `u₀` with constant-in-`t` placeholder norm, via `le_refl`)
+  # and `EnergyMonotone_zero` (the zero velocity field is
+  # monotone w.r.t. any `u₀`, via `H1Norm_zero` + `H1Norm_nonneg`).
+  # NS tower status unchanged: Open (`docs/ROADMAP.md` § 3). NOT
+  # the Leray-Hopf H¹ energy inequality — `H1Norm` is the
+  # Task #51 placeholder (Euclidean norm at the spatial origin).
+  "Towers.NS.EnergyIneq|TheoremaAureum.Towers.NS.EnergyMonotone"
+  "Towers.NS.EnergyIneq|TheoremaAureum.Towers.NS.EnergyMonotone_of_h1norm_const"
+  "Towers.NS.EnergyIneq|TheoremaAureum.Towers.NS.EnergyMonotone_zero"
   # Task #55 (Branch A witness, 2026-05-26): infinite-dimensionality
   # witness for `HilbertSpace = lp (fun _ : ℕ => ℂ) 2`. The canonical
   # `lp.single`-at-`1` family indexed by ℕ is orthonormal (norm-one
