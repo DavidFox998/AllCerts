@@ -845,3 +845,109 @@ def test_probe_refuses_to_append_when_seal_fails(hits_backup):
         "probe must not append to hits.txt when the Genesis seal fails; "
         f"size grew from {size_before} to {size_after}"
     )
+
+
+# ---------- scripts/seal-birth.py must queue on the sidecar lock ----------
+
+def test_seal_birth_blocks_on_hits_exclusive_lock():
+    """Task #75: prove that `scripts/seal-birth.py` genuinely queues on
+    `kernel.hits_exclusive_lock()` end-to-end, not just by code
+    inspection. A regression that drops the `with
+    kernel.hits_exclusive_lock():` wrapper around the read-verify-
+    append-checkpoint window in seal-birth.py would silently re-open
+    the race that task #65 closed: a concurrent `kernel._append_line`
+    writer could interleave between the script's seal check and its
+    append, desyncing `data/hits.txt.checkpoint`.
+
+    The test holds the sidecar flock in a background thread of THIS
+    process for a measurable window (HOLD_S), then launches
+    `seal-birth.py` as a subprocess. Cross-process serialization is
+    enforced by `fcntl.flock` on `data/.hits.lock`, so the subprocess
+    must block until the thread releases. We assert the subprocess
+    wall-clock is at least most of HOLD_S.
+
+    Snapshot/restore is done manually (not via the `hits_backup`
+    fixture) because that fixture itself holds the same sidecar lock
+    for the entire test, which would deadlock the background thread.
+    """
+    import kernel
+
+    pdf = REPO_ROOT / "data" / "MorningStar_RH_Cert.pdf"
+    tex = REPO_ROOT / "data" / "MorningStar_RH_Cert.tex"
+    if not pdf.exists() or not tex.exists():
+        pytest.skip(
+            "MorningStar_RH_Cert.pdf/.tex not present; seal-birth.py "
+            "refuses to run without them"
+        )
+
+    seal_birth = REPO_ROOT / "scripts" / "seal-birth.py"
+    assert seal_birth.exists(), seal_birth
+
+    HOLD_S = 0.5  # window the background thread holds the lock
+    # Allow generous slack for subprocess startup (Python import +
+    # kernel import + check-genesis-seal subprocess inside the script).
+    MIN_BLOCK_S = 0.3
+
+    original_hits = HITS.read_bytes()
+    original_cp = CHECKPOINT.read_bytes() if CHECKPOINT.exists() else None
+
+    lock_acquired = threading.Event()
+    release_lock = threading.Event()
+    holder_error: list[BaseException] = []
+
+    def _hold_lock():
+        try:
+            with kernel.hits_exclusive_lock():
+                lock_acquired.set()
+                # Hold for HOLD_S unless explicitly released sooner.
+                release_lock.wait(timeout=HOLD_S)
+        except BaseException as e:  # pragma: no cover — diagnostic
+            holder_error.append(e)
+            lock_acquired.set()
+
+    holder = threading.Thread(target=_hold_lock, daemon=True)
+    try:
+        holder.start()
+        assert lock_acquired.wait(timeout=5.0), (
+            "background lock holder failed to acquire sidecar lock"
+        )
+        assert not holder_error, f"holder thread errored: {holder_error[0]!r}"
+
+        t0 = time.monotonic()
+        proc = subprocess.run(
+            [sys.executable, str(seal_birth)],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            timeout=60.0,
+        )
+        wall = time.monotonic() - t0
+
+        # The background thread releases on its own after HOLD_S; join
+        # it so it doesn't leak into other tests.
+        holder.join(timeout=5.0)
+        assert not holder.is_alive(), "lock-holder thread did not exit"
+
+        assert proc.returncode == 0, (
+            f"seal-birth.py exited {proc.returncode}\n"
+            f"stdout={proc.stdout!r}\nstderr={proc.stderr!r}"
+        )
+        assert wall >= MIN_BLOCK_S, (
+            f"seal-birth.py completed in {wall:.3f}s — expected to block "
+            f"at least {MIN_BLOCK_S:.3f}s on kernel.hits_exclusive_lock(). "
+            "This means the script no longer queues on the sidecar flock; "
+            "the read-verify-append-checkpoint window is unprotected "
+            "against a concurrent kernel._append_line writer (regression "
+            "of task #65)."
+        )
+    finally:
+        # Make sure the holder doesn't outlive the test even on failure.
+        release_lock.set()
+        holder.join(timeout=5.0)
+        # Restore ledger + checkpoint atomically so a successful BIRTH
+        # append doesn't leak into other tests / the committed snapshot.
+        _atomic_write_bytes(HITS, original_hits)
+        if original_cp is not None:
+            _atomic_write_bytes(CHECKPOINT, original_cp)
+        else:
+            CHECKPOINT.unlink(missing_ok=True)
