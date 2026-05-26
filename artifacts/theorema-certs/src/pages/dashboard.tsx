@@ -52,6 +52,21 @@ function formatAge(ageDays: number | undefined): string {
   return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
+function formatRelativeAge(iso: string | null | undefined, nowMs: number): string {
+  if (!iso) return "never";
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "unknown";
+  const deltaSec = Math.max(0, Math.round((nowMs - t) / 1000));
+  if (deltaSec < 5) return "just now";
+  if (deltaSec < 60) return `${deltaSec}s ago`;
+  const mins = Math.floor(deltaSec / 60);
+  if (mins < 60) return `${mins} min${mins === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
+
 function formatTimestamp(iso: string | undefined): string {
   if (!iso) return "unknown";
   const d = new Date(iso);
@@ -254,6 +269,11 @@ export default function DashboardPage() {
   const [cancelConfirmElapsedMs, setCancelConfirmElapsedMs] = useState(0);
   const [rebuildLogLines, setRebuildLogLines] = useState<RebuildLogLine[]>([]);
   const [historyRefereeFilter, setHistoryRefereeFilter] = useState<string>("");
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
   const logPanelRef = useRef<HTMLPreElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -1381,6 +1401,21 @@ export default function DashboardPage() {
             (size + sha256 of the last known-good prefix). Mirrors{" "}
             <span className="text-foreground">scripts/check-ledger-integrity.py</span>.
             Read-only — never mutates the ledger. Polls every 30s.
+          </p>
+
+          <p
+            className="text-xs font-mono text-muted-foreground"
+            data-testid="text-ledger-last-ok"
+            title={
+              ledgerIntegrity?.lastOkAt
+                ? `last verified ok at ${ledgerIntegrity.lastOkAt}`
+                : "no successful verification recorded since the server started"
+            }
+          >
+            last verified ok:{" "}
+            <span className="text-foreground">
+              {formatRelativeAge(ledgerIntegrity?.lastOkAt ?? null, nowMs)}
+            </span>
           </p>
 
           {ledgerIntegrity && ledgerIntegrity.status !== "ok" ? (

@@ -26,7 +26,10 @@ interface LedgerIntegrityStatus {
   ledgerLastModified: string | null;
   ledgerPath: string;
   checkpointPath: string;
+  lastOkAt: string | null;
 }
+
+let lastOkAt: string | null = null;
 
 function resolveRepoRoot(): string {
   const candidates = [
@@ -76,6 +79,7 @@ function buildStatus(): LedgerIntegrityStatus {
     ledgerLastModified: null,
     ledgerPath: HITS,
     checkpointPath: CHECKPOINT,
+    lastOkAt,
   };
 
   if (!existsSync(HITS)) {
@@ -212,6 +216,7 @@ function buildStatus(): LedgerIntegrityStatus {
     };
   }
 
+  lastOkAt = checkedAt;
   return {
     ...base,
     status: "ok",
@@ -221,6 +226,7 @@ function buildStatus(): LedgerIntegrityStatus {
     livePrefixSha: prefixSha,
     growthBytes: liveSize - expectedSize,
     ledgerLastModified,
+    lastOkAt,
   };
 }
 

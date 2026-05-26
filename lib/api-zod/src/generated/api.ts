@@ -313,7 +313,8 @@ export const GetLedgerIntegrityResponse = zod.object({
   "checkedAt": zod.coerce.date().describe('ISO-8601 timestamp the check was performed (server time)'),
   "ledgerLastModified": zod.coerce.date().nullish().describe('ISO-8601 mtime of `data\/hits.txt` (null if missing)'),
   "ledgerPath": zod.string().describe('Filesystem path of the ledger that was checked'),
-  "checkpointPath": zod.string().describe('Filesystem path of the checkpoint sidecar')
+  "checkpointPath": zod.string().describe('Filesystem path of the checkpoint sidecar'),
+  "lastOkAt": zod.coerce.date().nullish().describe('ISO-8601 timestamp of the most recent `status: ok` integrity\ncheck served by this server process. In-memory only — resets\non server restart (mirrors the lockout panel\'s in-memory\npattern). Null when no successful check has been performed\nsince the process started. Lets operators tell if a\ncurrently-amber\/unreachable panel has been stuck for\nseconds vs hours.\n')
 })
 
 

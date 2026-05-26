@@ -358,6 +358,18 @@ export interface LedgerIntegrityStatus {
   ledgerPath: string;
   /** Filesystem path of the checkpoint sidecar */
   checkpointPath: string;
+  /**
+     * ISO-8601 timestamp of the most recent `status: ok` integrity
+  check served by this server process. In-memory only — resets
+  on server restart (mirrors the lockout panel's in-memory
+  pattern). Null when no successful check has been performed
+  since the process started. Lets operators tell if a
+  currently-amber/unreachable panel has been stuck for
+  seconds vs hours.
+
+     * @nullable
+     */
+  lastOkAt?: string | null;
 }
 
 export interface UploadUrlRequest {
