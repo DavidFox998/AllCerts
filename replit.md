@@ -135,170 +135,42 @@ the box.
 - `probe()` and friends never call SageMath. Out-of-scope inputs are recorded with `NEEDS_SAGE` and a `reason=` field, never silently stubbed.
 - `elliptic_stub` writes a SHA-stamped intent line tagged `ELLIPTIC_STUB`; the returned dict has no `L_*` keys. `test_kernel.py` pins this.
 - `zeta_sieve` is a parallelised sign-change sieve, **not** the Odlyzko-Schönhage 1991 FFT. The docstring says so.
-- **YM mass-gap schema concretized (2026-05-26, Task #51).** The three
-  previously `sorry`-backed schema defs in `Towers/YM/MassGap.lean`
-  (`HilbertSpace`, `YMHamiltonian`, `IsEigenstate`) and the two in
-  `Towers/NS/EnergyIneq.lean` (`H1Norm`, `HasFiniteEnergy`) were
-  replaced with concrete, minimal, mathlib-backed stand-ins
-  (`EuclideanSpace ℂ (Fin 3)`, sum of `Matrix.trace.re` over the four
-  SU(3) components, scaling-form eigenstate predicate; Euclidean norm
-  at the origin; bounded-amplitude predicate). Both files are now
-  `sorry`-free and `YM_mass_gap_statement` / `NS_global_regular_statement`
-  type-check without `sorryAx`. The schemas are **not** the Clay
-  surfaces — finite-dim Hilbert space, no Sobolev / Wightman / OS
-  machinery. YM and NS towers remain `Status: Open` in `docs/ROADMAP.md`.
-  New brick `IsEigenstate_zero_zero` lives in BRICKS and proves the
-  zero state is a trivial eigenstate of the zero Hamiltonian
-  (`0 = 0 * (‖0‖ * ‖0‖)`), demonstrating the concretized schema is
-  no longer dead weight. YM brick wall: **19**.
-- **NS energy schema is load-bearing (2026-05-26, Task #56).** Three
-  trio-clean bricks added to `Towers/NS/EnergyIneq.lean` exercising
-  the Task #51 concretizations of `H1Norm` and `HasFiniteEnergy`:
-  `H1Norm_zero` (`H1Norm 0 t = 0`), `HasFiniteEnergy_zero` (witness
-  `M = 0`), and `H1Norm_nonneg` (`0 ≤ H1Norm u t`, delegating to
-  `norm_nonneg`). These are the NS analogue of the YM
-  `IsEigenstate_zero_zero` move — minimal demonstrations that the
-  post-Task-#51 NS schema defs are real, usable, mathlib-flavoured
-  surfaces, not opaque `sorry`-defs. All three pass the axiom-
-  footprint check with `{propext, Classical.choice, Quot.sound}`.
-  Total brick wall: **32**. NS tower status unchanged: **Open**
-  (`docs/ROADMAP.md` § 3). These are NOT statements about the H¹
-  Sobolev norm, the L² energy bound, or any Leray-Hopf solution.
-- **YM Hamiltonian schema is load-bearing (2026-05-26, Task #55).**
-  Four additional trio-clean bricks added to `Towers/YM/MassGap.lean`
-  that each reference at least one of the Task #51 + Task #55
-  concretized schema defs (`HilbertSpace`, `YMHamiltonian`,
-  `IsEigenstate`); three reference at least two, and one references
-  all three. The bricks are: `YMHamiltonian_one_eq_twelve` (the
-  all-ones SU(3) connection has Hamiltonian value `12 = 4 · 3`, the
-  first numerical answer extracted from the def);
-  `IsEigenstate_zero_const` (the zero Hamiltonian is degenerate on
-  every `ψ : HilbertSpace`); `IsEigenstate_of_forall_zero` (any
-  extensionally-zero Hamiltonian is an eigenstate on every ψ); and
-  `YMHamiltonian_not_isEigenstate_zero` (the `YMHamiltonian` is NOT
-  an eigenstate at `(0 : HilbertSpace)` — derives `(12 : ℝ) = 0`
-  contradiction via the first brick). All four pass the
-  axiom-footprint check with `{propext, Classical.choice, Quot.sound}`.
-  YM brick wall: **26**. YM tower status unchanged: **Open**
-  (`docs/ROADMAP.md` § 2). The schema is still the placeholder
-  (ℓ²(ℕ,ℂ), sum-of-traces, scaling-form predicate), NOT the Clay
-  surface — the bricks prove the schema is genuinely usable, not
-  that the Yang-Mills mass gap has been formalized.
-- **SU(3) Gell-Mann basis bricks landed (2026-05-26, Task #56 Path B
-  batch 1).** Added `Towers/YM/SU3Basis.lean` with the eight
-  anti-Hermitian Gell-Mann generators `gellMann₁ … gellMann₈` as
-  explicit `Matrix (Fin 3) (Fin 3) ℂ` literals via mathlib's `!![…]`
-  notation, each proven to lie in `su3_submodule` (i.e.
-  anti-Hermitian + traceless). The unnormalised choice
-  `gellMann₈ := diag(I, 0, -I)` (no √3) keeps every membership proof
-  inside `ext + fin_cases + simp + rfl` — no `norm_num`, no `ring`,
-  no scary numeric coercion. Two local `macro`s factor the
-  per-generator boilerplate. All 8 bricks pass the axiom-footprint
-  check with `{propext, Classical.choice, Quot.sound}`. Total tower
-  brick wall: **51** (was 43 before this batch: 26 YM from Task #55
-  + 3 YM ℓ²(ℕ,ℂ) Hilbert-canonical-family bricks + 6 NS energy +
-  8 BSD/RH/NS legacy, plus 8 new `gellMann_i_mem` = 51).
-  These are the foundation for Path B batches 2 (`Basis.ofEquivFun`
-  on `↥su3_submodule ≃ₗ[ℝ] (Fin 8 → ℝ)` plus linear-independence /
-  span wrappers) and 3 (`InnerProductSpace.Core` instance on
-  `↥su3_submodule`). The bricks claim ONLY: anti-Hermitian +
-  traceless 3×3 complex matrices. No statement about YM dynamics,
-  the YM Hamiltonian, the SU(3) Lie algebra structure constants
-  `f^{abc}`, or the mass-gap conjecture. YM tower status unchanged:
-  **Open** (`docs/ROADMAP.md` § 2).
-- **Path B batch 2 v2 landed (2026-05-26, Task #56 follow-up).** The
-  earlier deferral is resolved. `Towers/YM/SU3Basis.lean` now ships
-  four new bricks: `su3_equiv_fin8_def` (the explicit
-  `↥su3_submodule ≃ₗ[ℝ] (Fin 8 → ℝ)` equiv), `su3_basis_def` (the
-  Gell-Mann basis via `Basis.ofEquivFun`), `su3_basis_linearIndependent`,
-  and `su3_basis_spans`. Strategy that worked: (i) replace the
-  `LinearMap.smulRight` combinator chain with a direct 8-term
-  `c 0 • gellMann₁ + … + c 7 • gellMann₈` sum (membership via nested
-  `Submodule.add_mem`/`smul_mem`); (ii) `set_option maxHeartbeats
-  4000000` on the equiv def to cover the 9-entry × 2-component
-  matrix-equality elaboration in `left_inv`; (iii) extract the
-  anti-Hermitian re/im pair `hAH_re`/`hAH_im` *with `star`* (not
-  `conj`) — simp-on-`conj` triggered a `sorryAx ℂ true` corruption
-  in v4.12.0 for some index pairs (h21 specifically); the `star`
-  formulation rewrites cleanly via `Matrix.star_apply` and matches
-  the field's `star = conj` instance via the trivial `simpa`. All
-  four bricks pass the axiom-footprint check with `{propext,
-  Classical.choice, Quot.sound}`. Total tower brick wall: **59**
-  classical-trio clean (was 55: 8 from Task #56 Batch 1, plus the
-  pre-existing 47 from earlier tasks; the new 4 push the count to
-  59). Bricks 5+6 from the user's batch 2 v2 spec
-  (`instance_normedSpace_su3_euclidean`,
-  `instance_inner_product_space_su3_euclidean`) are deferred to
-  **Path B batch 3** — `InnerProductSpace.induced` does not exist
-  in mathlib v4.12.0, only `InnerProductSpace.ofCore`, so batch 3
-  must build the structure explicitly via `InnerProductSpace.Core`
-  pulled back through `su3_equiv_fin8_def`. These four bricks claim
-  ONLY: there is an ℝ-linear bijection between the 8-dimensional
-  real vector space `↥su3_submodule` and `Fin 8 → ℝ`, and the 8
-  Gell-Mann generators form a basis. No statement about the YM
-  Hamiltonian, the SU(3) Lie algebra structure constants `f^{abc}`,
-  the Killing form, the inner product structure on `su(3)`, or the
-  mass-gap conjecture. YM tower status unchanged: **Open**
-  (`docs/ROADMAP.md` § 2).
-- **Path B batch 3 landed (2026-05-26, Task #56 follow-up).**
-  `Towers/YM/SU3Basis.lean` now ships six new bricks that pull an
-  `InnerProductSpace ℝ ↥su3_submodule` structure back through
-  `su3_equiv_fin8_def` from the Euclidean inner product on `Fin 8 → ℝ`:
-  `inner_su3_def` (the underlying real inner product as the sum over
-  the 8 Gell-Mann coordinates of the equiv-image), `norm_su3_def`
-  (`√⟪x,x⟫`), `inner_su3_conj_symm` (real symmetry), `inner_su3_add_left`
-  (left-additivity via `su3_equiv_fin8_def.map_add`), `inner_su3_smul_left`
-  (left-`ℝ`-scaling via `su3_equiv_fin8_def.map_smul`), and
-  `instance_inner_product_space_su3_core` (the `InnerProductSpace.Core`
-  instance assembled from the five). Strategy: avoid the
-  ambiguous-`map_add`/`map_smul` simp-set in `InnerProductSpace.Core`
-  field proofs by using the equiv's own named lemmas
-  (`su3_equiv_fin8_def.map_add` etc.) directly — `simp [map_add,
-  map_smul]` hits multiple instance candidates and fails to close. All
-  six bricks pass the axiom-footprint check with `{propext,
-  Classical.choice, Quot.sound}`. Total tower brick wall: **65**
-  classical-trio clean (was 59 after batch 2 v2; +6 from batch 3 = 65).
-  The earlier deferral of `instance_normedSpace_su3_euclidean` is
-  resolved transitively — the `InnerProductSpace.Core` instance gives
-  `NormedSpace ℝ ↥su3_submodule` for free via `.toNormedSpace` (no
-  separate brick needed, kept off the count to avoid double-billing
-  the same construction). These six bricks claim ONLY: the 8-dim real
-  vector space `↥su3_submodule` carries a real inner product
-  isomorphic to the Euclidean structure on `Fin 8 → ℝ`. No statement
-  about the Killing form, the `tr(XY)` trace form on `su(3)`, the YM
-  Hamiltonian, the SU(3) Lie algebra structure constants `f^{abc}`,
-  or the mass-gap conjecture. YM tower status unchanged: **Open**
-  (`docs/ROADMAP.md` § 2). Hardening: `scripts/check-towers.sh` now
-  uses an existence-probe for one well-known mathlib olean to decide
-  whether to skip `lake exe cache get`, instead of a piped
-  `find … | head | wc -l` (the SIGPIPE under `set -o pipefail`
-  silently killed the script after the lake-update SKIPPED message,
-  making the workflow appear to "succeed" with zero bricks checked).
-- **Path B batch 4 landed (2026-05-26, Task #56 follow-up).**
-  `Towers/YM/GaugeField.lean` introduces a discrete lattice gauge-field
-  stand-in `GaugeField n := PiLp 2 (fun _ : Fin n => EuclideanSpace ℝ
-  (Fin 8))` together with a trivial-identity `curvature` stand-in and
-  `YMHamiltonian A := ∑ i, ‖curvature A i‖²`. Six bricks ship trio-clean:
-  (1) `GaugeField_zero_apply`, (2) `curvature_zero`, (3) `curvature_add`,
-  (4) `YMHamiltonian_zero`, (5) `YMHamiltonian_nonneg`, (6)
-  `YMHamiltonian_eq_norm_sq` — for `curvature = id` the Hamiltonian
-  equals the Pi-L² squared norm via `PiLp.norm_sq_eq_of_L2`. Why
-  `EuclideanSpace ℝ (Fin 8)` per site and not `↥su3_submodule`
-  directly: Batch 3 only ships an `InnerProductSpace.Core`, not a
-  global `InnerProductSpace` instance, and registering one would
-  collide with future `Matrix.normedAddCommGroup` installs;
-  the Batch 2 v2 equiv `su3_equiv_fin8_def : ↥su3_submodule ≃ₗ[ℝ]
-  (Fin 8 → ℝ)` is the narrative bridge to the SU(3) Lie algebra.
-  All six pass the axiom-footprint check with `{propext,
-  Classical.choice, Quot.sound}`. Total tower brick wall: **71**
-  classical-trio clean (was 65 after batch 3; +6 from batch 4 = 71).
-  These bricks claim ONLY: a Pi-L² function space carries a
-  squared-norm sum that equals the identity-stand-in Hamiltonian.
-  This is NOT the Yang-Mills action, NOT the Wilson plaquette
-  action, NOT a genuine `F_μν` curvature (no commutator bracket, no
-  derivative, no coupling constant), and NOT a mass-gap statement.
-  YM tower status unchanged: **Open** (`docs/ROADMAP.md` § 2).
-- **Trivial-bundle Gauge bricks retired (2026-05-26, Task #50, Option A).** The six `gauge_action_*` lemmas (`one_smul`, `mul_smul`, `inv_smul`, `smul_inv`, `inv_inv`, `pow_zero`) that lived on `TrivialConfiguration G` in `Towers/YM/Gauge.lean` were removed: the action was `· • A := A`, so every lemma reduced definitionally on both sides to `A`, exercising neither group multiplication nor the action — hollow even by trivial-brick standards. The YM wall is now **18 bricks**, not 24, and YM bricks live exclusively in `Towers.YM.MassGap` against `Matrix.specialUnitaryGroup`. Rule going forward: no `gauge_action_*` on `TrivialConfiguration` — only real SU(3). See `docs/ROADMAP.md` for the retirement note and `scripts/check-towers.sh` for the comment block.
+### YM / NS Lean schema — Path B Tower Bricks (current state)
+
+All bricks below pass `scripts/check-towers.sh` with axiom footprint
+= `{propext, Classical.choice, Quot.sound}` (mathlib's classical
+trio — no research-grade axioms). All schemas are honest stand-ins
+for the Clay surfaces; **YM and NS towers stay `Status: Open` in
+`docs/ROADMAP.md`**. The schemas are NOT the YM action / Wilson
+plaquette / `F_μν` / mass-gap, NOT the Sobolev H¹ norm / Leray–Hopf
+solution. For per-batch prose and tactic notes see
+`docs/CHANGELOG.md`.
+
+| Date | Task | Module | Bricks added | Wall | Headline |
+|---|---|---|---|---|---|
+| 2026-05-26 | #51 | YM/MassGap, NS/EnergyIneq | concretized 5 `sorry`-defs + `IsEigenstate_zero_zero` | 19 | finite-dim YM / NS schemas, no Sobolev / Wightman |
+| 2026-05-26 | #55 | YM/MassGap | +4 YM Hamiltonian bricks (`one_eq_twelve`, `not_isEigenstate_zero`, …) | 26 | first numeric value `12` from the YM def |
+| 2026-05-26 | #56 | NS/EnergyIneq | +3 NS bricks (`H1Norm_zero`, `nonneg`, `HasFiniteEnergy_zero`) | 32 | NS schema is load-bearing |
+| 2026-05-26 | #56 / Path B 1 | YM/SU3Basis | +8 Gell-Mann `gellMann_i_mem` | 51 | unnormalised λ basis (no √3) |
+| 2026-05-26 | #56 / Path B 2 v2 | YM/SU3Basis | +4 (`su3_equiv_fin8_def`, basis def, lin-indep, spans) | 59 | `↥su3 ≃ₗ[ℝ] (Fin 8 → ℝ)` |
+| 2026-05-26 | #56 / Path B 3 | YM/SU3Basis | +6 (`inner_su3`, `norm_su3`, conj_symm, add_left, smul_left, Core instance) | 65 | `InnerProductSpace.Core` on `↥su3` |
+| 2026-05-26 | #56 / Path B 4 | YM/GaugeField | +6 (`GaugeField n := PiLp 2 …`, trivial-id curvature, `YMHamiltonian_eq_norm_sq`) | 71 | discrete lattice gauge field schema |
+| 2026-05-26 | #56 / Path B 5 | YM/RealCurvature | +5 (`structure_constants_su3`, `lie_bracket`, `lattice_deriv`, `curvature`, `YMEnergy_nonneg`) | 76 | placeholder `f^{abc}=0`, schema composes |
+
+**Hardening notes:**
+
+- `scripts/check-towers.sh` uses an olean-existence probe (not
+  `find | head | wc`) to decide on `lake exe cache get`; the
+  pipefail-SIGPIPE bug that silently passed zero bricks is fixed.
+- Task #50 (2026-05-26) retired the six `gauge_action_*` lemmas in
+  `Towers/YM/Gauge.lean` — the action was `· • A := A`, so every
+  lemma was definitionally trivial on both sides. Rule going forward:
+  no `gauge_action_*` on `TrivialConfiguration` — only real SU(3).
+
+**Tripwires:** `RealCurvature.curvature_eq_zero` routes through
+`lie_bracket_eq_zero` which is the placeholder `f^{abc}=0`; replacing
+the constants with real Gell-Mann values will *intentionally* break
+this brick, signalling that a real curvature has landed.
 
 ## User preferences
 

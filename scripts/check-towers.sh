@@ -412,6 +412,35 @@ BRICKS=(
   "Towers.YM.GaugeField|TheoremaAureum.Towers.YM.GaugeField.YMHamiltonian_zero"
   "Towers.YM.GaugeField|TheoremaAureum.Towers.YM.GaugeField.YMHamiltonian_nonneg"
   "Towers.YM.GaugeField|TheoremaAureum.Towers.YM.GaugeField.YMHamiltonian_eq_norm_sq"
+
+  # Task #56 Path B batch 5 (2026-05-26): an SU(3) structure-constants
+  # schema (`structure_constants_su3 : Fin 8 → Fin 8 → Fin 8 → ℝ`,
+  # all-zero placeholder for the real Gell-Mann `f^{abc}`), a
+  # placeholder Lie bracket on `EuclideanSpace ℝ (Fin 8)` built from
+  # it (`lie_bracket X Y c := ∑ a b, f^{abc} X^a Y^b`, identically
+  # zero under the placeholder), an identity-stand-in lattice
+  # covariant derivative `lattice_deriv (A : GaugeField n) (μ : Fin 4)
+  # := A`, the resulting `curvature A i := lie_bracket (lattice_deriv
+  # A 0 i) (lattice_deriv A 1 i)` (also identically zero), and
+  # `YMHamiltonian := ∑ i, ‖curvature A i‖²` with the headline
+  # `YMEnergy_nonneg`. Five bricks, one per user-spec item:
+  # (1) `structure_constants_su3_eq_zero` documents the placeholder;
+  # (2) `lie_bracket_eq_zero` exercises the bilinear sum via
+  # `Finset.sum_const_zero`; (3) `lattice_deriv_id` is rfl;
+  # (4) `curvature_eq_zero` routes through `lie_bracket_eq_zero`
+  # — the proof will break the moment the placeholder constants are
+  # replaced with real `f^{abc}`, which is the *intended* tripwire;
+  # (5) `YMEnergy_nonneg` is robust against future swaps of either
+  # placeholder, since `‖·‖² ≥ 0` is independent of both. This is
+  # NOT the actual SU(3) Lie algebra (`f^{abc}` is all-zero); NOT
+  # the genuine lattice covariant derivative (no shift, no parallel
+  # transport); NOT the YM action; NOT the Wilson plaquette; NOT
+  # mass-gap. YM tower status unchanged: Open (`docs/ROADMAP.md` § 2).
+  "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.structure_constants_su3_eq_zero"
+  "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.lie_bracket_eq_zero"
+  "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.lattice_deriv_id"
+  "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.curvature_eq_zero"
+  "Towers.YM.RealCurvature|TheoremaAureum.Towers.YM.RealCurvature.YMEnergy_nonneg"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
