@@ -1,10 +1,23 @@
 /-
   # Towers.YM.MassGap
 
-  **Mostly-statement file. Now contains ONE trio-clean theorem and
-  three remaining `sorry`-backed defs.** This file pins the Clay
-  Yang-Mills mass-gap conjecture as a future formalisation target,
-  using a structured (rather than single-`sorry`) schema.
+  **Mostly-statement file. Currently contains SEVEN trio-clean
+  theorems and three remaining `sorry`-backed schema defs**
+  (`PhysicalHilbert`, `YMHamiltonian`, `IsYMEigenstate` on
+  lines ~107/112/118). This file pins the Clay Yang-Mills
+  mass-gap conjecture as a future formalisation target, using a
+  structured (rather than single-`sorry`) schema.
+
+  The seven trio-clean SU(3) bricks proved below are:
+  `SU3Connection_one_mul`, `SU3Connection_component_unitary`,
+  `SU3Connection_component_det_one`, `SU3Connection_mul_one`,
+  `SU3Connection_one_one`, `SU3Connection_component_mul_unitary`,
+  `SU3Connection_component_mul_det_one`. Each is real SU(3)
+  monoid / submonoid algebra (no `TrivialConfiguration` shortcut)
+  with axiom footprint a subset of `{propext, Classical.choice,
+  Quot.sound}`. None of them advances the YM tower past
+  `Status: Open` (see `docs/ROADMAP.md` § 2); they are foundation
+  bricks under the schema, not Millennium claims.
 
   ## Status of the schema after the Plan #52 MassGap refactor
 
@@ -269,6 +282,97 @@ theorem SU3Connection_component_det_one (A : SU3Connection) (i : Fin 4) :
 theorem SU3Connection_mul_one (A : SU3Connection) (i : Fin 4) :
     A i * (1 : Matrix.specialUnitaryGroup (Fin 3) ℂ) = A i :=
   mul_one (A i)
+
+/-- **The SU(3) monoid identity squares to itself
+    (fifth brick in `MassGap.lean`).**
+
+    `(1 : Matrix.specialUnitaryGroup (Fin 3) ℂ) * 1 = 1`.
+
+    A one-line `mul_one 1` on the SU(3) submonoid. Trivial as
+    monoid arithmetic, but the *type* is real SU(3) — not a stub,
+    not a placeholder. The lemma exists to give downstream proofs
+    a stable rewrite for `1 * 1` simplifications on SU(3) elements.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}`. No research-grade
+    axioms.
+
+    **Honest scoping reminder.** This does **not** advance the YM
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It says
+    only that `1 * 1 = 1` in the SU(3) submonoid. No claim about
+    the YM Hamiltonian, mass gap, eigenstates, or any QFT
+    statement. -/
+theorem SU3Connection_one_one :
+    (1 : Matrix.specialUnitaryGroup (Fin 3) ℂ) * 1 = 1 :=
+  mul_one 1
+
+/-- **Product of two SU(3)-connection components is unitary
+    (sixth brick in `MassGap.lean`).**
+
+    For any two SU(3) connections `A B : SU3Connection` and any
+    spacetime direction `i : Fin 4`,
+
+      `(A i).1 * (B i).1 ∈ Matrix.unitaryGroup (Fin 3) ℂ`.
+
+    The proof invokes `Submonoid.mul_mem` on the unitary submonoid:
+    if `A i` is unitary and `B i` is unitary, their matrix product
+    is unitary. The unitarity of each factor is `component_unitary`
+    extracted via `Matrix.mem_specialUnitaryGroup_iff.mp _ |>.1`.
+
+    Genuine algebraic content: it exercises submonoid closure of
+    `Matrix.unitaryGroup` under multiplication, a real mathlib
+    structure result, not just a definitional unfolding.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}`. No research-grade
+    axioms.
+
+    **Honest scoping reminder.** This does **not** advance the YM
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It says
+    only that U(3) is closed under matrix multiplication — true by
+    definition of the unitary group. No claim about Yang-Mills
+    dynamics, mass gap, or any QFT result. -/
+theorem SU3Connection_component_mul_unitary
+    (A B : SU3Connection) (i : Fin 4) :
+    (A i).1 * (B i).1 ∈ Matrix.unitaryGroup (Fin 3) ℂ :=
+  (Matrix.unitaryGroup (Fin 3) ℂ).mul_mem
+    (Matrix.mem_specialUnitaryGroup_iff.mp (A i).2).1
+    (Matrix.mem_specialUnitaryGroup_iff.mp (B i).2).1
+
+/-- **Product of two SU(3)-connection components still has determinant 1
+    (seventh brick in `MassGap.lean`).**
+
+    For any two SU(3) connections `A B : SU3Connection` and any
+    spacetime direction `i : Fin 4`,
+
+      `((A i).1 * (B i).1).det = 1`.
+
+    The proof uses `Matrix.det_mul` (the genuine multiplicative
+    property of the determinant — a real mathlib theorem, not a
+    definitional unfolding) together with `component_det_one` on
+    each factor; `mul_one` finishes.
+
+    Genuine algebraic content: it exercises `Matrix.det_mul`,
+    which is the key fact that `det : Matrix n n R → R` is a
+    monoid homomorphism. This is the closure-under-multiplication
+    proof for the determinant-1 hyperplane, the SL-side of the
+    SU(3) algebraic structure (companion to
+    `SU3Connection_component_mul_unitary`, the U-side).
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}`. No research-grade
+    axioms.
+
+    **Honest scoping reminder.** This does **not** advance the YM
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 2). It says
+    only that SL(3) ⊃ SU(3) is closed under matrix multiplication
+    — true by multiplicativity of the determinant. No claim about
+    the Yang-Mills mass gap, dynamics, or any QFT result. -/
+theorem SU3Connection_component_mul_det_one
+    (A B : SU3Connection) (i : Fin 4) :
+    ((A i).1 * (B i).1).det = 1 := by
+  rw [Matrix.det_mul, SU3Connection_component_det_one,
+      SU3Connection_component_det_one, mul_one]
 
 end YM
 end Towers

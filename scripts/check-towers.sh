@@ -79,6 +79,8 @@ BRICKS=(
   "Towers.NS.Divergence|TheoremaAureum.Towers.NS.divergence_neg"
   "Towers.NS.Divergence|TheoremaAureum.Towers.NS.divergence_sub"
   "Towers.NS.Divergence|TheoremaAureum.Towers.NS.divergence_const"
+  "Towers.NS.Divergence|TheoremaAureum.Towers.NS.divergence_add_const"
+  "Towers.NS.Divergence|TheoremaAureum.Towers.NS.divergence_sub_const"
   "Towers.YM.Gauge|TheoremaAureum.Towers.YM.gauge_action_one_smul"
   "Towers.YM.Gauge|TheoremaAureum.Towers.YM.gauge_action_mul_smul"
   "Towers.YM.Gauge|TheoremaAureum.Towers.YM.gauge_action_inv_smul"
@@ -89,6 +91,9 @@ BRICKS=(
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_unitary"
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_det_one"
   "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_mul_one"
+  "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_one_one"
+  "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_mul_unitary"
+  "Towers.YM.MassGap|TheoremaAureum.Towers.YM.SU3Connection_component_mul_det_one"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

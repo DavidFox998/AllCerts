@@ -273,6 +273,66 @@ theorem divergence_const (c : V) (x : V) :
   simp only [divergence]
   simp [fderiv_const]
 
+/-- **Adding a constant vector field leaves divergence unchanged
+    (seventh divergence brick).**
+
+    For any differentiable vector field `v : V → V`, any constant
+    `c : V`, and any point `x : V`,
+
+      `div (v + fun _ => c) x = div v x`.
+
+    The proof composes two real analytic facts: `divergence_add`
+    (linearity in the first argument) and `divergence_const` (the
+    divergence of a constant is zero). `add_zero` finishes.
+
+    This is genuine analytic content, not a definitional trick:
+    each step invokes a real mathlib derivative lemma
+    (`fderiv_add`, `fderiv_const`).
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}` (verified by
+    `scripts/check-towers.sh`). No research-grade axioms.
+
+    **Honest scoping reminder.** This does **not** advance the NS
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 3). It is
+    a constant-offset invariance of the divergence operator,
+    nothing more. No claim of any PDE result, regularity, or
+    energy bound. -/
+theorem divergence_add_const (v : V → V) (c : V)
+    (hv : Differentiable ℝ v) (x : V) :
+    divergence (v + fun _ => c) x = divergence v x := by
+  rw [divergence_add v (fun _ => c) hv (differentiable_const c),
+      divergence_const, add_zero]
+
+/-- **Subtracting a constant vector field leaves divergence unchanged
+    (eighth divergence brick).**
+
+    For any differentiable vector field `v : V → V`, any constant
+    `c : V`, and any point `x : V`,
+
+      `div (v - fun _ => c) x = div v x`.
+
+    The proof composes `divergence_sub` and `divergence_const`,
+    with `sub_zero` finishing. Companion to `divergence_add_const`.
+
+    Genuine analytic content (each step uses a real mathlib
+    derivative lemma), not a definitional trick.
+
+    Axiom footprint: subset of mathlib's classical core
+    `{propext, Classical.choice, Quot.sound}` (verified by
+    `scripts/check-towers.sh`). No research-grade axioms.
+
+    **Honest scoping reminder.** This does **not** advance the NS
+    tower past `Status: Open` (see `docs/ROADMAP.md` § 3). It is
+    a constant-offset invariance of the divergence operator,
+    nothing more. No claim of any PDE result, regularity, or
+    energy bound. -/
+theorem divergence_sub_const (v : V → V) (c : V)
+    (hv : Differentiable ℝ v) (x : V) :
+    divergence (v - fun _ => c) x = divergence v x := by
+  rw [divergence_sub v (fun _ => c) hv (differentiable_const c),
+      divergence_const, sub_zero]
+
 end NS
 end Towers
 end TheoremaAureum
