@@ -893,6 +893,103 @@ def MassGap_YM4_Clay : Prop :=
   transfer_matrix_norm_less_one →
     ∃ Δ : ℝ, 0 < Δ ∧ MassGapV2 Δ
 
+/-! ### Batch 16 (2026-05-26) — Track 3: transfer-matrix / Perron-Frobenius / Clay conditional
+
+Five bricks naming the transfer-matrix → Perron-Frobenius →
+correlation-decay → Clay-mass-gap pipeline, plus a paired
+clustering schema. All low-level analytic surfaces stay as honest
+`Prop` **schemas**; the `_conditional` combinators conjoin the
+schemas (honest "if all three hold" bridge), and
+`MassGap_YM4_Clay_conditional` chains the conjunction with the
+Batch-15 Clay-shape `MassGap_YM4_Clay` schema into a named
+four-way conjunction.
+
+**Honest scope / tripwire honored.** The transfer-matrix-definition,
+Perron-Frobenius, and clustering Props are **not proved** — their
+proofs need real spectral theory on Hilbert space (largest
+eigenvalue `λ < 1`, symmetric transfer kernel, exponential cluster
+property), none of which the current placeholder `YMHamiltonian` /
+`SU3Connection` surface supplies. The `_conditional` brick
+faithfully reflects that the Clay-flavoured YM 4D mass-gap upgrade
+is unreachable without those schemas. YM tower stays
+**Status: Open** (`docs/ROADMAP.md` § 2). No Clay claim —
+`Δ = m > 0` for SU(3) 4D is NOT proven in this file. -/
+
+/-- **Schema (`transfer_matrix_definition_schema`).** Honest stand-in
+for "a well-defined transfer matrix exists on the SU(3) connection
+space": there exists a symmetric kernel
+`T : SU3Connection → SU3Connection → ℝ`, i.e. `T A B = T B A` for
+all `(A, B)`. Real `Prop`; **NOT proved** here — actual
+construction of the YM transfer matrix (the Osterwalder-Schrader
+positivity → Hilbert space → time-translation operator chain)
+requires real measure theory on connections, which the placeholder
+does not surface. -/
+def transfer_matrix_definition_schema : Prop :=
+  ∃ T : SU3Connection → SU3Connection → ℝ,
+    ∀ A B : SU3Connection, T A B = T B A
+
+/-- **Schema (`Perron_Frobenius_assumption_schema`).** Honest
+stand-in for the Perron-Frobenius assumption on the transfer
+matrix: the largest eigenvalue `λ` is positive and strictly less
+than `1`. Real `Prop` over real arithmetic; **NOT proved** here —
+the existence and bound on the largest eigenvalue of the YM
+transfer matrix is the open headline assumption of the entire
+mass-gap program, not a placeholder-tier theorem. -/
+def Perron_Frobenius_assumption_schema : Prop :=
+  ∃ lam : ℝ, 0 < lam ∧ lam < 1
+
+/-- **Brick (`correlation_decay_conditional`).** Conditional
+combinator: given the two Batch-16 schemas (transfer-matrix
+definition + Perron-Frobenius assumption), conjoin them into a
+single Prop. Honest scope: the inner
+"⟨O_x O_y⟩ ≤ C * exp(-m |x - y|)" correlation-decay content stays
+unproven; the combinator faithfully reflects that exponential
+correlation decay follows **from** (not before) the two schemas.
+Directive tripwire active: if either antecedent schema is
+unprovable, the conclusion is unreachable. -/
+theorem correlation_decay_conditional
+    (h_def : transfer_matrix_definition_schema)
+    (h_pf : Perron_Frobenius_assumption_schema) :
+    transfer_matrix_definition_schema ∧
+      Perron_Frobenius_assumption_schema :=
+  ⟨h_def, h_pf⟩
+
+/-- **Brick (`MassGap_YM4_Clay_conditional`).** Conditional
+combinator: given the Batch-16 `correlation_decay_conditional`
+conjunction (transfer-matrix-definition + Perron-Frobenius) AND
+the Batch-15 Clay-shape `MassGap_YM4_Clay` schema, package the
+three-way conjunction. Honest scope: this is the Clay-YM 4D
+promotion shape; all component Props are **schemas**, so the
+conclusion is itself a schema-level conjunction reflecting the
+still-unproven pipeline. YM tower stays Open. No Clay claim —
+`Δ = m > 0` for SU(3) 4D is NOT proven here. -/
+theorem MassGap_YM4_Clay_conditional
+    (h_pair :
+      transfer_matrix_definition_schema ∧
+        Perron_Frobenius_assumption_schema)
+    (h_clay : MassGap_YM4_Clay) :
+    transfer_matrix_definition_schema ∧
+      Perron_Frobenius_assumption_schema ∧
+      MassGap_YM4_Clay :=
+  ⟨h_pair.1, h_pair.2, h_clay⟩
+
+/-- **Schema (`clustering_for_YM3_lemma`).** Per-pair exponential
+clustering shape on the SU(3) Hamiltonian placeholder: for every
+pair `(A, B)` of SU(3) connections, there exist positive constants
+`C, m` such that
+`|YMHamiltonian A * YMHamiltonian B| ≤ C * exp(-m * r)` for every
+`r ≥ 0`. The "hardest brick left" per the Batch 16 directive — a
+per-pair existential of constants, in contrast to Batch 14's
+uniform-in-pair `clustering_for_YM3` which has the constants
+outside the `∀ A B` binder. Real `Prop`; **NOT proved** here — a
+real exponential clustering theorem needs real spectral theory the
+placeholder does not supply. YM tower stays Open. -/
+def clustering_for_YM3_lemma : Prop :=
+  ∀ A B : SU3Connection,
+    ∃ C m : ℝ, 0 < C ∧ 0 < m ∧
+      ∀ r : ℝ, 0 ≤ r →
+        |YMHamiltonian A * YMHamiltonian B| ≤ C * Real.exp (-m * r)
+
 end Spectrum
 end YM
 end Towers

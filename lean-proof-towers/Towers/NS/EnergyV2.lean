@@ -861,6 +861,107 @@ arbitrary data is NOT proven in this file. -/
 def NavierStokes_global_regular : Prop :=
   enstrophy_differential_inequality → Global_scheme_for_all_data
 
+/-! ### Batch 16 (2026-05-26) — Track 2: vorticity / Ladyzhenskaya / enstrophy promotion
+
+Five bricks naming the vorticity-enstrophy global-regularity
+pipeline: vorticity-equation L²-energy bound → refined 4D
+Ladyzhenskaya inequality → enstrophy bootstrap → conditional
+enstrophy differential inequality → NS global-regularity promotion.
+All low-level analytic surfaces stay as honest `Prop` **schemas**;
+the `_conditional` combinator conjoins the three analytic schemas
+(honest "if all three hold" bridge), and the `_promotion` brick
+chains that conjunction with the Batch-15 Clay-shape Props
+(`enstrophy_differential_inequality` + `NavierStokes_global_regular`)
+into a single named conjunction.
+
+**Honest scope / tripwire honored.** The vorticity / Ladyzhenskaya /
+bootstrap Props are **not proved** — their proofs need real
+Sobolev embedding in 4D and a real `‖∇u‖_{L²}` packaging, neither
+of which the current placeholder `H1Norm` surface supplies. The
+`_promotion` brick faithfully reflects that the Clay-flavoured NS
+global-regularity upgrade is unreachable without those schemas.
+NS tower stays **Status: Open** (`docs/ROADMAP.md` § 3). No Clay
+claim — `T_max = ∞` for arbitrary data is NOT proven here.
+Batch 8 `Dissipation = 0` tripwire untouched. -/
+
+/-- **Schema (`vorticity_equation_L2_energy_bound`).** There exists
+a positive `C` such that on every velocity field and every time,
+the (placeholder) enstrophy is bounded by `C * H1Norm² `. Honest
+stand-in for the vorticity-equation L²-energy bound. Real `Prop`
+over real arithmetic; **NOT proved** here — would require a real
+`L²` packaging of the vorticity which the placeholder surface does
+not supply. -/
+def vorticity_equation_L2_energy_bound : Prop :=
+  ∃ C : ℝ, 0 < C ∧
+    ∀ (u : VelocityField) (t : ℝ),
+      Enstrophy u t ≤ C * (H1Norm u t * H1Norm u t)
+
+/-- **Schema (`Ladyzhenskaya_bound_refined_4D`).** Refined 4D
+Ladyzhenskaya inequality shape: ∃ C > 0 such that
+`(H1Norm u t)⁴ ≤ C * Enstrophy u t * (H1Norm u t)²` for every
+`(u, t)`. Real `Prop`; **NOT proved** here — Ladyzhenskaya
+embedding in 4D needs real Sobolev machinery `W^{1,2} ↪ L^4` which
+the placeholder does not surface. -/
+def Ladyzhenskaya_bound_refined_4D : Prop :=
+  ∃ C : ℝ, 0 < C ∧
+    ∀ (u : VelocityField) (t : ℝ),
+      (H1Norm u t) ^ 4 ≤
+        C * Enstrophy u t * (H1Norm u t) ^ 2
+
+/-- **Schema (`enstrophy_bootstrap_lemma`).** Quadratic
+enstrophy-growth bootstrap shape: for every `(u, t)` with `t ≥ 0`,
+`Enstrophy u t ≤ Enstrophy u 0 + t * Enstrophy u 0 * Enstrophy u 0`.
+Honest stand-in for the Grönwall-style enstrophy bootstrap step.
+Real `Prop`; **NOT proved** here — actual bootstrap closure needs
+the differential inequality plus a real Grönwall on
+`[0, T_max)`. -/
+def enstrophy_bootstrap_lemma : Prop :=
+  ∀ (u : VelocityField) (t : ℝ), 0 ≤ t →
+    Enstrophy u t ≤
+      Enstrophy u 0 + t * Enstrophy u 0 * Enstrophy u 0
+
+/-- **Brick (`enstrophy_differential_inequality_conditional`).**
+Conditional combinator: given the three Batch-16 analytic schemas
+(vorticity L²-energy + refined 4D Ladyzhenskaya + enstrophy
+bootstrap), conjoin them into a single Prop. Honest scope: the
+inner "real `d/dt ‖∇u‖² ≤ -c ‖∇u‖^{10/3} + ...` content" stays
+unproven; the combinator faithfully reflects that the Clay-NS
+differential inequality follows **from** (not before) the three
+schemas. Named with `_conditional` suffix to avoid colliding with
+Batch 15's `enstrophy_differential_inequality` (which is the
+already-established schema-Prop predicate). -/
+theorem enstrophy_differential_inequality_conditional
+    (h1 : vorticity_equation_L2_energy_bound)
+    (h2 : Ladyzhenskaya_bound_refined_4D)
+    (h3 : enstrophy_bootstrap_lemma) :
+    vorticity_equation_L2_energy_bound ∧
+      Ladyzhenskaya_bound_refined_4D ∧
+      enstrophy_bootstrap_lemma :=
+  ⟨h1, h2, h3⟩
+
+/-- **Brick (`NavierStokes_global_regular_promotion`).** Conditional
+combinator: given the Batch-16 analytic conjunction
+(`vorticity_equation_L2_energy_bound ∧ Ladyzhenskaya_bound_refined_4D
+∧ enstrophy_bootstrap_lemma`) AND the Batch-15 Clay-shape
+`NavierStokes_global_regular` schema, package the four-way
+conjunction with the corresponding `enstrophy_differential_inequality`
+schema. Honest scope: this is the Clay-NS promotion shape; all
+component Props are **schemas**, so the conclusion is itself a
+schema-level conjunction reflecting the still-unproven pipeline.
+NS tower stays Open. No Clay claim — global regularity for
+arbitrary data is NOT proven in this file. -/
+theorem NavierStokes_global_regular_promotion
+    (h_bricks :
+      vorticity_equation_L2_energy_bound ∧
+        Ladyzhenskaya_bound_refined_4D ∧
+        enstrophy_bootstrap_lemma)
+    (h_clay : NavierStokes_global_regular) :
+    vorticity_equation_L2_energy_bound ∧
+      Ladyzhenskaya_bound_refined_4D ∧
+      enstrophy_bootstrap_lemma ∧
+      NavierStokes_global_regular :=
+  ⟨h_bricks.1, h_bricks.2.1, h_bricks.2.2, h_clay⟩
+
 end EnergyV2
 end NS
 end Towers

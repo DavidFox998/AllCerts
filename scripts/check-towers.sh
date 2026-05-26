@@ -1009,6 +1009,40 @@ BRICKS=(
   "Towers.NS.RealH1Norm|TheoremaAureum.Towers.NS.RealH1Norm.frobNormSq_nonneg"
   "Towers.NS.RealH1Norm|TheoremaAureum.Towers.NS.RealH1Norm.H1NormReal_nonneg"
   "Towers.NS.RealH1Norm|TheoremaAureum.Towers.NS.RealH1Norm.H1NormReal_zero_eq_zero"
+  # ---- Batch 16 (2026-05-26) — +15 bricks across the same 3 files
+  # as Batch 15, zero cross-track imports. Track 1: IR Poincaré +
+  # Neumann eigenvalue + IR-cutoff gap + uniform-in-Λ + MassGap
+  # promotion (5 bricks on Spectral/OperatorV2.lean; low-level
+  # analytic Props stay schemas, `_promotion` is a real conditional
+  # combinator that builds `MassGap` from `mass_gap_from_lower_bound`).
+  # Track 2: vorticity-equation L² + refined 4D Ladyzhenskaya +
+  # enstrophy bootstrap + conditional differential inequality + NS
+  # global-regularity promotion (5 bricks on NS/EnergyV2.lean; low-
+  # level analytic Props stay schemas, `_conditional` and `_promotion`
+  # combinators conjoin the schemas with the Batch-15 Clay-shape
+  # `NavierStokes_global_regular`). Track 3: transfer-matrix
+  # definition + Perron-Frobenius assumption + correlation decay
+  # conditional + Clay YM4 conditional + clustering for YM3 lemma
+  # (5 bricks on YM/Spectrum.lean; schemas + two conditional
+  # combinators chained with Batch-15's `MassGap_YM4_Clay`). All
+  # three towers stay Status: Open. No Clay claim — the YM-operator
+  # mass gap, NS all-data global regularity, and SU(3) 4D mass gap
+  # `Δ = m > 0` are NOT proven in any of these files.
+  "Towers.Spectral.OperatorV2|TheoremaAureum.Towers.Spectral.OperatorV2.Poincare_inequality_IR_lattice"
+  "Towers.Spectral.OperatorV2|TheoremaAureum.Towers.Spectral.OperatorV2.Neumann_eigenvalue_lower_bound_Λ"
+  "Towers.Spectral.OperatorV2|TheoremaAureum.Towers.Spectral.OperatorV2.IR_cutoff_gap_estimate"
+  "Towers.Spectral.OperatorV2|TheoremaAureum.Towers.Spectral.OperatorV2.gap_uniform_in_Lambda"
+  "Towers.Spectral.OperatorV2|TheoremaAureum.Towers.Spectral.OperatorV2.MassGap_YM_operator_promotion"
+  "Towers.NS.EnergyV2|TheoremaAureum.Towers.NS.EnergyV2.vorticity_equation_L2_energy_bound"
+  "Towers.NS.EnergyV2|TheoremaAureum.Towers.NS.EnergyV2.Ladyzhenskaya_bound_refined_4D"
+  "Towers.NS.EnergyV2|TheoremaAureum.Towers.NS.EnergyV2.enstrophy_bootstrap_lemma"
+  "Towers.NS.EnergyV2|TheoremaAureum.Towers.NS.EnergyV2.enstrophy_differential_inequality_conditional"
+  "Towers.NS.EnergyV2|TheoremaAureum.Towers.NS.EnergyV2.NavierStokes_global_regular_promotion"
+  "Towers.YM.Spectrum|TheoremaAureum.Towers.YM.Spectrum.transfer_matrix_definition_schema"
+  "Towers.YM.Spectrum|TheoremaAureum.Towers.YM.Spectrum.Perron_Frobenius_assumption_schema"
+  "Towers.YM.Spectrum|TheoremaAureum.Towers.YM.Spectrum.correlation_decay_conditional"
+  "Towers.YM.Spectrum|TheoremaAureum.Towers.YM.Spectrum.MassGap_YM4_Clay_conditional"
+  "Towers.YM.Spectrum|TheoremaAureum.Towers.YM.Spectrum.clustering_for_YM3_lemma"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

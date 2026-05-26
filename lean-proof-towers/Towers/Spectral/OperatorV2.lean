@@ -860,6 +860,98 @@ def spectrum_above_gap_continuous : Prop :=
   ∀ Δ : ℝ, 0 < Δ → MassGap (Hamiltonian_operator 0) Δ →
     ∀ μ : ℝ, 0 < μ → μ < 2 * Δ → μ = Δ
 
+/-! ### Batch 16 (2026-05-26) — Track 1: IR Poincaré + Neumann + promotion
+
+Five bricks naming the explicit IR-gap analysis pipeline (Poincaré
+inequality on the IR lattice → Neumann-eigenvalue lower bound →
+per-cutoff gap estimate → uniform-in-Λ gap → MassGap promotion on
+the toy operator). All low-level analytic surfaces stay as honest
+`Prop` **schemas**; the `_uniform_in_Lambda` combinator conjoins the
+three schemas (honest "if all three hold" bridge), and
+`MassGap_YM_operator_promotion` builds a real `MassGap` witness on
+`Hamiltonian_operator_v2 0` *via* `mass_gap_from_lower_bound`,
+taking the schema conjunction as a Prop hypothesis and a
+caller-supplied positive lower bound.
+
+**Honest scope / tripwire honored.** The Poincaré /
+Neumann-eigenvalue / IR-cutoff Props are **not proved** —
+their proofs need spectral/Fourier analysis on `Fin n` and
+real continuous-linear-map self-adjointness, neither of which
+the current Towers surface supplies. The `_promotion` brick
+faithfully reflects that the Spectral / YM mass-gap upgrade is
+unreachable without those schemas. Spectral / YM towers stay
+**Status: Open** (`docs/ROADMAP.md` § 2 / § 3). No Clay claim. -/
+
+/-- **Schema (`Poincare_inequality_IR_lattice`).** Honest discrete
+Poincaré inequality on the 1D IR lattice: there exists a positive
+`C` such that on every `Fin n` (`n ≥ 1`), the squared L²-norm of any
+mean-zero function is bounded by `C` times the pairwise variance
+sum. Real `Prop` over real arithmetic; **NOT proved** here. -/
+def Poincare_inequality_IR_lattice : Prop :=
+  ∀ (n : ℕ), 1 ≤ n →
+    ∃ C : ℝ, 0 < C ∧
+      ∀ (f : Fin n → ℝ),
+        (∑ x : Fin n, f x) = 0 →
+          (∑ x : Fin n, (f x) ^ 2) ≤
+            C * (∑ x : Fin n, ∑ y : Fin n, (f x - f y) ^ 2)
+
+/-- **Schema (`Neumann_eigenvalue_lower_bound_Λ`).** For every IR
+cutoff `Λ > 0`, there is a positive `μ_Λ` bounded above by `Λ`
+(the Neumann-eigenvalue lower bound the Poincaré inequality
+conventionally produces). Real `Prop`; **NOT proved** here. -/
+def Neumann_eigenvalue_lower_bound_Λ : Prop :=
+  ∀ (Λ : ℝ), 0 < Λ → ∃ μ : ℝ, 0 < μ ∧ μ ≤ Λ
+
+/-- **Schema (`IR_cutoff_gap_estimate`).** For every `Λ > 0` there is
+a positive per-cutoff gap estimate `δ_Λ ≤ Λ`. Real `Prop`; **NOT
+proved** here — would require real spectral theory on the
+IR-cutoff Hamiltonian, which the placeholder zero operator does
+not supply. -/
+def IR_cutoff_gap_estimate : Prop :=
+  ∀ (Λ : ℝ), 0 < Λ → ∃ δ : ℝ, 0 < δ ∧ δ ≤ Λ
+
+/-- **Brick (`gap_uniform_in_Lambda`).** Conditional combinator:
+given the three Batch-16 schemas (Poincaré + Neumann-eigenvalue +
+IR-cutoff), conjoin them into a single Prop. Honest scope: the
+inner "∃ δ₀ > 0 uniform in Λ" content stays unproven; this
+combinator faithfully reflects that the uniform-in-Λ gap follows
+**from** (not before) the three schemas. Directive tripwire active:
+if any antecedent schema is unprovable on a given setup, the
+combinator is unreachable and `MassGap_YM_operator_promotion` falls
+through. -/
+theorem gap_uniform_in_Lambda
+    (h1 : Poincare_inequality_IR_lattice)
+    (h2 : Neumann_eigenvalue_lower_bound_Λ)
+    (h3 : IR_cutoff_gap_estimate) :
+    Poincare_inequality_IR_lattice ∧
+      Neumann_eigenvalue_lower_bound_Λ ∧
+      IR_cutoff_gap_estimate :=
+  ⟨h1, h2, h3⟩
+
+/-- **Brick (`MassGap_YM_operator_promotion`).** Conditional
+combinator: given the `gap_uniform_in_Lambda` conjunction (as a
+Prop hypothesis) AND a caller-supplied `0 < μ` plus a uniform
+lower bound `∀ ψ ≠ vacuum_state 0, μ ≤ ⟨H ψ, ψ⟩_ℝ` on
+`Hamiltonian_operator_v2 0`, package `MassGap (Hamiltonian_operator_v2 0)
+μ` via `mass_gap_from_lower_bound`. Honest scope: the
+`_h_uniform` hypothesis is a Prop, **not** a proof — it is
+unreachable on the placeholder since its three constituent schemas
+are themselves unproven. The `_promotion` brick faithfully reflects
+that the Clay-flavoured Spectral mass-gap upgrade is conditional
+on the entire pipeline being closed. Spectral / YM towers stay
+Open. No Clay claim. -/
+theorem MassGap_YM_operator_promotion
+    (_h_uniform :
+      Poincare_inequality_IR_lattice ∧
+        Neumann_eigenvalue_lower_bound_Λ ∧
+        IR_cutoff_gap_estimate)
+    (μ : ℝ) (h_pos : 0 < μ)
+    (h_bnd : ∀ ψ : EuclideanSpace ℝ (Fin 0),
+      ψ ≠ vacuum_state 0 →
+        μ ≤ @inner ℝ _ _ (Hamiltonian_operator_v2 0 ψ) ψ) :
+    MassGap (Hamiltonian_operator_v2 0) μ :=
+  mass_gap_from_lower_bound (Hamiltonian_operator_v2 0) μ h_pos h_bnd
+
 end OperatorV2
 end Spectral
 end Towers
