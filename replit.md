@@ -146,17 +146,10 @@ plaquette / `F_μν` / mass-gap, NOT the Sobolev H¹ norm / Leray–Hopf
 solution. For per-batch prose and tactic notes see
 `docs/CHANGELOG.md`.
 
-| Date | Task | Module | Bricks added | Wall | Headline |
-|---|---|---|---|---|---|
-| 2026-05-26 | #51 | YM/MassGap, NS/EnergyIneq | concretized 5 `sorry`-defs + `IsEigenstate_zero_zero` | 19 | finite-dim YM / NS schemas, no Sobolev / Wightman |
-| 2026-05-26 | #55 | YM/MassGap | +4 YM Hamiltonian bricks (`one_eq_twelve`, `not_isEigenstate_zero`, …) | 26 | first numeric value `12` from the YM def |
-| 2026-05-26 | #56 | NS/EnergyIneq | +3 NS bricks (`H1Norm_zero`, `nonneg`, `HasFiniteEnergy_zero`) | 32 | NS schema is load-bearing |
-| 2026-05-26 | #56 / Path B 1 | YM/SU3Basis | +8 Gell-Mann `gellMann_i_mem` | 51 | unnormalised λ basis (no √3) |
-| 2026-05-26 | #56 / Path B 2 v2 | YM/SU3Basis | +4 (`su3_equiv_fin8_def`, basis def, lin-indep, spans) | 59 | `↥su3 ≃ₗ[ℝ] (Fin 8 → ℝ)` |
-| 2026-05-26 | #56 / Path B 3 | YM/SU3Basis | +6 (`inner_su3`, `norm_su3`, conj_symm, add_left, smul_left, Core instance) | 65 | `InnerProductSpace.Core` on `↥su3` |
-| 2026-05-26 | #56 / Path B 4 | YM/GaugeField | +6 (`GaugeField n := PiLp 2 …`, trivial-id curvature, `YMHamiltonian_eq_norm_sq`) | 71 | discrete lattice gauge field schema |
-| 2026-05-26 | #56 / Path B 5 | YM/RealCurvature | +5 (`structure_constants_su3`, `lie_bracket`, `lattice_deriv`, `curvature`, `YMEnergy_nonneg`) | 76 | placeholder `f^{abc}=0`, schema composes |
-| 2026-05-26 | #56 / Path B 6 | YM/RealCurvatureV2 | +5 (`structure_constants_su3_def`, `lie_bracket_su3_def`, `lattice_deriv_forward_diff`, `curvature_su3_def`, `YMEnergy_nonneg`) | 81 | `f^{012}=1` + cyclic `D_μ A := A(i+1)−A i` |
+| Date | Task | Wall | Headline |
+|---|---|---|---|
+| 2026-05-26 | #51 / #55 / #56 (Path B 1–6) | 19 → 81 | YM / NS schemas, Gell-Mann basis, gauge-field stand-in, placeholder `f^{abc}` → `f^{012}=1` + cyclic forward-diff (see `docs/CHANGELOG.md` for per-batch prose) |
+| 2026-05-26 | #56 / Path B 7 (3 tracks) | 81 → 96 | A: `Towers/YM/Geometry.lean` (antisymmetrized `f^{abc}` wrapper + `Lattice4D`); B: `Towers/NS/Energy.lean` (kinetic/potential split + flow combinators); C: `Towers/Spectral/Operator.lean` (generic `MassGap` predicate, independent of YM/MassGap) |
 
 **Hardening notes:**
 

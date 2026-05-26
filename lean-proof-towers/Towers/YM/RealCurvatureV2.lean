@@ -116,7 +116,7 @@ The direction index `μ : Fin 4` is currently ignored: this is a
 one-dimensional lattice indexing, so all four "directions" use the
 same neighbour shift. A genuine 4D lattice would index by
 `Fin n × Fin n × Fin n × Fin n` with a direction-dependent shift. -/
-def lattice_deriv {n : ℕ} [NeZero n]
+noncomputable def lattice_deriv {n : ℕ} [NeZero n]
     (A : GaugeField n) (_μ : Fin 4) : GaugeField n :=
   fun i => A (i + 1) - A i
 
@@ -144,7 +144,7 @@ schema is non-zero, in contrast to Batch 5's all-zero placeholder. -/
 theorem structure_constants_su3_def :
     structure_constants_su3 0 1 2 = 1 := by
   unfold structure_constants_su3
-  decide
+  simp
 
 /-- **Brick 2 (`lie_bracket_su3_def`).** Unfolds the bracket to its
 defining bilinear sum, exposing the formula for downstream use. -/

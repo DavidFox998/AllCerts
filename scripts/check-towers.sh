@@ -529,6 +529,80 @@ BRICKS=(
   "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.lattice_deriv_forward_diff"
   "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.curvature_su3_def"
   "Towers.YM.RealCurvatureV2|TheoremaAureum.Towers.YM.RealCurvatureV2.YMEnergy_nonneg"
+
+  # Task #56 Path B batch 7 / Track A (2026-05-26): YM geometry upgrade.
+  # New file `Towers/YM/Geometry.lean`. Introduces the totally
+  # antisymmetric WRAPPER `structure_constants_su3_full` defined as
+  # the 6-term antisymmetrizer of a placeholder `f_seed = 0` — so
+  # values are zero, but antisymmetry holds STRUCTURALLY by `ring`,
+  # independent of seed. Also adds `Lattice4D n := Fin n × Fin n ×
+  # Fin n × Fin n` (first 4D index type in the tower; Batches 4-6
+  # used 1D `Fin n`) and a placeholder `curvature_4d A μ ν i :=
+  # A μ i - A ν i` (direction-antisymmetric placeholder, NOT the
+  # real `∂_μ A_ν - ∂_ν A_μ + g[A_μ,A_ν]`). Jacobi holds because
+  # the seed is zero; a Batch 8 task will replace the seed with the
+  # nine canonical Gell-Mann entries (`f^{012}=1, f^{036}=½,
+  # f^{057}=-½, f^{135}=½, f^{146}=-½, f^{247}=½, f^{345}=½,
+  # f^{367}=√3/2, f^{567}=√3/2`), at which point `f_abc_jacobi`
+  # will need a real algebraic proof. NOT the real SU(3) Lie
+  # algebra; NOT a gauge-covariant 4D derivative; NOT the Wilson
+  # plaquette; NOT mass-gap. YM tower status unchanged: Open
+  # (`docs/ROADMAP.md` § 2).
+  "Towers.YM.Geometry|TheoremaAureum.Towers.YM.Geometry.structure_constants_su3_full_def"
+  "Towers.YM.Geometry|TheoremaAureum.Towers.YM.Geometry.f_abc_antisymm"
+  "Towers.YM.Geometry|TheoremaAureum.Towers.YM.Geometry.f_abc_jacobi"
+  "Towers.YM.Geometry|TheoremaAureum.Towers.YM.Geometry.lattice_spacetime_4d_def"
+  "Towers.YM.Geometry|TheoremaAureum.Towers.YM.Geometry.curvature_4d_def"
+
+  # Task #56 Path B batch 7 / Track B (2026-05-26): NS energy
+  # decomposition. New file `Towers/NS/Energy.lean`. Introduces a
+  # named `total = kinetic + potential` split on the Task #51 NS
+  # placeholder schema (`VelocityField`, `H1Norm`,
+  # `HasFiniteEnergy` from `Towers.NS.EnergyIneq`):
+  # `kinetic_energy u t := ½ · H1Norm u t ²`,
+  # `potential_energy u t := 0` (explicit zero placeholder for the
+  # NS forcing / pressure-work slot), `total_energy = kinetic +
+  # potential`. Adds two real combinators that take a generic
+  # parameter `Φ : VelocityField → VelocityField` (no NS time-
+  # evolution operator is constructed): `energy_nonincreasing_flow`
+  # (if pointwise H1Norm does not grow under Φ then total_energy
+  # does not grow, via `pow_le_pow_left` + `H1Norm_nonneg`) and
+  # `finite_energy_persistent` (if `Φ u₀` is pointwise bounded
+  # at t=0 then `HasFiniteEnergy (Φ u₀)`, via the Task #62
+  # packager `HasFiniteEnergy_of_bounded_zero`). NOT the Leray-Hopf
+  # energy inequality; NOT NS global regularity; NOT weak-strong
+  # uniqueness. NS tower status unchanged: Open (`docs/ROADMAP.md`
+  # § 3).
+  "Towers.NS.Energy|TheoremaAureum.Towers.NS.Energy.kinetic_energy_def"
+  "Towers.NS.Energy|TheoremaAureum.Towers.NS.Energy.potential_energy_def"
+  "Towers.NS.Energy|TheoremaAureum.Towers.NS.Energy.energy_decomposition"
+  "Towers.NS.Energy|TheoremaAureum.Towers.NS.Energy.energy_nonincreasing_flow"
+  "Towers.NS.Energy|TheoremaAureum.Towers.NS.Energy.finite_energy_persistent"
+
+  # Task #56 Path B batch 7 / Track C (2026-05-26): generic
+  # spectral schema. New file `Towers/Spectral/Operator.lean`,
+  # intentionally INDEPENDENT of `Towers.YM.MassGap` (which carries
+  # the YM-specific schema `HilbertSpace := lp(ℕ,ℂ,2)` and
+  # `YMHamiltonian` as a trace sum). This file gives a thin
+  # generic surface: `Hamiltonian_operator n` (placeholder zero
+  # operator on `EuclideanSpace ℝ (Fin n)`), `vacuum_state n`
+  # (the literal zero vector), `IsEigenstate H ψ μ := H ψ = μ • ψ`,
+  # `MassGap H μ := 0 < μ ∧ ∀ ψ ≠ vacuum, μ ≤ ⟨H ψ, ψ⟩`. With the
+  # placeholder zero `H` the existential `∃ μ, MassGap H μ` is
+  # FALSE — honestly reflecting that the placeholder has no mass
+  # gap. Five bricks: three named unfolders (`Hamiltonian_operator_def`,
+  # `vacuum_state_def`, `MassGap_def`), `vacuum_is_eigenstate`
+  # (zero is an eigenstate of zero with eigenvalue 0), and
+  # `mass_gap_pos_means_spectrum_gap` (positivity extractor from a
+  # `MassGap` witness). NOT a Yang-Mills mass-gap existence proof;
+  # NOT a spectral theorem; NOT self-adjointness of any non-trivial
+  # operator; NOT OS reconstruction. YM tower status unchanged:
+  # Open (`docs/ROADMAP.md` § 2).
+  "Towers.Spectral.Operator|TheoremaAureum.Towers.Spectral.Hamiltonian_operator_def"
+  "Towers.Spectral.Operator|TheoremaAureum.Towers.Spectral.vacuum_state_def"
+  "Towers.Spectral.Operator|TheoremaAureum.Towers.Spectral.vacuum_is_eigenstate"
+  "Towers.Spectral.Operator|TheoremaAureum.Towers.Spectral.MassGap_def"
+  "Towers.Spectral.Operator|TheoremaAureum.Towers.Spectral.mass_gap_pos_means_spectrum_gap"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
