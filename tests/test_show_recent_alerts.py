@@ -143,3 +143,176 @@ def test_limit_zero_short_circuits(cli, capsys):
     # Table mode with no entries prints the "no alerts" stderr notice.
     assert captured.out == ""
     assert "No alerts recorded" in captured.err
+
+
+# --- Task #121: --since and --failure-mode coverage --------------------
+
+from datetime import datetime, timedelta, timezone
+
+
+def _now_minus(minutes: int) -> str:
+    return (
+        datetime.now(timezone.utc) - timedelta(minutes=minutes)
+    ).isoformat()
+
+
+FILTER_SAMPLE = [
+    {
+        "timestamp": "2026-05-20T00:00:00+00:00",
+        "workflow": "zeta-burst",
+        "failure_mode": "hits_truncated",
+        "message": "old truncated",
+        "delivery": {"webhook": {"status": "ok"}, "email": {"status": "ok"}},
+    },
+    {
+        "timestamp": "2026-05-25T00:00:00+00:00",
+        "workflow": "zeta-sieve",
+        "failure_mode": "hits_rewritten",
+        "message": "mid rewritten",
+        "delivery": {"webhook": {"status": "ok"}, "email": {"status": "ok"}},
+    },
+    {
+        "timestamp": "2026-05-26T12:00:00+00:00",
+        "workflow": "zeta-burst",
+        "failure_mode": "sink_wedged",
+        "message": "recent wedged",
+        "delivery": {"webhook": {"status": "ok"}, "email": {"status": "ok"}},
+    },
+]
+
+
+def test_since_absolute_iso_filters_older_entries(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    rc = mod.main(["--since", "2026-05-26T00:00Z", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert [e["message"] for e in parsed] == ["recent wedged"]
+
+
+def test_since_duration_filters_relative_to_now(cli, capsys, monkeypatch):
+    mod, alerts_log, _ = cli
+    recent_ts = _now_minus(5)
+    old_ts = _now_minus(120)
+    entries = [
+        {
+            "timestamp": old_ts,
+            "workflow": "w",
+            "failure_mode": "hits_truncated",
+            "message": "old",
+            "delivery": {},
+        },
+        {
+            "timestamp": recent_ts,
+            "workflow": "w",
+            "failure_mode": "hits_truncated",
+            "message": "new",
+            "delivery": {},
+        },
+    ]
+    _write_entries(alerts_log, entries)
+    rc = mod.main(["--since", "30m", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert [e["message"] for e in parsed] == ["new"]
+
+
+def test_failure_mode_single_filters_other_modes(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    rc = mod.main(["--failure-mode", "hits_rewritten", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert [e["message"] for e in parsed] == ["mid rewritten"]
+
+
+def test_failure_mode_repeated_unions_modes(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    rc = mod.main(
+        [
+            "--failure-mode",
+            "hits_truncated",
+            "--failure-mode",
+            "sink_wedged",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    # Newest-first ordering preserved from the ring buffer.
+    assert [e["message"] for e in parsed] == ["recent wedged", "old truncated"]
+
+
+def test_since_and_failure_mode_compose(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    rc = mod.main(
+        [
+            "--since",
+            "2026-05-24T00:00Z",
+            "--failure-mode",
+            "hits_rewritten",
+            "--failure-mode",
+            "sink_wedged",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert [e["message"] for e in parsed] == ["recent wedged", "mid rewritten"]
+
+
+def test_limit_caps_results_after_filtering(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    # Two entries match the filter; --limit 1 must return just one of
+    # them (the newest), NOT silently fail because the over-fetch
+    # window happened to include a filtered-out row.
+    rc = mod.main(
+        [
+            "--failure-mode",
+            "hits_truncated",
+            "--failure-mode",
+            "sink_wedged",
+            "--limit",
+            "1",
+            "--json",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert rc == 0
+    parsed = json.loads(captured.out)
+    assert len(parsed) == 1
+    assert parsed[0]["message"] == "recent wedged"
+
+
+def test_malformed_since_exits_nonzero(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    with pytest.raises(SystemExit) as excinfo:
+        mod.main(["--since", "not-a-real-timestamp"])
+    assert excinfo.value.code != 0
+    captured = capsys.readouterr()
+    assert "--since" in captured.err
+
+
+def test_empty_since_exits_nonzero(cli, capsys):
+    mod, _, _ = cli
+    with pytest.raises(SystemExit) as excinfo:
+        mod.main(["--since", "   "])
+    assert excinfo.value.code != 0
+
+
+def test_failure_mode_no_match_returns_empty_json(cli, capsys):
+    mod, alerts_log, _ = cli
+    _write_entries(alerts_log, FILTER_SAMPLE)
+    rc = mod.main(["--failure-mode", "nonexistent_mode", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert json.loads(captured.out) == []
