@@ -294,6 +294,36 @@ def _alert_timeout_seconds() -> float:
     return v if v > 0 else 5.0
 
 
+def _alert_subject(payload: "dict[str, Any]") -> str:
+    """Build the human-readable subject line for an alert payload.
+
+    The watchdog stall / recovery signals fired by the api-server's
+    `checkWatchdog` (task #113) ride the same `_fire_ledger_alert`
+    transport as a real tamper, but a midnight on-call should be able
+    to tell them apart from a glance at the inbox / Slack channel —
+    a stalled monitor means "push alerts may be silent", not "the
+    ledger has been corrupted". Task #144.
+
+    The subject is also injected back into the payload as `subject`
+    before delivery so webhook consumers (Slack, PagerDuty, etc.)
+    can route on a single human-readable field without re-deriving
+    it from `failure_mode` / `previous_failure_mode`.
+    """
+    workflow = payload.get("workflow", "?")
+    failure_mode = payload.get("failure_mode")
+    previous = payload.get("previous_failure_mode")
+    if failure_mode == "monitor_stalled":
+        return (
+            f"[MorningStar] Ledger MONITOR STALLED — push alerts may "
+            f"be silent: {workflow}"
+        )
+    if failure_mode == "recovered" and previous == "monitor_stalled":
+        return f"[MorningStar] Ledger monitor RECOVERED: {workflow}"
+    if failure_mode == "recovered":
+        return f"[MorningStar] Ledger integrity RECOVERED: {workflow}"
+    return f"[MorningStar] Ledger integrity alert: {workflow}"
+
+
 def _post_webhook(url: str, payload: "dict[str, Any]") -> None:
     """POST JSON payload to `url` with a short timeout. Raises on any
     failure (caller wraps in best-effort try/except)."""
@@ -330,22 +360,49 @@ def _send_email(payload: "dict[str, Any]", message: str) -> None:
     password = os.environ.get("MORNINGSTAR_ALERT_SMTP_PASSWORD", "")
 
     msg = EmailMessage()
-    msg["Subject"] = (
-        f"[MorningStar] Ledger integrity alert: {payload.get('workflow', '?')}"
-    )
+    msg["Subject"] = _alert_subject(payload)
     msg["From"] = from_addr
     msg["To"] = to_addr
-    body = (
-        f"{message}\n\n"
-        f"workflow: {payload.get('workflow')}\n"
-        f"timestamp: {payload.get('timestamp')}\n"
-        f"expected_size: {payload.get('expected_size')}\n"
-        f"actual_size: {payload.get('actual_size')}\n"
-        f"expected_sha: {payload.get('expected_sha')}\n"
-        f"actual_sha: {payload.get('actual_sha')}\n"
-        f"failure_mode: {payload.get('failure_mode')}\n\n"
-        f"{_ALERT_RECOVERY_POINTER}\n"
-    )
+    failure_mode = payload.get("failure_mode")
+    if failure_mode in ("monitor_stalled", "recovered") and (
+        failure_mode == "monitor_stalled"
+        or payload.get("previous_failure_mode") == "monitor_stalled"
+    ):
+        # Task #144: watchdog signals carry stall_age/threshold/last_tick
+        # fields instead of the expected/actual size+sha fields used for
+        # real tamper alerts. Tail with a "what to do about it" pointer
+        # rather than the tamper-recovery doc, since a stalled monitor
+        # is not a tamper — the operator should investigate the
+        # api-server process / its periodic tick, not restore hits.txt.
+        body = (
+            f"{message}\n\n"
+            f"workflow: {payload.get('workflow')}\n"
+            f"timestamp: {payload.get('timestamp')}\n"
+            f"failure_mode: {failure_mode}\n"
+            f"previous_failure_mode: {payload.get('previous_failure_mode')}\n"
+            f"source: {payload.get('source')}\n"
+            f"last_tick_at: {payload.get('last_tick_at')}\n"
+            f"stall_age_seconds: {payload.get('stall_age_seconds')}\n"
+            f"stall_threshold_seconds: {payload.get('stall_threshold_seconds')}\n"
+            f"monitor_interval_seconds: {payload.get('monitor_interval_seconds')}\n\n"
+            f"This is a ledger MONITOR signal, not a tamper. While "
+            f"the monitor is stalled, push alerts on a real ledger "
+            f"tamper may not fire until the api-server is restarted. "
+            f"Investigate the api-server process and its periodic "
+            f"integrity tick; do NOT restore hits.txt.\n"
+        )
+    else:
+        body = (
+            f"{message}\n\n"
+            f"workflow: {payload.get('workflow')}\n"
+            f"timestamp: {payload.get('timestamp')}\n"
+            f"expected_size: {payload.get('expected_size')}\n"
+            f"actual_size: {payload.get('actual_size')}\n"
+            f"expected_sha: {payload.get('expected_sha')}\n"
+            f"actual_sha: {payload.get('actual_sha')}\n"
+            f"failure_mode: {payload.get('failure_mode')}\n\n"
+            f"{_ALERT_RECOVERY_POINTER}\n"
+        )
     msg.set_content(body)
     with smtplib.SMTP(host, port, timeout=_alert_timeout_seconds()) as smtp:
         if user:
@@ -477,6 +534,11 @@ def _fire_ledger_alert(message: str, context: "dict[str, Any]") -> None:
         "checkpoint_path": str(CHECKPOINT),
         **context,
     }
+    # Task #144: derive a human-readable subject so webhook consumers
+    # (Slack, PagerDuty) and the email transport route on the same
+    # field, and so a watchdog-stalled alert is visibly distinct from
+    # a real tamper at a glance.
+    payload["subject"] = _alert_subject(payload)
     thread = threading.Thread(
         target=_deliver_ledger_alert,
         args=(payload, message, webhook, email_to),

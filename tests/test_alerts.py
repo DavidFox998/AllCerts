@@ -193,6 +193,38 @@ def _seed_and_truncate(tmp_hits: Path) -> None:
     tmp_hits.write_bytes(tmp_hits.read_bytes()[:1])
 
 
+def _fire_watchdog_alert(failure_mode: str, previous: str | None = None) -> None:
+    """Helper: synthesize the exact payload the api-server's
+    `checkWatchdog` would push into `_fire_ledger_alert`, then block
+    on the dispatch thread so the caller can assert against the
+    captured transport state. Mirrors the context shape built in
+    `artifacts/api-server/src/routes/ledger.ts::checkWatchdog`."""
+    ctx: dict = {
+        "failure_mode": failure_mode,
+        "source": "api-server-monitor-watchdog",
+        "checked_at": "2026-05-27T00:00:00+00:00",
+        "last_tick_at": "2026-05-27T00:00:00+00:00",
+        "monitor_interval_seconds": 1,
+    }
+    if failure_mode == "monitor_stalled":
+        ctx["stall_age_seconds"] = 7
+        ctx["stall_threshold_seconds"] = 2
+        message = (
+            "Ledger monitor watchdog: no integrity tick has completed in "
+            "7s (threshold 2s = 2 × 1s interval). The auto-integrity "
+            "check has stalled — push alerts on ledger tamper may not "
+            "fire until the api-server is restarted."
+        )
+    else:
+        ctx["previous_failure_mode"] = previous or "monitor_stalled"
+        message = (
+            "Ledger monitor watchdog RECOVERED: integrity ticks have "
+            "resumed (last tick 0s ago)."
+        )
+    kernel._fire_ledger_alert(message, ctx)
+    assert kernel._await_alert_dispatch(timeout=5.0)
+
+
 def test_webhook_wire_format_end_to_end(tmp_hits, monkeypatch, webhook_server):
     """The real `_post_webhook` ⇒ `http.server` round trip must deliver
     a JSON POST with `Content-Type: application/json` and the full
@@ -729,3 +761,174 @@ def test_inflight_dispatch_threads_are_capped_under_backpressure(
         # on them terminating before pytest exits (they're daemons).
         server.hang_event.set()
         kernel._await_alert_dispatch(timeout=10.0)
+
+
+# ---------------------------------------------------------------------------
+# Task #144: watchdog stall / recovery alerts must be visibly distinct from
+# real tamper alerts on both transports.
+# ---------------------------------------------------------------------------
+
+
+def test_alert_subject_helper_distinguishes_watchdog_from_tamper():
+    """`_alert_subject` is the single source of truth for human-readable
+    subject lines on every transport (task #144). It must emit a
+    visibly distinct line for `monitor_stalled`, for `recovered` from
+    a `monitor_stalled`, and for the default tamper case."""
+    tamper = {
+        "workflow": "zeta-burst-101-10000",
+        "failure_mode": "hits_truncated",
+    }
+    stall = {
+        "workflow": "api-server",
+        "failure_mode": "monitor_stalled",
+    }
+    recover = {
+        "workflow": "api-server",
+        "failure_mode": "recovered",
+        "previous_failure_mode": "monitor_stalled",
+    }
+    tamper_recover = {
+        "workflow": "api-server",
+        "failure_mode": "recovered",
+        "previous_failure_mode": "hits_truncated",
+    }
+
+    s_tamper = kernel._alert_subject(tamper)
+    s_stall = kernel._alert_subject(stall)
+    s_recover = kernel._alert_subject(recover)
+    s_tamper_recover = kernel._alert_subject(tamper_recover)
+
+    assert "Ledger integrity alert" in s_tamper
+    assert "MONITOR STALLED" in s_stall
+    assert "push alerts may be silent" in s_stall
+    assert "Ledger monitor RECOVERED" in s_recover
+    assert "Ledger integrity RECOVERED" in s_tamper_recover
+    # The three watchdog/recovery subjects must each be distinct from
+    # the plain tamper subject so on-call routing can split them.
+    assert s_tamper != s_stall != s_recover != s_tamper_recover
+
+
+def test_watchdog_stalled_email_subject_and_body_are_distinct(
+    tmp_hits, monkeypatch, smtp_server
+):
+    """A `monitor_stalled` watchdog fire must deliver an email whose
+    Subject line clearly says "MONITOR STALLED" (not just "Ledger
+    integrity alert") and whose body carries the stall-specific
+    fields instead of the tamper expected/actual hash columns. Task
+    #144."""
+    monkeypatch.setenv("MORNINGSTAR_ALERT_EMAIL_TO", "ops@example.com")
+    monkeypatch.setenv("MORNINGSTAR_ALERT_EMAIL_FROM", "ledger@example.com")
+    monkeypatch.setenv("MORNINGSTAR_ALERT_SMTP_HOST", smtp_server.host)
+    monkeypatch.setenv("MORNINGSTAR_ALERT_SMTP_PORT", str(smtp_server.port))
+    monkeypatch.setenv("MORNINGSTAR_WORKFLOW_NAME", "api-server")
+    monkeypatch.delenv("MORNINGSTAR_ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("MORNINGSTAR_ALERT_SMTP_USER", raising=False)
+    monkeypatch.delenv("MORNINGSTAR_ALERT_SMTP_PASSWORD", raising=False)
+
+    _fire_watchdog_alert("monitor_stalled")
+    smtp_server._thread.join(timeout=5)
+
+    assert len(smtp_server.messages) == 1, smtp_server.messages
+    parsed = message_from_bytes(smtp_server.messages[0]["data"], policy=policy.default)
+    subject = parsed["Subject"]
+    assert subject is not None
+    assert "MONITOR STALLED" in subject
+    assert "push alerts may be silent" in subject
+    assert "api-server" in subject
+    # Crucially, must NOT collide with the tamper subject.
+    assert "Ledger integrity alert" not in subject
+
+    body = parsed.get_content() if parsed.get_content_maintype() == "text" else ""
+    assert "failure_mode: monitor_stalled" in body
+    assert "stall_age_seconds: 7" in body
+    assert "stall_threshold_seconds: 2" in body
+    assert "monitor_interval_seconds: 1" in body
+    assert "last_tick_at:" in body
+    # The tamper-recovery doc pointer must NOT appear — restoring
+    # hits.txt is the wrong instruction for a stalled monitor.
+    assert "REPRODUCE.md" not in body
+    assert "do NOT restore hits.txt" in body
+
+
+def test_watchdog_recovered_email_subject_is_distinct(
+    tmp_hits, monkeypatch, smtp_server
+):
+    """A `monitor_recovered` watchdog fire (i.e. `recovered` with
+    `previous_failure_mode == monitor_stalled`) must deliver an
+    "all-clear" email whose Subject says "Ledger monitor RECOVERED"
+    and which does NOT carry the tamper recovery pointer. Task #144."""
+    monkeypatch.setenv("MORNINGSTAR_ALERT_EMAIL_TO", "ops@example.com")
+    monkeypatch.setenv("MORNINGSTAR_ALERT_EMAIL_FROM", "ledger@example.com")
+    monkeypatch.setenv("MORNINGSTAR_ALERT_SMTP_HOST", smtp_server.host)
+    monkeypatch.setenv("MORNINGSTAR_ALERT_SMTP_PORT", str(smtp_server.port))
+    monkeypatch.setenv("MORNINGSTAR_WORKFLOW_NAME", "api-server")
+    monkeypatch.delenv("MORNINGSTAR_ALERT_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("MORNINGSTAR_ALERT_SMTP_USER", raising=False)
+    monkeypatch.delenv("MORNINGSTAR_ALERT_SMTP_PASSWORD", raising=False)
+
+    _fire_watchdog_alert("recovered", previous="monitor_stalled")
+    smtp_server._thread.join(timeout=5)
+
+    assert len(smtp_server.messages) == 1, smtp_server.messages
+    parsed = message_from_bytes(smtp_server.messages[0]["data"], policy=policy.default)
+    subject = parsed["Subject"]
+    assert subject is not None
+    assert "Ledger monitor RECOVERED" in subject
+    assert "api-server" in subject
+    assert "MONITOR STALLED" not in subject
+
+    body = parsed.get_content() if parsed.get_content_maintype() == "text" else ""
+    assert "failure_mode: recovered" in body
+    assert "previous_failure_mode: monitor_stalled" in body
+    assert "REPRODUCE.md" not in body
+
+
+def test_watchdog_stalled_webhook_carries_subject_field(
+    tmp_hits, monkeypatch, webhook_server
+):
+    """A `monitor_stalled` watchdog fire must deliver a webhook POST
+    whose JSON body carries a `subject` field clearly distinct from
+    the tamper subject, so Slack / PagerDuty routing can split them
+    without re-deriving from `failure_mode`. Task #144."""
+    url, server = webhook_server
+    captured = server.captured
+    monkeypatch.setenv("MORNINGSTAR_ALERT_WEBHOOK_URL", url)
+    monkeypatch.setenv("MORNINGSTAR_WORKFLOW_NAME", "api-server")
+    monkeypatch.delenv("MORNINGSTAR_ALERT_EMAIL_TO", raising=False)
+
+    _fire_watchdog_alert("monitor_stalled")
+
+    assert len(captured) == 1, captured
+    payload = json.loads(captured[0]["body"].decode("utf-8"))
+    assert payload["failure_mode"] == "monitor_stalled"
+    assert payload["source"] == "api-server-monitor-watchdog"
+    assert payload["stall_age_seconds"] == 7
+    assert payload["stall_threshold_seconds"] == 2
+    assert "subject" in payload
+    assert "MONITOR STALLED" in payload["subject"]
+    assert "push alerts may be silent" in payload["subject"]
+    assert "Ledger integrity alert" not in payload["subject"]
+
+
+def test_watchdog_recovered_webhook_carries_distinct_subject_field(
+    tmp_hits, monkeypatch, webhook_server
+):
+    """The "all-clear" recovery fire must also expose a `subject`
+    field on the webhook payload, distinct from both the stall and
+    the plain tamper subjects. Task #144."""
+    url, server = webhook_server
+    captured = server.captured
+    monkeypatch.setenv("MORNINGSTAR_ALERT_WEBHOOK_URL", url)
+    monkeypatch.setenv("MORNINGSTAR_WORKFLOW_NAME", "api-server")
+    monkeypatch.delenv("MORNINGSTAR_ALERT_EMAIL_TO", raising=False)
+
+    _fire_watchdog_alert("recovered", previous="monitor_stalled")
+
+    assert len(captured) == 1, captured
+    payload = json.loads(captured[0]["body"].decode("utf-8"))
+    assert payload["failure_mode"] == "recovered"
+    assert payload["previous_failure_mode"] == "monitor_stalled"
+    assert "subject" in payload
+    assert "Ledger monitor RECOVERED" in payload["subject"]
+    assert "MONITOR STALLED" not in payload["subject"]
+    assert "Ledger integrity alert" not in payload["subject"]
