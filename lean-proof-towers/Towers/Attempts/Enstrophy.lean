@@ -48,6 +48,7 @@ namespace Attempts
 namespace Enstrophy
 
 open TheoremaAureum.Towers.NS
+open TheoremaAureum.Towers.NS.EnergyV2
 
 /-- **Global enstrophy bound for 3D Navier-Stokes.**
 
