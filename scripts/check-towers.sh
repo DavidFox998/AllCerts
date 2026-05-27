@@ -1876,6 +1876,39 @@ BRICKS=(
   "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.IsMassGap"
   "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.lattice_to_continuum"
   "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.AsymptoticFreedom"
+
+  # ---------------------------------------------------------------
+  # Task #156 — file 1 of 6 (Varadhan scaffolding, integrated-tail
+  # target shape (C); 2026-05-27). One trio-clean brick in
+  # `Towers/YM/Casimir.lean`: **quadratic** lower bound on the SU(3)
+  # Casimir eigenvalue with explicit threshold `k₀ = 0`,
+  #   `¾ · (m + n)² + 3 · (m + n)  ≤  C₂(m, n)`,
+  # strengthening the **linear** bound
+  # `Casimir_SU3_explicit_real_ge_linear` from Batch 19.1p-redux-a
+  # (still in `Towers/YM/PeterWeyl.lean`, untouched and still used
+  # by `PeterWeyl_Summable_SU3`). Closed in one tactic line:
+  # `unfold + push_cast; nlinarith [sq_nonneg ((m : ℝ) − n), …]`,
+  # since `4·C₂ − 3(m+n)² − 12(m+n) = (m − n)²`. Wall: 464 → 465.
+  #
+  # **Honest scope (locked).** This is file 1 of 6 for Task #156.
+  # YM tower stays `Status: Open` (`docs/ROADMAP.md` § 2). Surface
+  # #2 stays OPEN (4 open-gap blocks in
+  # `docs/Surface2_ResearchProgram.tex`; `kotecky_preiss_criterion`
+  # remains a `sorry` in `Towers/Attempts/ClusterExpansion.lean`).
+  # Files 2-6 — `Towers/YM/{WeylDim,HeatTraceBound,OffDiagKernel,
+  # Varadhan}.lean` and the `Attempts/ClusterExpansion.lean` wiring
+  # — are **NOT** shipped by this batch. File 4 alone (bi-invariant
+  # Riemannian metric on SU(3) via the Killing form + the
+  # off-diagonal heat kernel as a function on the group) is not in
+  # mathlib v4.12.0 out of the box. Landing this brick does NOT
+  # discharge the Varadhan small-`t` asymptotic, the per-plaquette
+  # activity bound, KP, the cluster expansion, the area law, or any
+  # mass-gap statement. It ships one arithmetic inequality — the
+  # input the Gaussian-tail estimate in file 3 will eventually
+  # consume to convert `Σ poly(k) · exp(-t · C₂)` from a polynomial
+  # `t^{-(p+1)}` decay (what the linear bound gives) into the
+  # Weyl-law `t^{-d/2} = t^{-4}` heat-trace shape.
+  "Towers.YM.Casimir|TheoremaAureum.Towers.YM.Casimir.Casimir_SU3_explicit_real_ge_quadratic"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

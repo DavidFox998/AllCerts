@@ -6,6 +6,81 @@ this file is the version history.
 
 ---
 
+## Batch 20.2a — Task #156 file 1 of 6 (Varadhan scaffolding): Casimir quadratic lower bound. Wall 464 → 465, +1 BRICK (2026-05-27)
+
+**Goal.** Land the **arithmetic input** for the eventual Varadhan
+small-`t` heat-kernel asymptotic on SU(3) (task #156, target shape
+(C) — *integrated tail* `∫_{d(g,e) ≥ δ} K_t(g, e) dg ≤ C · t⁻⁴ ·
+e⁻ᶜᵟ²ᐟᵗ`, the only one of (A)/(B)/(C) that gives the `e⁻ᶜᐟᵝ` factor
+the Surface #2 per-plaquette activity bound needs). This is **file
+1 of 6**; the 6-file decomposition is
+
+  1. `Towers/YM/Casimir.lean`         ← **this batch**
+  2. `Towers/YM/WeylDim.lean`         — `dim(m,n) ≤ (m+n+1)³`
+  3. `Towers/YM/HeatTraceBound.lean`  — `K(t) ≤ C · t⁻⁴`
+  4. `Towers/YM/OffDiagKernel.lean`   — `K_t(g, e)` def + metric
+  5. `Towers/YM/Varadhan.lean`        — integrated tail bound
+  6. `Towers/Attempts/ClusterExpansion.lean` — wire to KP
+
+Files 2–6 are NOT in this batch. File 4 alone (bi-invariant
+Riemannian metric on SU(3) via the Killing form + the off-diagonal
+heat kernel as a function on the group) is not in mathlib v4.12.0
+out of the box and is a substantial sub-project on its own.
+
+**One trio-clean brick.** New file `Towers/YM/Casimir.lean` ships
+
+  * `Casimir_SU3_explicit_real_ge_quadratic`
+        `(3/4 : ℝ) · ((m : ℝ) + n)² + 3 · ((m : ℝ) + n)
+            ≤ (Casimir_SU3_explicit (m, n) : ℝ)`
+    with explicit threshold `k₀ = 0` (the bound holds for **all**
+    `(m, n) : ℕ × ℕ`, not just sufficiently large `m + n`).
+
+This **strengthens** — does not replace — the linear bound
+`Casimir_SU3_explicit_real_ge_linear` from Batch 19.1p-redux-a
+(`Towers/YM/PeterWeyl.lean` Brick 1, still landed, still consumed
+by `PeterWeyl_Summable_SU3`). The two coexist: the linear form is
+what the **Summable** result needs (geometric envelope
+`exp(-βm)·exp(-βn)`); the quadratic form is what the future
+file-3 **Gaussian-tail** estimate will need
+(`Σ poly(k) · exp(-t · k²) ~ t⁻⁽ᵖ⁺¹⁾ᐟ²`, which is what produces
+the Weyl-law `t⁻ᵈᐟ² = t⁻⁴` heat-trace shape for `d = dim_ℝ SU(3)
+= 8`).
+
+**Algebra.** `4 · C₂ − 3(m+n)² − 12(m+n)
+  = 4(m² + n² + mn + 3m + 3n) − 3(m² + 2mn + n²) − 12(m + n)
+  = m² − 2mn + n² = (m − n)² ≥ 0`,
+hence `C₂ ≥ ¾(m+n)² + 3(m+n)`. Closed by `unfold + push_cast;
+nlinarith [sq_nonneg ((m : ℝ) − n), …]`.
+
+**Honest scope (locked).** YM tower stays `Status: Open`
+(`docs/ROADMAP.md` § 2). Surface #2 stays OPEN (4 open-gap blocks
+in `docs/Surface2_ResearchProgram.tex`; `kotecky_preiss_criterion`
+remains a `sorry` in `Towers/Attempts/ClusterExpansion.lean`).
+Landing this brick does NOT discharge the Varadhan asymptotic, the
+per-plaquette activity bound, KP, the cluster expansion, the area
+law, or any mass-gap statement. It is **one arithmetic inequality**
+on ℕ × ℕ cast to ℝ; the entire Task #156 chain still has 5 files
+to go, and files 4–5 require Riemannian-geometry infrastructure
+that v4.12.0 mathlib does not provide out of the box.
+
+**Why target shape (C) and not (A) or (B).** The originally pasted
+target `K(t) ≤ C · t⁻⁴ · e⁻ᶜᐟᵗ` for the **heat trace** is provably
+false on `(0, t₀]` (LHS → ∞, RHS → 0 as `t → 0⁺`); that bound shape
+lives on the **off-diagonal pointwise** kernel
+`K_t(g, e) ≤ C · t⁻⁴ · e⁻ᵈ⁽ᵍ,ᵉ⁾²ᐟ⁴ᵗ` and produces the `e⁻ᶜᐟᵝ`
+plaquette decay only after integrating against Haar over the
+"away from identity" region `d(g, e) ≥ δ`. This is the same
+false-shape failure mode that retired `Heat_kernel_def_real` in
+Batch 19.1p-redux-b; not reintroducing it under a new name was
+explicit pre-condition for accepting Task #156.
+
+**Verification.** `bash scripts/check-towers.sh` — "all 465
+brick(s) passed the axiom-footprint check". The new brick reports
+`[propext, Classical.choice, Quot.sound]` (mathlib's classical
+trio, no research-grade axioms). Existing 464 unchanged.
+
+---
+
 ## Batch 20.1a — Surface #3 setup: define the continuum. Wall 460 → 464, +4 BRICKS, +1 parked sorry (NOT a brick) (2026-05-27)
 
 **Goal ("Plan #156").** Make the Clay 4D SU(3) Yang-Mills continuum
