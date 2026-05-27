@@ -92,10 +92,23 @@ Lean axiom debt for `main_theorem`, `H2_WeilTransfer`, `M9_WeilTransfer_All`: **
 | `CITATION.cff`                                 | Citation Metadata (no DOI; v1.8-BC source-of-truth on Replit)       |
 | `replit.md`                                    | Operator Runbook                                                    |
 
-## VII. Out of scope for v1.9 (explicitly deferred)
+## VII. Yang–Mills surface installments (Volume IV, research-program preprints)
+
+Honest-scope writeups of the formalized infrastructure landing on the YM tower
+(`lean-proof-towers/Towers/YM/`). The YM tower itself remains
+**Status: Open** in `docs/ROADMAP.md` § 2; these documents do not promote it.
+Each preprint enumerates exactly which Lean identifiers it relies on and which
+gaps remain open as project tasks.
+
+| Node                                          | Title                                                              |
+| --------------------------------------------- | ------------------------------------------------------------------ |
+| `docs/Surface1_InstallmentA.{tex,pdf}`        | *Surface #1, Installment A — A Formalized Truncation-to-Envelope Bridge for the SU(3) Peter–Weyl Heat-Kernel Series* (tasks #154, #155; +8 trio-clean bricks; Varadhan small-t asymptotic remains open as task #156) |
+| `docs/Surface2_ResearchProgram.{tex,pdf}`     | *Surface #2 (Research Program) — A Polymer-Expansion Scaffold for 4D SU(3) Lattice Yang–Mills, With an Honest Accounting of the Open Analytic Gaps* (target of `kotecky_preiss_criterion` parked sorry; nothing formalized at this surface yet) |
+
+## VIII. Out of scope for v1.9 (explicitly deferred)
 
 - L₂ = Dirichlet L(s, χ₅) — no `hits_dirichlet_5.txt` exists; no `genesis_dir5` computed.
 - L₃ = Elliptic L(E37a1, s) — `kernel.elliptic_stub` refuses to evaluate; no Sage backend wired.
-- Yang–Mills mass gap, Navier–Stokes regularity, BSD beyond M10/M13 — roadmap only.
+- Yang–Mills mass gap (Surface #1 envelope landed in §VII; full proof open), Navier–Stokes regularity, BSD beyond M10/M13 — roadmap only.
 - E₈ cross-L coupling, gaskets — Stage 4 deferral list (batch 3 §F.1).
 - γ₁₀₀₀₁ → γ₁₀₀₀₀₀ via `zeta_sieve(14159, 100000)` — workflow stalled at finalize, not restarted; see Casualty Log Incident 4.
