@@ -1,8 +1,26 @@
 # The Three Hard Lemmas
 
-**Status:** open. **Repository wall:** 313 bricks, axiom footprint
+**Status:** open. **Repository wall:** 325 bricks, axiom footprint
 `⊆ {propext, Classical.choice, Quot.sound}`. **Towers:**
 `Status: Open` (`docs/ROADMAP.md` § 2, § 3).
+
+**Batch 19.1e update (2026-05-27):** the K=1 base case of the
+cluster expansion ships on top of the 19.1d skeleton (+12 bricks
+in `Towers/YM/ClusterExpansion.lean`: `mayer_K_constant`,
+`mayer_Delta_constant`, `Ursell_functions`, `Mayer_expansion_def`,
+`Ursell_functions_bound`, `Kotecky_Preiss_criterion`,
+`Base_case_discharge`, `Small_g_regime_def`,
+`Transfer_contraction_from_CE`, `mayer_K_pos`,
+`Small_g_regime_pos`, `Base_case_K_one`). The reduction chain
+`MassGap_YM4_Clay ← spectral_radius_def < 1 ← ‖T_g‖ < 1 ←
+Cluster_expansion` is now explicit at the Prop level. Honest
+scope: `Transfer_contraction_from_CE` proves `≤ 1`, not `< 1` —
+the `≤`→`<` gap *is* the parked sorry in
+`Towers/Attempts/T_g.lean :: Perron_Frobenius_for_transfer`.
+`Kotecky_Preiss_criterion` ships the `e = 1` slice (`K * Δ ≤ 1`)
+to avoid pulling `Real.exp` into the YM tower for one constant.
+YM tower stays `Status: Open`; `MassGap_YM4_Clay` stays a schema —
+see `docs/CHANGELOG.md` Batch 19.1e.
 
 **Batch 19.1d update (2026-05-27):** the cluster-expansion +
 Glimm-Jaffe *skeleton* now lives in `Towers/YM/ClusterExpansion.lean`

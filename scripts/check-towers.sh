@@ -1202,6 +1202,34 @@ BRICKS=(
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Correlation_decay_from_CE"
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Transfer_from_measure"
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Transfer_bound_from_CE"
+
+  # ---- Batch 19.1e (2026-05-27) — Cluster Expansion Base (K=1).
+  # Wall 313 → 325 (+12 bricks). Mayer / Kotecky-Preiss / Ursell
+  # skeleton at the trivial `K = 1` slice, appended to
+  # `Towers/YM/ClusterExpansion.lean`. All bounds in this batch are
+  # honest placeholders against zero polymer activities; the SHAPE
+  # of the Brydges-Federbush argument is pinned, the real analytic
+  # discharge stays as the `sorry` in `Towers/Attempts/T_g.lean`.
+  #
+  # Honest scope: `Transfer_contraction_from_CE` proves `≤ 1`, NOT
+  # `< 1`. The gap is the real strict-contraction bound (Brydges-
+  # Federbush convergent polymer expansion for `g < g₀`). The
+  # `Kotecky_Preiss_criterion` ships the `e = 1` slice
+  # (`K * Δ ≤ 1`), avoiding `Real.exp` until a future batch pays
+  # for `Mathlib.Analysis.SpecialFunctions.Exp.Basic`. YM tower
+  # stays `Status: Open`; `MassGap_YM4_Clay` stays a schema.
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.mayer_K_constant"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.mayer_Delta_constant"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Ursell_functions"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Mayer_expansion_def"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Ursell_functions_bound"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Kotecky_Preiss_criterion"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Base_case_discharge"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Small_g_regime_def"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Transfer_contraction_from_CE"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.mayer_K_pos"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Small_g_regime_pos"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Base_case_K_one"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

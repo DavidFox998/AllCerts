@@ -6,6 +6,86 @@ this file is the version history.
 
 ---
 
+## Batch 19.1e — Cluster Expansion Base (K = 1 trivial slice). Wall 313 → 325, +12 bricks (2026-05-27)
+
+User directive: extend `Towers/YM/ClusterExpansion.lean` (the 8-brick
+19.1d skeleton) with the Mayer / Kotecky-Preiss / Ursell base case at
+`K = 1`, so the reduction chain
+`MassGap_YM4_Clay ← spectral_radius_def < 1 ← ‖T_g‖ < 1 ←
+Cluster_expansion` becomes explicit at the Prop level. Hard analytic
+bounds stay as `sorry` in `Towers/Attempts/T_g.lean`, NOT in BRICKS.
+
+**Honest scope.** Two real deviations from the user spec, both
+documented in the file docstring and the `check-towers.sh` block:
+
+1. `Transfer_contraction_from_CE` proves `spectral_radius_def D g ≤ 1`,
+   NOT `< 1`. The gap from `≤` to `<` *is* the parked `sorry` in
+   `Towers/Attempts/T_g.lean :: Perron_Frobenius_for_transfer` — the
+   real Brydges-Federbush strict-contraction bound. Shipping `≤ 1` is
+   honest at the placeholder `spectral_radius_def := 1` slice;
+   promoting away from that placeholder is what the next batch must
+   land.
+2. `Kotecky_Preiss_criterion` ships `K * Δ ≤ 1` (the `e = 1` slice)
+   rather than the textbook `K * e * Δ ≤ 1`, to avoid pulling
+   `Mathlib.Analysis.SpecialFunctions.Exp.Basic` into the YM tower
+   for a single constant. With `K = 1`, `Δ = 0` the statement is
+   `1 * 0 ≤ 1`, trivially.
+
+YM tower stays `Status: Open`; `MassGap_YM4_Clay` stays a schema; the
+Brydges-Federbush analytic discharge is still future work.
+
+**Track 1 — `Towers/YM/ClusterExpansion.lean` (extends 19.1d, +12 bricks):**
+
+Six bricks from the directive:
+
+- `Mayer_expansion_def : OSPreHilbert → ℝ → ℝ := fun _ _ => 0` —
+  placeholder `log Z` (since `Polymer_partition_function = 1`,
+  `log 1 = 0`). The real surface is the formal-series identity
+  `log Ξ_Λ = ∑_{X cluster} φ_T(X)`.
+- `Ursell_functions_bound` — `|Ursell_functions D g n| ≤ (n!: ℝ)` at
+  `K = 1`. Discharged by `abs_zero` + `Nat.cast_nonneg` against the
+  zero-placeholder Ursell.
+- `Kotecky_Preiss_criterion` — `mayer_K_constant * mayer_Delta_constant ≤ 1`.
+  Discharged by `mul_zero` + `zero_le_one`.
+- `Base_case_discharge` — `|Wilson_measure_def D g| ≤ mayer_K_constant ^ n`.
+  Wraps `Cluster_estimate_base` with the explicit `K = 1`.
+- `Small_g_regime_def : ℝ := 1` — placeholder `g₀`, the largest `g` for
+  which the Kotecky-Preiss criterion holds.
+- `Transfer_contraction_from_CE` — `g < g₀ → spectral_radius_def D g ≤ 1`.
+  Discharged by `unfold spectral_radius_def; exact le_refl 1`. (Note
+  `≤`, not `<` — see honest scope above.)
+
+Six naturally arising helper bricks pulled into BRICKS:
+
+- `mayer_K_constant : ℝ := 1`, `mayer_Delta_constant : ℝ := 0`,
+  `Ursell_functions : OSPreHilbert → ℝ → ℕ → ℝ := fun _ _ _ => 0` —
+  the named constants and placeholder Ursell functional.
+- `mayer_K_pos`, `Small_g_regime_pos`, `Base_case_K_one` — `0 < K`,
+  `0 < g₀`, and the definitional `K = 1` equation used by the
+  `Base_case_discharge` wrapper.
+
+Import added: `Mathlib.Data.Nat.Factorial.Basic` (for `Nat.factorial`
+in `Ursell_functions_bound`).
+
+**Track 2 — `Towers/Attempts/T_g.lean` (docstring updates only, no
+sorry changes):**
+
+Both `Transfer_compact` and `Perron_Frobenius_for_transfer` docstrings
+updated to reference the now-20-brick `ClusterExpansion.lean` and to
+name the second bridge (`Transfer_contraction_from_CE`) alongside the
+19.1d `Transfer_bound_from_CE`. The `Perron_Frobenius_for_transfer`
+docstring explicitly notes that the `≤ 1` slice from 19.1e plus the
+strict `< 1` requirement of this theorem *is* the gap parked here as
+`sorry`. Per the locked "Hard theorems → Attempts with `sorry`" rule,
+the sorries stay.
+
+**Drift guard.** Genesis seal `eecbcd9a…875f` re-verified green. Axiom
+footprint stays `⊆ {propext, Classical.choice, Quot.sound}`.
+`lakefile.lean` already declared `Towers.YM.ClusterExpansion` as a
+root (added in 19.1d) — no edit needed.
+
+---
+
 ## Batch 19.1d — Cluster Expansion + Glimm-Jaffe skeleton. Wall 305 → 313, +8 bricks (2026-05-27)
 
 User directive: land the cluster-expansion scaffolding for the YM
