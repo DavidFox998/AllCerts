@@ -74,7 +74,14 @@ export default defineConfig({
             command:
               "pnpm --filter @workspace/api-server run dev",
             url: `http://127.0.0.1:${MANAGED_API_PORT}/api/healthz`,
-            reuseExistingServer: false,
+            // reuseExistingServer: true so the e2e suite works in
+            // both fresh-CI (port 8080 free → boot our own) and
+            // dev / post-merge (the `artifacts/api-server` workflow
+            // already holds 8080 → reuse it instead of EADDRINUSE-
+            // crashing). Specs mock the endpoints they assert via
+            // page.route, so the only requirement is that api-server
+            // is alive enough not to 500 on /api/certificates.
+            reuseExistingServer: true,
             timeout: 180_000,
             stdout: "pipe",
             stderr: "pipe",
@@ -86,7 +93,10 @@ export default defineConfig({
             command: "pnpm run dev",
             cwd: ".",
             url: `http://127.0.0.1:${MANAGED_PORT}/`,
-            reuseExistingServer: false,
+            // reuseExistingServer: true — symmetric with api-server
+            // above, so dev-environment runs don't EADDRINUSE-crash
+            // against the `artifacts/theorema-certs: web` workflow.
+            reuseExistingServer: true,
             timeout: 120_000,
             stdout: "pipe",
             stderr: "pipe",

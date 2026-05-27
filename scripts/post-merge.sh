@@ -113,7 +113,38 @@ fi
 # as `lean-proof`. The script is lenient by default for fresh clones
 # without browsers; STRICT_E2E_CHECK=1 here promotes that to a merge
 # gate.
-echo ">> running scripts/check-theorema-certs-e2e.sh (dashboard Playwright suite)" >&2
-STRICT_E2E_CHECK=1 ./scripts/check-theorema-certs-e2e.sh
+#
+# Dashboard-surface gate (mirrors the tamper-surface gate above —
+# post-merge.sh has a configurable timeout and the full Playwright
+# suite is far too slow to run on every merge). Inline-strict only
+# when the merge actually touched a file the suite covers:
+#   - artifacts/theorema-certs/**  (the SPA + the suite itself)
+#   - artifacts/api-server/**      (the routes the SPA renders)
+#   - lib/api-spec/**              (the contract the routes implement)
+#   - scripts/check-theorema-certs-e2e.sh  (the harness itself)
+# Otherwise the `theorema-certs-e2e` validation workflow (registered
+# in .replit by Task #149) remains the on-demand merge gate and this
+# step is skipped silently — same posture as the tamper-surface gate.
+DASHBOARD_PATHS=(
+  artifacts/theorema-certs
+  artifacts/api-server
+  lib/api-spec
+  scripts/check-theorema-certs-e2e.sh
+)
+DASHBOARD_TOUCHED=1
+if git rev-parse --verify --quiet HEAD~1 >/dev/null; then
+  if git diff --quiet HEAD~1 HEAD -- "${DASHBOARD_PATHS[@]}"; then
+    DASHBOARD_TOUCHED=0
+  fi
+else
+  echo ">> post-merge: HEAD~1 unreachable; running e2e inline (fail-safe)" >&2
+fi
+
+if [ $DASHBOARD_TOUCHED -eq 1 ]; then
+  echo ">> running scripts/check-theorema-certs-e2e.sh (dashboard surface changed)" >&2
+  STRICT_E2E_CHECK=1 ./scripts/check-theorema-certs-e2e.sh
+else
+  echo ">> skipped e2e (no dashboard-surface diff); theorema-certs-e2e validation workflow remains the on-demand gate" >&2
+fi
 
 ./scripts/print-direction.sh >&2
