@@ -8,11 +8,30 @@
 import type { LedgerAlertDeliveryStatusStatus } from './ledgerAlertDeliveryStatusStatus';
 
 export interface LedgerAlertDeliveryStatus {
-  /** Per-transport delivery outcome at the moment the alert fired */
+  /** Per-transport delivery outcome at the moment the alert fired.
+  `dropped_backpressure` (task #94) means the in-flight dispatch
+  thread cap was saturated when this alert tried to fire, so no
+  network call was made — the sink itself is wedged. When this
+  value is set, `inflight` and `cap` describe the saturation.
+   */
   status: LedgerAlertDeliveryStatusStatus;
   /**
      * Best-effort delivery error string (present when status=failed)
      * @nullable
      */
   error?: string | null;
+  /**
+     * In-flight dispatch thread count observed at the moment the
+  alert was dropped. Only present when `status=dropped_backpressure`.
+
+     * @nullable
+     */
+  inflight?: number | null;
+  /**
+     * Configured cap on concurrent in-flight dispatch threads.
+  Only present when `status=dropped_backpressure`.
+
+     * @nullable
+     */
+  cap?: number | null;
 }

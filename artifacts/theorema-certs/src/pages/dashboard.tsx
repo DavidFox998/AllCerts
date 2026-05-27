@@ -1394,9 +1394,25 @@ export default function DashboardPage() {
                               const ackCount = ledgerAlertsData.alerts.filter(
                                 (a) => a.acknowledgedAt,
                               ).length;
+                              const droppedCount = ledgerAlertsData.alerts.filter(
+                                (a) =>
+                                  a.delivery.webhook.status ===
+                                    "dropped_backpressure" ||
+                                  a.delivery.email.status ===
+                                    "dropped_backpressure",
+                              ).length;
                               const base = `${visible} entr${visible === 1 ? "y" : "ies"}`;
-                              return ackCount > 0 && !showAcknowledgedAlerts
-                                ? `${base} (${ackCount} ack'd hidden)`
+                              const suffixes: string[] = [];
+                              if (ackCount > 0 && !showAcknowledgedAlerts) {
+                                suffixes.push(`${ackCount} ack'd hidden`);
+                              }
+                              if (droppedCount > 0) {
+                                suffixes.push(
+                                  `${droppedCount} suppressed (sink wedged)`,
+                                );
+                              }
+                              return suffixes.length > 0
+                                ? `${base} (${suffixes.join(", ")})`
                                 : base;
                             })()
                           : "loading…"}
@@ -1443,6 +1459,9 @@ export default function DashboardPage() {
                           const anyFailed = transports.some(
                             (t) => t.info.status === "failed",
                           );
+                          const anyDropped = transports.some(
+                            (t) => t.info.status === "dropped_backpressure",
+                          );
                           const isAcked = Boolean(alert.acknowledgedAt);
                           return (
                             <li
@@ -1450,11 +1469,16 @@ export default function DashboardPage() {
                               className={`px-3 py-2 font-mono text-[11px] space-y-1 ${
                                 isAcked
                                   ? "opacity-60"
-                                  : anyFailed
-                                    ? "bg-amber-500/10 border-l-2 border-amber-500"
-                                    : ""
+                                  : anyDropped
+                                    ? "bg-amber-500/15 border-l-2 border-amber-600"
+                                    : anyFailed
+                                      ? "bg-amber-500/10 border-l-2 border-amber-500"
+                                      : ""
                               }`}
                               data-testid={`row-ledger-alert-${i}`}
+                              data-dropped-backpressure={
+                                anyDropped ? "true" : undefined
+                              }
                             >
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                 <span
@@ -1479,20 +1503,35 @@ export default function DashboardPage() {
                                 </span>
                                 <span className="ml-auto flex items-center gap-1.5">
                                   {transports.map((t) => {
+                                    const isDropped =
+                                      t.info.status === "dropped_backpressure";
                                     const cls =
                                       t.info.status === "ok"
                                         ? "text-green-700 dark:text-green-400 border-green-500/40"
                                         : t.info.status === "failed"
                                           ? "text-amber-700 dark:text-amber-400 border-amber-500/50 bg-amber-500/10"
-                                          : "text-muted-foreground border-border";
+                                          : isDropped
+                                            ? "text-amber-800 dark:text-amber-300 border-amber-600/70 bg-amber-500/20 font-semibold"
+                                            : "text-muted-foreground border-border";
+                                    const label = isDropped
+                                      ? `${t.name}: suppressed (sink wedged)`
+                                      : `${t.name}: ${t.info.status}`;
+                                    const tooltip = isDropped
+                                      ? `In-flight dispatch cap saturated when alert tried to fire (inflight=${
+                                          t.info.inflight ?? "?"
+                                        } / cap=${
+                                          t.info.cap ?? "?"
+                                        }). No network call was made — the sink itself is wedged.`
+                                      : (t.info.error ?? undefined);
                                     return (
                                       <span
                                         key={t.name}
                                         className={`inline-block px-1.5 py-0.5 border ${cls}`}
-                                        title={t.info.error ?? undefined}
+                                        title={tooltip}
                                         data-testid={`text-ledger-alert-${t.name}-${i}`}
+                                        data-status={t.info.status}
                                       >
-                                        {t.name}: {t.info.status}
+                                        {label}
                                       </span>
                                     );
                                   })}

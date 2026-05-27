@@ -270,12 +270,16 @@ export const GetLedgerAlertsResponse = zod.object({
   "source": zod.string().nullish().describe('Origin of the alert (e.g. `scripts\/check-ledger-integrity.py`).\nNull when fired from inside kernel.probe.\n'),
   "delivery": zod.object({
   "webhook": zod.object({
-  "status": zod.enum(['ok', 'failed', 'not_configured']).describe('Per-transport delivery outcome at the moment the alert fired'),
-  "error": zod.string().nullish().describe('Best-effort delivery error string (present when status=failed)')
+  "status": zod.enum(['ok', 'failed', 'not_configured', 'dropped_backpressure']).describe('Per-transport delivery outcome at the moment the alert fired.\n`dropped_backpressure` (task #94) means the in-flight dispatch\nthread cap was saturated when this alert tried to fire, so no\nnetwork call was made — the sink itself is wedged. When this\nvalue is set, `inflight` and `cap` describe the saturation.\n'),
+  "error": zod.string().nullish().describe('Best-effort delivery error string (present when status=failed)'),
+  "inflight": zod.number().nullish().describe('In-flight dispatch thread count observed at the moment the\nalert was dropped. Only present when `status=dropped_backpressure`.\n'),
+  "cap": zod.number().nullish().describe('Configured cap on concurrent in-flight dispatch threads.\nOnly present when `status=dropped_backpressure`.\n')
 }),
   "email": zod.object({
-  "status": zod.enum(['ok', 'failed', 'not_configured']).describe('Per-transport delivery outcome at the moment the alert fired'),
-  "error": zod.string().nullish().describe('Best-effort delivery error string (present when status=failed)')
+  "status": zod.enum(['ok', 'failed', 'not_configured', 'dropped_backpressure']).describe('Per-transport delivery outcome at the moment the alert fired.\n`dropped_backpressure` (task #94) means the in-flight dispatch\nthread cap was saturated when this alert tried to fire, so no\nnetwork call was made — the sink itself is wedged. When this\nvalue is set, `inflight` and `cap` describe the saturation.\n'),
+  "error": zod.string().nullish().describe('Best-effort delivery error string (present when status=failed)'),
+  "inflight": zod.number().nullish().describe('In-flight dispatch thread count observed at the moment the\nalert was dropped. Only present when `status=dropped_backpressure`.\n'),
+  "cap": zod.number().nullish().describe('Configured cap on concurrent in-flight dispatch threads.\nOnly present when `status=dropped_backpressure`.\n')
 })
 }).describe('Per-transport delivery status at fire time')
 }).describe('One entry from the on-disk alert ring buffer\n`data\/ledger-alerts.jsonl`. Each field other than the four\nrequired ones is best-effort: older entries (or\ncheck-ledger-integrity.py hard FATALs) may omit any of them.\n')).describe('Most-recent-first slice of alert entries'),

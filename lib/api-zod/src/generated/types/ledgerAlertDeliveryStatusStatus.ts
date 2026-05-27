@@ -7,7 +7,12 @@
  */
 
 /**
- * Per-transport delivery outcome at the moment the alert fired
+ * Per-transport delivery outcome at the moment the alert fired.
+`dropped_backpressure` (task #94) means the in-flight dispatch
+thread cap was saturated when this alert tried to fire, so no
+network call was made — the sink itself is wedged. When this
+value is set, `inflight` and `cap` describe the saturation.
+
  */
 export type LedgerAlertDeliveryStatusStatus = typeof LedgerAlertDeliveryStatusStatus[keyof typeof LedgerAlertDeliveryStatusStatus];
 
@@ -16,4 +21,5 @@ export const LedgerAlertDeliveryStatusStatus = {
   ok: 'ok',
   failed: 'failed',
   not_configured: 'not_configured',
+  dropped_backpressure: 'dropped_backpressure',
 } as const;

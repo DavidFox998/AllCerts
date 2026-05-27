@@ -724,11 +724,26 @@ components:
       properties:
         status:
           type: string
-          enum: [ok, failed, not_configured]
-          description: Per-transport delivery outcome at the moment the alert fired
+          enum: [ok, failed, not_configured, dropped_backpressure]
+          description: |
+            Per-transport delivery outcome at the moment the alert fired.
+            `dropped_backpressure` (task #94) means the in-flight dispatch
+            thread cap was saturated when this alert tried to fire, so no
+            network call was made — the sink itself is wedged. When this
+            value is set, `inflight` and `cap` describe the saturation.
         error:
           type: ["string", "null"]
           description: Best-effort delivery error string (present when status=failed)
+        inflight:
+          type: ["integer", "null"]
+          description: |
+            In-flight dispatch thread count observed at the moment the
+            alert was dropped. Only present when `status=dropped_backpressure`.
+        cap:
+          type: ["integer", "null"]
+          description: |
+            Configured cap on concurrent in-flight dispatch threads.
+            Only present when `status=dropped_backpressure`.
 
     LedgerAlertAckRequest:
       type: object
