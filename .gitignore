@@ -49,3 +49,4 @@ Thumbs.db
 .local/
 data/hits.txt.checkpoint
 data/ledger-alerts.jsonl
+data/hits.txt.lastok
