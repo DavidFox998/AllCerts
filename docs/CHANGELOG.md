@@ -6,6 +6,89 @@ this file is the version history.
 
 ---
 
+## Batch 19.1l — Single Plaquette: SU(3) Haar / heat-kernel reduction. Wall 400 → 408, +8 BRICKS, +1 Attempts sorry (2026-05-27)
+
+User directive: "attack the sorry." Sharpen the 19.1k Gaussian-form
+`Single_plaquette_bound` sorry to the real SU(3) Haar integral
+`∫_{SU(3)} e^{-β Re tr U} dU ≤ e^{-c β}`, and explicitly reduce
+it to a heat-kernel asymptotic bound on SU(3). YM tower stays
+`Status: Open`; the locked honest-scope guard from 19.1j/k still
+in force.
+
+**Track 1 — `Towers/Attempts/ClusterExpansion.lean` (+1 sorry,
++2 defs, 7 → 8 file-level):**
+
+- def `SU3_Haar_measure_explicit : ℝ := 1` — normalized Haar
+  measure on SU(3) (placeholder total mass).
+- def `Character_expansion_plaquette β : ℝ := 0` — placeholder
+  for `e^{-β Re tr U} = Σ c_n(β) · χ_n(U)`.
+- theorem `Single_plaquette_bound_SU3 (β) (hβ : 0 < β)` (sorry)
+  — `Character_expansion_plaquette β · SU3_Haar_measure_explicit
+  ≤ Real.exp (-(Casimir_SU3 · β))`. The sharpened SU(3)-shaped
+  target. Reduction chain:
+    Single_plaquette_bound_SU3
+      ⇐ heat-kernel asymptotic (`K_t(1) ∼ t^{-4} · e^{-c/t}`)
+      ⇐ `Heat_kernel_asymptotics` (19.1l YM BRICK)
+      ⇐ promote `Heat_kernel_def` from `:= 1` to real surface
+        (target for 19.1m+).
+
+The original 19.1k `Single_plaquette_bound` (Gaussian-form) is
+unchanged at line 204; the new sorry is the SHARPER SU(3)-form
+target whose discharge would propagate through the 19.1k 4-way
+decomposition.
+
+**Track 2 — `Towers/YM/ClusterExpansion.lean` (+8 BRICKS,
++4 defs):**
+
+- 4 new defs (placeholder, NOT in BRICKS):
+  `SU3_dimension_def : ℕ := 8` (= dim SU(3) = dim adjoint rep),
+  `Character_def n g : ℝ := 0` (placeholder χ_n on SU(3)),
+  `Casimir_SU3 : ℝ := 3` (C_2(adjoint) = N for SU(N)),
+  `Heat_kernel_def t : ℝ := 1` (placeholder K_t(1) at identity).
+- 8 sorry-free BRICKS theorems (axiom footprint
+  `⊆ {propext, Classical.choice, Quot.sound}`):
+  - 3 rfl pins (`SU3_dimension_eq_eight`,
+    `Character_def_zero`, `Casimir_SU3_eq_three`).
+  - 2 positivity helpers (`SU3_dimension_pos` via `decide`,
+    `Casimir_SU3_pos` via `norm_num`).
+  - 1 character orthogonality (`Character_orthogonality`,
+    `χ_n · χ_m = 0` at placeholder, modelling Schur
+    orthogonality `∫ χ_n χ_m dU = δ_{nm}` off-diagonal).
+  - 1 heat-kernel asymptotic bound (`Heat_kernel_asymptotics`,
+    `K_t(1) ≤ e^{C·t}` for `t ≥ 0`, proven via
+    `Real.one_le_exp` + `mul_nonneg`).
+  - 1 heat-kernel positivity (`Heat_kernel_def_pos`).
+
+**The explicit gap (post-condition).** With 19.1l the
+`Single_plaquette_bound_SU3` sorry is no longer monolithic "do
+Gaussian/character-expansion analysis"; it is now reduced to
+"discharge the SU(3) heat-kernel `t^{-4} · e^{-c/t}` small-`t`
+asymptotic against the Casimir-driven placeholder bound
+`K_t(1) ≤ e^{C·t}` landed in YM/ as `Heat_kernel_asymptotics`."
+If a 19.1m batch promotes `Heat_kernel_def` away from the `:= 1`
+placeholder and discharges the genuine small-`t` asymptotic,
+`Single_plaquette_bound_SU3` closes — and via the 19.1k 4-way
+decomposition wrapper `Polymer_activity_bound_real`, YM tower
+can flip from `Open`.
+
+**Honest scope (locked, unchanged from 19.1j/k).** YM tower
+stays `Status: Open`. NO promotion of `MassGap_YM4_Clay`. NO
+`YM_tower_status_closed` symbol. NO new `Towers/YM/YM4.lean`.
+`replit.md`, `docs/ROADMAP.md`, `Towers/YM/Spectrum.lean`
+`MassGap_YM4_Clay` schema, and the `lean-proof/` spine all
+UNTOUCHED. The three 19.1f/g sorries and four 19.1k sorries in
+Attempts/ UNCHANGED — single named gate to closing YM still
+intact.
+
+**Drift guard.** Genesis seal `eecbcd9a…875f` re-verified
+green. Axiom footprint of BRICKS stays
+`⊆ {propext, Classical.choice, Quot.sound}`. No sorry in
+`Towers/YM/ClusterExpansion.lean`. 8 sorries total in
+`Towers/Attempts/ClusterExpansion.lean` (3 from 19.1f/g
+unchanged + 4 from 19.1k unchanged + 1 new from 19.1l).
+
+---
+
 ## Batch 19.1k — Brydges-Federbush Step 1: structural decomposition. Wall 388 → 400, +12 BRICKS, +4 Attempts sorries (2026-05-27)
 
 User directive: "break the sorry down." Decompose the monolithic

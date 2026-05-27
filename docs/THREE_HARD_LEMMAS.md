@@ -1,8 +1,32 @@
 # The Three Hard Lemmas
 
-**Status:** open. **Repository wall:** 400 bricks, axiom footprint
+**Status:** open. **Repository wall:** 408 bricks, axiom footprint
 `⊆ {propext, Classical.choice, Quot.sound}`. **Towers:**
 `Status: Open` (`docs/ROADMAP.md` § 2, § 3).
+
+**Batch 19.1l update (2026-05-27):** Single Plaquette — sharpen
+the Brydges-Federbush single-plaquette bound to the real SU(3)
+Haar integral form, reduced to a heat-kernel asymptotic on
+SU(3). Track 2 (`Towers/YM/ClusterExpansion.lean`): +8 BRICKS
+(wall 400 → 408) covering `SU3_dimension_def = 8`, placeholder
+SU(3) characters with Schur orthogonality, `Casimir_SU3 = 3`
+(adjoint-rep Casimir of SU(3)), and the placeholder heat-kernel
+bound `K_t(1) ≤ e^{C·t}` for `t ≥ 0`. Track 1
+(`Towers/Attempts/ClusterExpansion.lean`): +1 new sorry
+(`Single_plaquette_bound_SU3`) for the SU(3) Haar integral
+target, plus 2 new defs (`SU3_Haar_measure_explicit`,
+`Character_expansion_plaquette`). The new sorry is the
+SHARPER SU(3)-form whose discharge would propagate through the
+19.1k 4-way decomposition. Explicit reduction chain documented:
+Single_plaquette_bound_SU3 ⇐ Heat_kernel_asymptotics ⇐ promote
+`Heat_kernel_def` from `:= 1` to real surface (target for
+19.1m+). If 19.1m discharges that promotion, YM tower can flip
+from `Open`. Attempts sorries 7 → 8. YM tower stays Status:
+Open; locked honest-scope guard remains in force; no promotion
+of `MassGap_YM4_Clay`; no `replit.md` / `ROADMAP.md` edits.
+See `docs/CHANGELOG.md` Batch 19.1l for the full ship list.
+**Honest scope: YM is NOT solved — Yang-Mills Clay remains
+open in this repo.**
 
 **Batch 19.1k update (2026-05-27):** Brydges-Federbush Step 1 —
 structural decomposition of the monolithic polymer-activity-bound

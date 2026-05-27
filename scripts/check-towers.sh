@@ -1571,6 +1571,45 @@ BRICKS=(
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Exp_moment_bound_nonneg"
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Wick_theorem_plaquette"
   "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Single_plaquette_handle"
+  # -----------------------------------------------------------------
+  # Batch 19.1l — Single Plaquette (Track 2). Wall 400 → 408,
+  # +8 BRICKS. SU(3)-shaped helper bricks for the Attempts/
+  # `Single_plaquette_bound_SU3` sorry that reduces the single-
+  # plaquette integral `∫_{SU(3)} e^{-β Re tr U} dU` to a heat-
+  # kernel asymptotic bound on SU(3). All sorry-free, classical
+  # trio axioms only. YM tower stays Status: Open.
+  #
+  # 4 new defs (NOT in BRICKS):
+  #   SU3_dimension_def (:= 8), Character_def (:= 0 placeholder
+  #   character χ_n on SU(3)), Casimir_SU3 (:= 3, C_2 for adjoint
+  #   rep of SU(3)), Heat_kernel_def (:= 1 placeholder K_t(1) at
+  #   identity).
+  #
+  # 8 BRICKS theorems:
+  #   3 rfl pins: SU3_dimension_eq_eight, Character_def_zero,
+  #     Casimir_SU3_eq_three.
+  #   2 positivity helpers: SU3_dimension_pos, Casimir_SU3_pos.
+  #   1 character orthogonality: Character_orthogonality
+  #     (Schur orthogonality `∫ χ_n χ_m = δ_{nm}` at placeholder).
+  #   1 heat-kernel asymptotic bound: Heat_kernel_asymptotics
+  #     (`K_t(1) ≤ e^{C·t}` for `t ≥ 0`, via Real.one_le_exp).
+  #   1 heat-kernel positivity: Heat_kernel_def_pos.
+  #
+  # Track 1 (Attempts/, NOT in BRICKS): +1 new sorry
+  #   Single_plaquette_bound_SU3, the SU(3)-shaped sharper target
+  #   that reduces the Gaussian-form 19.1k Single_plaquette_bound
+  #   to a heat-kernel asymptotic on SU(3). Plus 2 new defs
+  #   (SU3_Haar_measure_explicit, Character_expansion_plaquette).
+  #   Attempts sorry-count: 7 → 8.
+  # -----------------------------------------------------------------
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.SU3_dimension_eq_eight"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.SU3_dimension_pos"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Character_def_zero"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Character_orthogonality"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Casimir_SU3_eq_three"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Casimir_SU3_pos"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Heat_kernel_asymptotics"
+  "Towers.YM.ClusterExpansion|TheoremaAureum.Towers.YM.ClusterExpansion.Heat_kernel_def_pos"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

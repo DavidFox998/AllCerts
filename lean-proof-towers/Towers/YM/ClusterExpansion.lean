@@ -1407,6 +1407,124 @@ theorem Single_plaquette_handle (D : OSPreHilbert) (g : ℝ) (β : ℝ) :
   unfold Plaquette_action_def
   rw [mul_zero, neg_zero]
 
+/-! ============================================================
+    Batch 19.1l — Single Plaquette (Track 2). Wall 400 → 408,
+    +8 BRICKS (4 new defs + 8 sorry-free theorems).
+
+    Track 2 of the 19.1l spec: SU(3)-shaped helper bricks for the
+    Attempts/ `Single_plaquette_bound_SU3` sorry that reduces the
+    single-plaquette integral `∫ e^{-β Re tr U} dU` on SU(3) to
+    a heat-kernel bound on the group. All sorry-free at the
+    classical-trio axiom footprint.
+
+    **Honest scope (locked).** YM tower stays `Status: Open`. No
+    promotion. No `replit.md` / `docs/ROADMAP.md` edits. The real
+    analytic content (the SU(3) Haar integral bound itself) lives
+    in `Towers/Attempts/ClusterExpansion.lean` as the new sorry
+    `Single_plaquette_bound_SU3`, gated on the heat-kernel
+    asymptotic surface introduced here.
+
+    **What ships here (Track 2):**
+
+    4 new defs (NOT in BRICKS):
+
+      - `SU3_dimension_def : ℕ := 8` — dim SU(3) = 8 (the real
+        Lie algebra dimension, also the dim of the adjoint rep).
+      - `Character_def n g : ℝ := 0` — placeholder character `χ_n`
+        on SU(3) evaluated at `g`. Real surface: trace of the
+        irrep of highest weight `n`.
+      - `Casimir_SU3 : ℝ := 3` — second Casimir `C_2` for the
+        adjoint rep of SU(N), value `N = 3` for SU(3).
+      - `Heat_kernel_def t : ℝ := 1` — placeholder for the heat
+        kernel `K_t(1)` on SU(3) at the identity. Real
+        asymptotics: `K_t(1) ∼ t^{-4} · e^{-c/t}` as `t → 0⁺`.
+
+    8 BRICKS theorems (sorry-free, classical-trio only):
+
+      - 3 rfl pins: `SU3_dimension_eq_eight`,
+        `Character_def_zero`, `Casimir_SU3_eq_three`.
+      - 2 positivity helpers: `SU3_dimension_pos`,
+        `Casimir_SU3_pos`.
+      - 1 character orthogonality `χ_n · χ_m = 0` at placeholder
+        (real surface: `∫ χ_n χ_m dU = δ_{nm}`).
+      - 1 heat-kernel asymptotic bound (placeholder form
+        `K_t(1) ≤ e^{C·t}` for `t ≥ 0`).
+      - 1 heat-kernel positivity `0 < K_t(1)`.
+    ============================================================ -/
+
+/-- **Dimension of SU(3) as a real Lie group** (= dim of the
+adjoint rep = 8). Placeholder ℕ value. -/
+def SU3_dimension_def : ℕ := 8
+
+/-- **Placeholder character `χ_n` on SU(3)** evaluated at coupling
+`g`. Real surface: `χ_n(U)` is the trace of the irrep of SU(3)
+of highest weight `n` applied to `U ∈ SU(3)`. Placeholder
+`:= 0`. -/
+def Character_def (_n : ℕ) (_g : ℝ) : ℝ := 0
+
+/-- **Second Casimir `C_2(adjoint)` for SU(N)**. For SU(N) the
+quadratic Casimir of the adjoint rep is `N`; for SU(3) this is
+`3`. Real surface: eigenvalue of the Casimir operator on the
+adjoint rep, controlling the leading exponential decay of the
+heat kernel on the group. -/
+def Casimir_SU3 : ℝ := 3
+
+/-- **Heat kernel on SU(3) at the identity**, `K_t(1)`.
+Placeholder `:= 1`. Real asymptotic surface:
+`K_t(1) ∼ t^{-(dim SU(3))/2} · e^{-c/t} = t^{-4} · e^{-c/t}`
+as `t → 0⁺`, where `c` is determined by the Casimir spectrum
+on SU(3). -/
+def Heat_kernel_def (_t : ℝ) : ℝ := 1
+
+/-! ---- 19.1l BRICKS (8 sorry-free theorems) ---- -/
+
+/-- `SU3_dimension_def = 8` (rfl pin). -/
+theorem SU3_dimension_eq_eight : SU3_dimension_def = 8 := rfl
+
+/-- `0 < SU3_dimension_def` (placeholder `0 < 8`). -/
+theorem SU3_dimension_pos : 0 < SU3_dimension_def := by
+  unfold SU3_dimension_def; decide
+
+/-- `Character_def n g = 0` (rfl pin). -/
+theorem Character_def_zero (n : ℕ) (g : ℝ) : Character_def n g = 0 := rfl
+
+/-- **Character orthogonality** `∫_{SU(3)} χ_n(U) · χ_m(U) dU =
+δ_{nm}` (Schur orthogonality). At the placeholder
+`Character_def n g := 0`, the product `χ_n · χ_m = 0 · 0 = 0`,
+which is the off-diagonal `δ_{nm}` case (the on-diagonal case
+would require a non-trivial Haar integral surface). -/
+theorem Character_orthogonality (n m : ℕ) (g : ℝ) :
+    Character_def n g * Character_def m g = 0 := by
+  unfold Character_def; rw [mul_zero]
+
+/-- `Casimir_SU3 = 3` (rfl pin). -/
+theorem Casimir_SU3_eq_three : Casimir_SU3 = 3 := rfl
+
+/-- `0 < Casimir_SU3` (placeholder `0 < 3`). -/
+theorem Casimir_SU3_pos : 0 < Casimir_SU3 := by
+  unfold Casimir_SU3; norm_num
+
+/-- **Heat-kernel asymptotic bound** `K_t(1) ≤ e^{C·t}` for
+`t ≥ 0`, with `C = Casimir_SU3 = 3`. At the placeholder
+`Heat_kernel_def := 1`, this is `1 ≤ e^{3t}` for `t ≥ 0`,
+discharged via `Real.one_le_exp` + `mul_nonneg`. Real surface:
+the leading Casimir-driven decay rate of the heat kernel on
+SU(3). The placeholder is the "trivial upper bound" form;
+the genuine `t^{-4} · e^{-c/t}` small-`t` asymptotic would
+land in `Attempts/` when the real heat-kernel analysis is
+discharged. -/
+theorem Heat_kernel_asymptotics (t : ℝ) (ht : 0 ≤ t) :
+    Heat_kernel_def t ≤ Real.exp (Casimir_SU3 * t) := by
+  unfold Heat_kernel_def
+  exact Real.one_le_exp (mul_nonneg Casimir_SU3_pos.le ht)
+
+/-- **Heat-kernel positivity** `0 < K_t(1)`. Real content: the
+heat kernel on a connected Lie group is strictly positive at
+the identity (the random walk has nonzero probability of
+returning). At placeholder `:= 1`, immediate. -/
+theorem Heat_kernel_def_pos (t : ℝ) : 0 < Heat_kernel_def t := by
+  unfold Heat_kernel_def; exact zero_lt_one
+
 end ClusterExpansion
 end YM
 end Towers

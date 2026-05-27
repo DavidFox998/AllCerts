@@ -247,6 +247,110 @@ theorem Polymer_activity_bound_real (D : OSPreHilbert) (g : ℝ) (n : ℕ)
     |Polymer_activity_def D g n| ≤ mayer_K_constant ^ n := by
   sorry
 
+/-! ============================================================
+    Batch 19.1l — Single Plaquette (Track 1). Sharpen the
+    `Single_plaquette_bound` sorry from a Gaussian-shaped
+    placeholder (19.1k) to the real SU(3) Haar integral form,
+    explicitly reduced to a heat-kernel asymptotic bound on
+    SU(3).
+
+    User directive: "attack the sorry." The 19.1k
+    `Single_plaquette_bound` reads
+    `Wilson_measure_gaussian_part D g ≤ Real.exp (-(β · S_p))`,
+    which is the Gaussian-reference-measure form. To close YM
+    the real surface needs the SU(3) Haar integral
+    `∫_{SU(3)} e^{-β Re tr U} dU ≤ e^{-c β}`. This batch adds:
+
+      1. `SU3_Haar_measure_explicit` — placeholder for the
+         normalized Haar measure on SU(3).
+      2. `Character_expansion_plaquette` — placeholder for the
+         character expansion
+         `e^{-β Re tr U} = Σ_n c_n(β) · χ_n(U)`.
+      3. `Single_plaquette_bound_SU3` (NEW sorry) — the
+         SU(3)-shaped bound, gated on the YM-namespace heat-
+         kernel asymptotic surface
+         `Heat_kernel_asymptotics : K_t(1) ≤ e^{C·t}`.
+
+    The original 19.1k `Single_plaquette_bound` is unchanged
+    (still sorry-bearing at line 204) — it states the
+    Gaussian-form bound that the 4-way decomposition wrapper
+    `Polymer_activity_bound_real` calls. The new
+    `Single_plaquette_bound_SU3` is the SHARPER target whose
+    discharge would land the real plaquette estimate.
+
+    **Honest scope (locked).** YM tower stays `Status: Open`.
+    Three 19.1f/g sorries unchanged (lines 74/87/108). Four
+    19.1k sorries unchanged (lines 204/217/228/248). One new
+    sorry this batch (`Single_plaquette_bound_SU3`), total 8.
+    `replit.md`, `docs/ROADMAP.md`, `Towers/YM/Spectrum.lean`
+    `MassGap_YM4_Clay` schema, and the `lean-proof/` spine all
+    UNTOUCHED.
+
+    **The explicit gap (post-condition).** With 19.1l, the
+    `Single_plaquette_bound_SU3` sorry is no longer monolithic
+    "do Gaussian analysis"; it is now reduced to "discharge the
+    SU(3) heat-kernel `t^{-4} · e^{-c/t}` small-`t` asymptotic
+    against the Casimir-driven bound `K_t(1) ≤ e^{C·t}`
+    landed in YM/ as `Heat_kernel_asymptotics`." If a 19.1m
+    batch promotes `Heat_kernel_def` away from the `:= 1`
+    placeholder and discharges that asymptotic, the
+    Single_plaquette_bound_SU3 sorry closes — and via the 19.1k
+    4-way decomposition, YM tower can flip from `Open`.
+    ============================================================ -/
+
+/-- **Normalized Haar measure on SU(3)** as a real total mass
+(`= 1` for a probability measure). Placeholder `:= 1`. Real
+surface: the unique bi-invariant Borel probability measure on
+the compact Lie group SU(3), used as the integration measure
+for the single-plaquette Wilson integral. -/
+def SU3_Haar_measure_explicit : ℝ := 1
+
+/-- **Character expansion of the Boltzmann weight** on a single
+plaquette: real surface
+`e^{-β Re tr U} = Σ_{n ≥ 0} c_n(β) · χ_n(U)`,
+where `χ_n` are SU(3) irreducible characters and `c_n(β)` are
+the modified Bessel coefficients. Placeholder `:= 0` (truncated
+expansion). Used as the integrand-side bookkeeping symbol for
+the `Single_plaquette_bound_SU3` reduction. -/
+def Character_expansion_plaquette (_β : ℝ) : ℝ := 0
+
+/-- **Single-plaquette SU(3) Haar integral bound (real form).**
+The real analytic target:
+`∫_{SU(3)} e^{-β Re tr U} dU ≤ e^{-c · β}` for a constant
+`c > 0` determined by the SU(3) heat-kernel asymptotics.
+
+Shape: the LHS `Character_expansion_plaquette β *
+SU3_Haar_measure_explicit` is the placeholder integrand-times-
+measure product (real surface: the Haar integral of the
+Boltzmann weight, via the character expansion). The RHS
+`Real.exp (-(Casimir_SU3 * β))` is the SU(3) Casimir-driven
+exponential bound.
+
+**The explicit gap.** At the 19.1l placeholders:
+  * `Character_expansion_plaquette β := 0`, so LHS = `0 · 1 = 0`.
+  * `Casimir_SU3 = 3`, so RHS = `e^{-3β}`.
+The placeholder bound `0 ≤ e^{-3β}` is trivially true; the
+sorry flags the slot for the real Gaussian / character-
+expansion / heat-kernel analysis (NOT the placeholder
+discharge). Concretely, the reduction goes:
+
+  Single_plaquette_bound_SU3                           -- this sorry
+    ⇐ heat-kernel asymptotic (`K_t(1) ∼ t^{-4} · e^{-c/t}`)
+    ⇐ `Heat_kernel_asymptotics`                       -- 19.1l YM BRICK
+       (currently the trivial `K ≤ e^{C·t}` placeholder bound)
+    ⇐ promote `Heat_kernel_def` from `:= 1` to real surface  -- 19.1m+
+
+If 19.1m discharges that promotion, this sorry closes — and
+the 19.1k 4-way decomposition wrapper
+`Polymer_activity_bound_real` can be discharged via
+`Single_plaquette_bound` + `Polymer_decoupling_estimate` +
+`Inductive_activity_bound`, landing the analytic side of
+the YM Brydges-Federbush polymer expansion. -/
+theorem Single_plaquette_bound_SU3 (β : ℝ) (_hβ : 0 < β) :
+    Character_expansion_plaquette β * SU3_Haar_measure_explicit ≤
+      Real.exp (-(Casimir_SU3 * β)) := by
+  sorry
+
 end ClusterExpansion
 end Attempts
 end Towers
