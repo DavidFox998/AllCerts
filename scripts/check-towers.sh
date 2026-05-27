@@ -1846,6 +1846,36 @@ BRICKS=(
   "Towers.YM.PeterWeylHeat|TheoremaAureum.Towers.YM.PeterWeylHeat.Weyl_sum_explicit_SU3_real_le_Heat_kernel_envelope_real"
   "Towers.YM.PeterWeylHeat|TheoremaAureum.Towers.YM.PeterWeylHeat.Heat_kernel_envelope_real_ge_one_of_pos"
   "Towers.YM.PeterWeylHeat|TheoremaAureum.Towers.YM.PeterWeylHeat.Heat_kernel_envelope_real_ge_truncation"
+  # Batch 20.1a (2026-05-27, Surface #3 setup, "Plan #156"): four
+  # trio-clean definitions in `Towers/YM/Continuum.lean` that make
+  # the Clay 4D SU(3) Yang-Mills continuum statement
+  # machine-checkable. Zero theorems. The only `sorry` introduced
+  # by this batch lives in `Towers/Attempts/Clay.lean` as the
+  # parked `MassGap_YM4_Clay` (NOT a brick). No Varadhan small-`t`
+  # asymptotic is assumed anywhere; Varadhan is project task #156,
+  # a separate track. Wall: 460 → 464.
+  #   1. `YM4_Continuum`        — schema type (structure with
+  #                                `gauge_rank = 3`, `spacetime_dim = 4`).
+  #   2. `IsMassGap`            — predicate `0 < Δ` (placeholder shape).
+  #   3. `lattice_to_continuum` — renormalization map from
+  #                                `(a : ℝ, A : SU3Connection)` to
+  #                                the default `YM4_Continuum`.
+  #   4. `AsymptoticFreedom`    — Prop `∀ μ > 0, ∃ g, 0 < g ∧ g < 1`.
+  # **Honest scope.** None advance YM past `Status: Open`
+  # (`docs/ROADMAP.md` § 2). The four defs are placeholder schema
+  # naming the slots Surface #3 (continuum limit `a → 0`) will
+  # eventually flesh out via Batches 20.1b (limit existence), 20.1c
+  # (OS axioms), 20.1d (mass gap). After this batch
+  # `MassGap_YM4_Clay` exists as a machine-checkable Lean
+  # statement with explicit type, parked at sorry — that is what
+  # the directive means by "becomes a BRICK target with explicit
+  # type"; it is **not** registered in this BRICKS array because
+  # its body is `sorry` and `#print axioms` would report
+  # `[sorryAx]`.
+  "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.YM4_Continuum"
+  "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.IsMassGap"
+  "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.lattice_to_continuum"
+  "Towers.YM.Continuum|TheoremaAureum.Towers.YM.Continuum.AsymptoticFreedom"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

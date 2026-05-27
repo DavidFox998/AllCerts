@@ -6,6 +6,67 @@ this file is the version history.
 
 ---
 
+## Batch 20.1a — Surface #3 setup: define the continuum. Wall 460 → 464, +4 BRICKS, +1 parked sorry (NOT a brick) (2026-05-27)
+
+**Goal ("Plan #156").** Make the Clay 4D SU(3) Yang-Mills continuum
+mass-gap statement machine-checkable. Zero theorems. Four
+definitions. Wall 460 → 464. YM tower stays `Status: Open`
+(`docs/ROADMAP.md` § 2). No Varadhan small-`t` heat-kernel
+asymptotic is assumed anywhere; Varadhan is project task #156,
+a separate track that runs in parallel.
+
+**Two new files.** `Towers/YM/Continuum.lean` ships the four
+trio-clean definitions (sorry-free); `Towers/Attempts/Clay.lean`
+parks the only new `sorry` as the Clay statement against those
+definitions. Sorry stays out of `Towers/YM/` — Attempts/ is where
+research-grade obligations live, and `MassGap_YM4_Clay` is NOT
+registered in BRICKS (its body is `sorry`, so `#print axioms`
+would report `[sorryAx]`).
+
+The four bricks in `Towers/YM/Continuum.lean`:
+
+  1. `YM4_Continuum` — schema `structure` with two `Nat` fields
+     (`gauge_rank = 3`, `spacetime_dim = 4`). Axiom debt = `[]`
+     (no axioms used at all — structure declaration only).
+  2. `IsMassGap T Δ` — predicate `0 < Δ` on a `YM4_Continuum`.
+     Placeholder shape; carries no spectral content.
+  3. `lattice_to_continuum a A` — renormalization map taking
+     `(a : ℝ, A : SU3Connection)` to the default `YM4_Continuum`.
+     Placeholder trivial map; does NOT implement a real `a → 0`
+     continuum limit.
+  4. `AsymptoticFreedom T` — Prop `∀ μ > 0, ∃ g, 0 < g ∧ g < 1`.
+     Names the *shape* of "the running coupling exists and is
+     small in the UV"; does NOT reference a β-function or any RG
+     flow.
+
+The parked obligation in `Towers/Attempts/Clay.lean`:
+
+  * `MassGap_YM4_Clay : ∀ (T : YM4_Continuum), AsymptoticFreedom T
+    → ∃ Δ : ℝ, IsMassGap T Δ`. Proof = `sorry`. NOT a brick.
+    Against the Batch 20.1a placeholder definitions the conclusion
+    reduces to `∃ Δ : ℝ, 0 < Δ` (trivial); the `sorry` is honest
+    because the *real* downstream goal is to upgrade `IsMassGap`
+    to the spectral-gap statement on the OS-reconstructed
+    continuum Hilbert space (Batches 20.1b → 20.1d), at which
+    point this parked obligation becomes the genuine Clay target.
+    Keeping the `sorry` in place across the placeholder ⇒
+    real-spectrum refactor is the whole point of parking it here.
+
+**Honest scope.** None of the four bricks advances YM past
+`Status: Open`. The definitions are placeholder schema naming
+the slots Surface #3 (continuum limit `a → 0`) will eventually
+flesh out. Surface #3 itself remains an open chain with three
+sub-dragons: 20.1b (limit existence), 20.1c (Osterwalder-Schrader
+axioms), 20.1d (real mass gap on the OS-reconstructed Hilbert
+space). Surface #1 stays OPEN until Varadhan (task #156) lands.
+
+**Build status.** `bash scripts/check-towers.sh` reports
+`Towers library built; all 464 brick(s) passed the
+axiom-footprint check`. The Genesis-seal preamble of
+`data/hits.txt` is unchanged.
+
+---
+
 ## Batch 19.1p-redux-b — Truncated Peter-Weyl ≤ heat-kernel envelope. Wall 456 → 460, +4 BRICKS, Attempts sorry 10 → 9 (2026-05-27)
 
 **Track 1 (YM/, sorry-free, Task #155).** New file
