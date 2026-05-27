@@ -103,6 +103,19 @@ interface LedgerIntegrityStatus {
    * replaces it with a new un-acked one (a different forged payload).
    */
   lastOkSidecarStatusAcknowledgedAt: string | null;
+  /**
+   * Task #139: attribution for the operator that dismissed the
+   * current forged-sidecar incident. Mirrors the named-token
+   * attribution used by `POST /api/lean/verify/rebuild`: a matched
+   * named token from `LEDGER_REBUILD_TOKENS` wins; otherwise the
+   * sanitized `X-Referee-Name` header; otherwise the literal string
+   * `"anonymous"` (shared-token deploys with no header). Null while
+   * the banner is still un-acked (or when there is no forged
+   * incident at all). Persisted alongside `acknowledgedAt` in
+   * `data/hits.txt.lastok.forged-ack` so attribution survives a
+   * restart of the API server.
+   */
+  lastOkSidecarStatusAcknowledgedBy: string | null;
 }
 
 const DEFAULT_STALE_THRESHOLD_SECONDS = 3600;
@@ -577,6 +590,11 @@ function readPersistedState(
 interface ForgedAckRecord {
   payloadSha: string;
   acknowledgedAt: string;
+  // Task #139: attribution string persisted alongside the ack so the
+  // dashboard tooltip / audit trail can answer "who dismissed this
+  // banner?" after a server restart. Null on legacy ack files written
+  // before task #139 landed.
+  ackedBy: string | null;
 }
 
 function readForgedAck(
@@ -600,7 +618,20 @@ function readForgedAck(
     ) {
       return null;
     }
-    return { payloadSha: payloadSha.toLowerCase(), acknowledgedAt };
+    // Task #139: attribution is optional for backward compatibility
+    // with ack files written by the task-#124 implementation. A
+    // non-string / empty value is normalized to null so the dashboard
+    // can fall back to a generic "acknowledged" tooltip.
+    const ackedByRaw = obj["ackedBy"];
+    const ackedBy =
+      typeof ackedByRaw === "string" && ackedByRaw.length > 0
+        ? ackedByRaw
+        : null;
+    return {
+      payloadSha: payloadSha.toLowerCase(),
+      acknowledgedAt,
+      ackedBy,
+    };
   } catch (err) {
     logger?.warn?.(
       { err, ackPath },
@@ -730,12 +761,13 @@ export interface LedgerChecker {
    * an already-acked incident returns the original `acknowledgedAt`
    * with `alreadyAcknowledged: true`.
    */
-  acknowledgeForgedSidecar: () =>
+  acknowledgeForgedSidecar: (ackedBy?: string | null) =>
     | {
         ok: true;
         acknowledgedAt: string;
         alreadyAcknowledged: boolean;
         payloadSha: string;
+        ackedBy: string | null;
       }
     | { ok: false; reason: "no_incident" };
 }
@@ -810,6 +842,7 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
   type ForgedIncident = {
     payloadSha: string;
     acknowledgedAt: string | null;
+    ackedBy: string | null;
   };
   let forgedIncident: ForgedIncident | null = null;
   if (persisted.sidecarStatus === "forged") {
@@ -830,6 +863,12 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
         priorAck != null && priorAck.payloadSha === payloadSha
           ? priorAck.acknowledgedAt
           : null;
+      // Task #139: carry forward the persisted attribution so the
+      // dashboard tooltip / audit trail survives a restart.
+      const carriedAckedBy =
+        priorAck != null && priorAck.payloadSha === payloadSha
+          ? priorAck.ackedBy
+          : null;
       if (priorAck != null && priorAck.payloadSha !== payloadSha) {
         // Stale ack from a previous incident — clear it so the
         // dashboard surfaces the new tamper as un-acked.
@@ -839,7 +878,11 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
           /* best-effort */
         }
       }
-      forgedIncident = { payloadSha, acknowledgedAt: carriedAck };
+      forgedIncident = {
+        payloadSha,
+        acknowledgedAt: carriedAck,
+        ackedBy: carriedAck != null ? carriedAckedBy : null,
+      };
     } else {
       // Couldn't sha the forged file — fall back to "no incident".
       try {
@@ -1049,6 +1092,7 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
       lastOkSidecarStatus,
       sidecarSecretStrictMode: STRICT_MODE,
       lastOkSidecarStatusAcknowledgedAt: null,
+      lastOkSidecarStatusAcknowledgedBy: null,
     };
 
 
@@ -1075,9 +1119,11 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
     if (forgedIncident != null) {
       base.lastOkSidecarStatus = "forged";
       base.lastOkSidecarStatusAcknowledgedAt = forgedIncident.acknowledgedAt;
+      base.lastOkSidecarStatusAcknowledgedBy = forgedIncident.ackedBy;
     } else {
       base.lastOkSidecarStatus = lastOkSidecarStatus;
       base.lastOkSidecarStatusAcknowledgedAt = null;
+      base.lastOkSidecarStatusAcknowledgedBy = null;
     }
 
     if (!existsSync(HITS)) {
@@ -1246,12 +1292,15 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
     res.status(200).json({ ...status, monitor });
   });
 
-  function acknowledgeForgedSidecar():
+  function acknowledgeForgedSidecar(
+    ackedBy?: string | null,
+  ):
     | {
         ok: true;
         acknowledgedAt: string;
         alreadyAcknowledged: boolean;
         payloadSha: string;
+        ackedBy: string | null;
       }
     | { ok: false; reason: "no_incident" } {
     if (forgedIncident == null) {
@@ -1263,17 +1312,32 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
         acknowledgedAt: forgedIncident.acknowledgedAt,
         alreadyAcknowledged: true,
         payloadSha: forgedIncident.payloadSha,
+        ackedBy: forgedIncident.ackedBy,
       };
     }
+    // Task #139: normalize the caller-supplied attribution. Empty /
+    // missing values collapse to the literal "anonymous" so the
+    // audit trail always names a dismisser (shared-token deploys
+    // with no X-Referee-Name header still produce a stable string,
+    // matching the rebuild-attribution contract).
+    const ackedByNormalized: string =
+      typeof ackedBy === "string" && ackedBy.length > 0
+        ? ackedBy
+        : "anonymous";
     const acknowledgedAt = new Date().toISOString();
     writeForgedAck(
       FORGED_ACK_PATH,
-      { payloadSha: forgedIncident.payloadSha, acknowledgedAt },
+      {
+        payloadSha: forgedIncident.payloadSha,
+        acknowledgedAt,
+        ackedBy: ackedByNormalized,
+      },
       defaultLogger,
     );
     forgedIncident = {
       payloadSha: forgedIncident.payloadSha,
       acknowledgedAt,
+      ackedBy: ackedByNormalized,
     };
     // Suppress any still-pending boot-forged one-shot alert: the
     // operator has dismissed the incident from the dashboard, so the
@@ -1285,6 +1349,7 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
       acknowledgedAt,
       alreadyAcknowledged: false,
       payloadSha: forgedIncident.payloadSha,
+      ackedBy: ackedByNormalized,
     };
   }
 

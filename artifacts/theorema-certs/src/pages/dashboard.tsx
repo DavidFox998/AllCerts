@@ -1825,9 +1825,21 @@ export default function DashboardPage() {
                   <span
                     className="text-[10px] uppercase tracking-wider border border-red-500/40 bg-red-500/20 px-1.5 py-0.5"
                     data-testid="badge-ledger-sidecar-forged-acknowledged"
-                    title={`Acknowledged at ${ledgerIntegrity.lastOkSidecarStatusAcknowledgedAt}`}
+                    data-acked-by={
+                      ledgerIntegrity?.lastOkSidecarStatusAcknowledgedBy ?? ""
+                    }
+                    title={
+                      ledgerIntegrity?.lastOkSidecarStatusAcknowledgedBy
+                        ? `Acknowledged by ${ledgerIntegrity.lastOkSidecarStatusAcknowledgedBy} at ${ledgerIntegrity.lastOkSidecarStatusAcknowledgedAt}`
+                        : `Acknowledged at ${ledgerIntegrity.lastOkSidecarStatusAcknowledgedAt}`
+                    }
                   >
                     acknowledged
+                    {ledgerIntegrity?.lastOkSidecarStatusAcknowledgedBy ? (
+                      <span className="normal-case lowercase tracking-normal ml-1 opacity-80">
+                        · {ledgerIntegrity.lastOkSidecarStatusAcknowledgedBy}
+                      </span>
+                    ) : null}
                   </span>
                 ) : null}
               </div>

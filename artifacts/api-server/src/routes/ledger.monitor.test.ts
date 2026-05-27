@@ -463,6 +463,117 @@ describe("startLedgerMonitor", () => {
     }
   });
 
+  it("persists forged-ack attribution (ackedBy) across a restart (task #139)", async () => {
+    const sealed = "line1\nline2\nline3\n";
+    const { size, sha } = writeHits(sealed);
+    writeCheckpoint(size, sha);
+    // Forge the sidecar before the first boot so the checker latches
+    // a forged-incident from `readPersistedState`. Capture the exact
+    // bytes so we can re-forge the SAME payloadSha after the restart
+    // (the ack record is bound to that sha, and a different forge
+    // would correctly invalidate it).
+    const forgedBytes =
+      JSON.stringify({
+        lastOkAt: new Date(Date.now() + 60_000).toISOString(),
+        lastCheckedAt: new Date().toISOString(),
+      }) + "\n";
+    writeFileSync(lastOkPath, forgedBytes);
+
+    const secretPath = `${lastOkPath}.key`;
+    const checker1 = createLedgerChecker({
+      hitsPath,
+      checkpointPath,
+      lastOkPath,
+      secretPath,
+    });
+
+    // Boot status: forged, un-acked.
+    const boot = checker1.buildStatus();
+    expect(boot.lastOkSidecarStatus).toBe("forged");
+    expect(boot.lastOkSidecarStatusAcknowledgedAt).toBeNull();
+    expect(boot.lastOkSidecarStatusAcknowledgedBy).toBeNull();
+
+    // Operator dismisses via the rebuild-auth surface; named referee
+    // attribution is threaded through `acknowledgeForgedSidecar`.
+    const ack = checker1.acknowledgeForgedSidecar("alice");
+    expect(ack.ok).toBe(true);
+    if (!ack.ok) throw new Error("unreachable");
+    expect(ack.ackedBy).toBe("alice");
+    expect(ack.alreadyAcknowledged).toBe(false);
+
+    // Same-process re-ack is idempotent and surfaces the original
+    // attribution (no overwrite).
+    const reack = checker1.acknowledgeForgedSidecar("mallory");
+    expect(reack.ok).toBe(true);
+    if (!reack.ok) throw new Error("unreachable");
+    expect(reack.alreadyAcknowledged).toBe(true);
+    expect(reack.ackedBy).toBe("alice");
+
+    const after = checker1.buildStatus();
+    expect(after.lastOkSidecarStatus).toBe("forged");
+    expect(after.lastOkSidecarStatusAcknowledgedAt).toBe(ack.acknowledgedAt);
+    expect(after.lastOkSidecarStatusAcknowledgedBy).toBe("alice");
+
+    // Simulate a server restart: re-forge the sidecar bytes (since
+    // checker1's buildStatus rewrote a legitimate HMAC'd payload) so
+    // the new checker sees the SAME forged payloadSha the ack was
+    // bound to, and confirm attribution is carried forward.
+    writeFileSync(lastOkPath, forgedBytes);
+
+    const checker2 = createLedgerChecker({
+      hitsPath,
+      checkpointPath,
+      lastOkPath,
+      secretPath,
+    });
+    const restartStatus = checker2.buildStatus();
+    expect(restartStatus.lastOkSidecarStatus).toBe("forged");
+    expect(restartStatus.lastOkSidecarStatusAcknowledgedAt).toBe(
+      ack.acknowledgedAt,
+    );
+    expect(restartStatus.lastOkSidecarStatusAcknowledgedBy).toBe("alice");
+
+    // Empty / null attribution from the auth layer (shared-token
+    // deploy with no X-Referee-Name) collapses to "anonymous". To
+    // test this, wipe the on-disk ack and re-ack on a fresh
+    // payloadSha.
+    try {
+      unlinkSync(`${lastOkPath}.forged-ack`);
+    } catch {
+      /* ignore */
+    }
+    writeFileSync(
+      lastOkPath,
+      JSON.stringify({
+        lastOkAt: new Date(Date.now() + 120_000).toISOString(),
+        lastCheckedAt: new Date().toISOString(),
+        note: "different-bytes",
+      }) + "\n",
+    );
+    const checker3 = createLedgerChecker({
+      hitsPath,
+      checkpointPath,
+      lastOkPath,
+      secretPath,
+    });
+    checker3.buildStatus();
+    const anon = checker3.acknowledgeForgedSidecar(null);
+    expect(anon.ok).toBe(true);
+    if (!anon.ok) throw new Error("unreachable");
+    expect(anon.ackedBy).toBe("anonymous");
+
+    try {
+      unlinkSync(secretPath);
+    } catch {
+      /* ignore */
+    }
+    try {
+      unlinkSync(`${lastOkPath}.forged-ack`);
+    } catch {
+      /* ignore */
+    }
+  });
+
   it("fires exactly one 'checkpoint_stale' alert when the checkpoint mtime ages past the threshold, then 'recovered' when re-rolled (task #111)", async () => {
     const sealed = "line1\nline2\nline3\n";
     const { size, sha } = writeHits(sealed);

@@ -24,5 +24,19 @@ export interface SidecarForgedAckResult {
   alreadyAcknowledged?: boolean;
   /** sha256 hex of the forged sidecar payload bytes the ack is bound to */
   payloadSha?: string;
+  /**
+     * Task #139. Attribution string for the operator that
+  dismissed the banner. A matched named token from
+  `LEDGER_REBUILD_TOKENS` wins; otherwise the sanitized
+  `X-Referee-Name` request header; otherwise the literal
+  string `"anonymous"`. Persisted on the on-disk
+  forged-ack sidecar so the value survives a restart and
+  shows up in `lastOkSidecarStatusAcknowledgedBy` on
+  subsequent `GET /ledger/integrity` responses. Null only
+  on legacy ack files written before task #139 landed.
+
+     * @nullable
+     */
+  ackedBy?: string | null;
   error?: string;
 }

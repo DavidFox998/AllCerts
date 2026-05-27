@@ -311,6 +311,20 @@ export interface SidecarForgedAckResult {
   alreadyAcknowledged?: boolean;
   /** sha256 hex of the forged sidecar payload bytes the ack is bound to */
   payloadSha?: string;
+  /**
+     * Task #139. Attribution string for the operator that
+  dismissed the banner. A matched named token from
+  `LEDGER_REBUILD_TOKENS` wins; otherwise the sanitized
+  `X-Referee-Name` request header; otherwise the literal
+  string `"anonymous"`. Persisted on the on-disk
+  forged-ack sidecar so the value survives a restart and
+  shows up in `lastOkSidecarStatusAcknowledgedBy` on
+  subsequent `GET /ledger/integrity` responses. Null only
+  on legacy ack files written before task #139 landed.
+
+     * @nullable
+     */
+  ackedBy?: string | null;
   error?: string;
 }
 
@@ -952,6 +966,24 @@ export interface LedgerIntegrityStatus {
      * @nullable
      */
   lastOkSidecarStatusAcknowledgedAt?: string | null;
+  /**
+     * Task #139. Attribution string for the operator that
+  dismissed the current forged-sidecar incident. A matched
+  named token from `LEDGER_REBUILD_TOKENS` wins; otherwise
+  the sanitized `X-Referee-Name` request header recorded
+  on the original `POST /ledger/sidecar-forged-ack`;
+  otherwise the literal string `"anonymous"`
+  (shared-token deploys with no header). Null while the
+  banner is still un-acked, when `lastOkSidecarStatus` is
+  not `forged`, or on legacy ack files written before
+  task #139 landed. Persisted to
+  `data/hits.txt.lastok.forged-ack` so the value survives
+  a restart and is shown as a tooltip on the dashboard
+  "acknowledged" badge.
+
+     * @nullable
+     */
+  lastOkSidecarStatusAcknowledgedBy?: string | null;
   /** Task #97. Observability surface for the server-side
   ledger-integrity monitor (the background timer added in
   task #85). Lets the dashboard show operators that the

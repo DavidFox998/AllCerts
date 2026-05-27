@@ -600,7 +600,13 @@ router.post("/ledger/sidecar-forged-ack", (req, res) => {
     res.status(auth.status).json({ ok: false, error: auth.error });
     return;
   }
-  const result = forgedSidecarAcker();
+  // Task #139: thread the rebuild-auth attribution into the ack so
+  // the audit trail / dashboard tooltip name the dismisser. Named
+  // tokens from LEDGER_REBUILD_TOKENS win (auth.refereeName already
+  // implements that precedence over X-Referee-Name); a shared-token
+  // deploy with no header falls through to "anonymous" inside the
+  // checker.
+  const result = forgedSidecarAcker(auth.refereeName);
   if (!result.ok) {
     res.status(409).json({
       ok: false,
@@ -614,7 +620,9 @@ router.post("/ledger/sidecar-forged-ack", (req, res) => {
       payloadSha: result.payloadSha,
       acknowledgedAt: result.acknowledgedAt,
       alreadyAcknowledged: result.alreadyAcknowledged,
-      ackedBy: getClientIp(req),
+      ackedBy: result.ackedBy,
+      ackedByIp: getClientIp(req),
+      refereeName: auth.refereeName,
     },
     "Ledger sidecar-forged incident acknowledged by operator",
   );
@@ -623,6 +631,7 @@ router.post("/ledger/sidecar-forged-ack", (req, res) => {
     acknowledgedAt: result.acknowledgedAt,
     alreadyAcknowledged: result.alreadyAcknowledged,
     payloadSha: result.payloadSha,
+    ackedBy: result.ackedBy,
   });
 });
 
