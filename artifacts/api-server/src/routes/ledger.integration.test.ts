@@ -1127,3 +1127,367 @@ describe("watchdog stall alert (task #129, e2e through kernel)", () => {
     30_000,
   );
 });
+
+/**
+ * Task #162: end-to-end coverage that the task #144 watchdog-stalled
+ * subject ACTUALLY reaches the wire on both the SMTP and webhook
+ * transports — not just the on-disk `ledger-alerts.jsonl` ring
+ * buffer. The Python-side `tests/test_alerts.py` proves
+ * `_fire_ledger_alert` builds the distinct Subject / `subject`
+ * field; the TS-side `ledger.monitor.test.ts` proves the watchdog
+ * builds the right context shape; this test wires them together so
+ * a regression that drops the watchdog-specific fields between TS
+ * and Python (e.g. an unintentional payload-key rename) cannot
+ * slip past both unit suites.
+ *
+ * Flow per test:
+ *   real `startLedgerMonitor.checkWatchdog`
+ *     → real `kernel._fire_ledger_alert` (spawned)
+ *       → real `_send_email` to a Node SMTP capture
+ *       → real `_post_webhook` to a Node HTTP capture
+ *         → assert subject is the distinct "MONITOR STALLED" /
+ *           "Ledger monitor RECOVERED" line on both transports.
+ */
+describe("watchdog stall alert — SMTP + webhook subject on the wire (task #162)", () => {
+  const REPO_ROOT = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "..",
+    "..",
+    "..",
+  );
+
+  interface WebhookCapture {
+    server: http.Server;
+    port: number;
+    captured: Array<{ headers: Record<string, string>; body: string }>;
+    close: () => Promise<void>;
+  }
+
+  async function startWebhookCapture(): Promise<WebhookCapture> {
+    const captured: Array<{
+      headers: Record<string, string>;
+      body: string;
+    }> = [];
+    const app = express();
+    app.use(express.raw({ type: "*/*", limit: "1mb" }));
+    app.post("/alert", (req, res) => {
+      captured.push({
+        headers: Object.fromEntries(
+          Object.entries(req.headers).map(([k, v]) => [
+            k,
+            Array.isArray(v) ? v.join(",") : String(v ?? ""),
+          ]),
+        ),
+        body: (req.body as Buffer).toString("utf-8"),
+      });
+      res.status(200).send("ok");
+    });
+    const server = http.createServer(app);
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const port = (server.address() as AddressInfo).port;
+    return {
+      server,
+      port,
+      captured,
+      close: () =>
+        new Promise<void>((resolve, reject) =>
+          server.close((err) => (err ? reject(err) : resolve())),
+        ),
+    };
+  }
+
+  interface SmtpCapture {
+    port: number;
+    messages: Array<{ raw: string; subject: string; body: string }>;
+    close: () => Promise<void>;
+  }
+
+  // Minimal RFC-5321 sink: speaks just enough of EHLO / MAIL FROM /
+  // RCPT TO / DATA / QUIT for `smtplib.SMTP.send_message` (no auth,
+  // no STARTTLS — `_send_email` skips both when SMTP_USER is unset)
+  // to complete. Captures the DATA payload plus the parsed Subject
+  // header and body.
+  async function startSmtpCapture(): Promise<SmtpCapture> {
+    const net = await import("node:net");
+    const messages: Array<{ raw: string; subject: string; body: string }> = [];
+    const server = net.createServer((sock) => {
+      sock.setEncoding("utf-8");
+      let buf = "";
+      let inData = false;
+      let dataLines: string[] = [];
+      const write = (line: string) => sock.write(line + "\r\n");
+      write("220 mini.smtp ready");
+      sock.on("data", (chunk: string) => {
+        buf += chunk;
+        let nl: number;
+        while ((nl = buf.indexOf("\r\n")) >= 0) {
+          const line = buf.slice(0, nl);
+          buf = buf.slice(nl + 2);
+          if (inData) {
+            if (line === ".") {
+              const raw = dataLines.join("\r\n");
+              const headerEnd = raw.indexOf("\r\n\r\n");
+              let subject = "";
+              let body = "";
+              if (headerEnd >= 0) {
+                const headers = raw.slice(0, headerEnd);
+                const rawBody = raw.slice(headerEnd + 4);
+                // RFC-2822 unfold + find Subject:.
+                const unfolded = headers.replace(/\r\n[\t ]+/g, " ");
+                let cte = "";
+                for (const h of unfolded.split("\r\n")) {
+                  const ms = /^Subject:\s*(.*)$/i.exec(h);
+                  if (ms && ms[1] !== undefined) subject = ms[1];
+                  const mc = /^Content-Transfer-Encoding:\s*(.*)$/i.exec(h);
+                  if (mc && mc[1] !== undefined) cte = mc[1].toLowerCase();
+                }
+                // Decode quoted-printable so assertions can match
+                // human-readable substrings that the SMTP layer may
+                // have soft-wrapped (e.g. "do NOT restore hits.txt"
+                // landing across an `=\r\n` soft break).
+                body = rawBody;
+                if (cte === "quoted-printable") {
+                  body = body
+                    .replace(/=\r\n/g, "")
+                    .replace(/=\n/g, "")
+                    .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+                      String.fromCharCode(parseInt(hex, 16)),
+                    );
+                }
+              }
+              messages.push({ raw, subject, body });
+              inData = false;
+              dataLines = [];
+              write("250 queued");
+            } else {
+              dataLines.push(line.startsWith("..") ? line.slice(1) : line);
+            }
+            continue;
+          }
+          const upper = line.toUpperCase();
+          if (upper.startsWith("EHLO") || upper.startsWith("HELO")) {
+            write("250 hello");
+          } else if (upper.startsWith("MAIL FROM:")) {
+            write("250 ok");
+          } else if (upper.startsWith("RCPT TO:")) {
+            write("250 ok");
+          } else if (upper.startsWith("DATA")) {
+            write("354 send data");
+            inData = true;
+            dataLines = [];
+          } else if (upper.startsWith("QUIT")) {
+            write("221 bye");
+            sock.end();
+          } else if (upper.startsWith("RSET") || upper.startsWith("NOOP")) {
+            write("250 ok");
+          } else {
+            write("250 ok");
+          }
+        }
+      });
+      sock.on("error", () => {
+        /* ignore */
+      });
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const port = (server.address() as AddressInfo).port;
+    return {
+      port,
+      messages,
+      close: () =>
+        new Promise<void>((resolve, reject) =>
+          server.close((err) => (err ? reject(err) : resolve())),
+        ),
+    };
+  }
+
+  // Sink that mirrors `createKernelAlertSink` but (a) redirects
+  // `kernel.ALERTS_LOG` to a per-test tmp file and (b) passes the
+  // webhook + SMTP env vars into the spawn so the real
+  // `_post_webhook` / `_send_email` transports run against our
+  // capture servers. The python program does `_await_alert_dispatch`
+  // so the daemon dispatch thread is drained before exit.
+  function makeWireSink(
+    alertsLogPath: string,
+    env: Record<string, string>,
+  ): LedgerAlertSink {
+    const program = [
+      "import json, sys, pathlib",
+      `sys.path.insert(0, ${JSON.stringify(REPO_ROOT)})`,
+      "import kernel",
+      `kernel.ALERTS_LOG = pathlib.Path(${JSON.stringify(alertsLogPath)})`,
+      "data = json.load(sys.stdin)",
+      "kernel._fire_ledger_alert(data['message'], data['context'])",
+      "assert kernel._await_alert_dispatch(15.0), 'alert dispatch did not drain'",
+    ].join("\n");
+    return (invocation: LedgerAlertInvocation) =>
+      new Promise<void>((resolve, reject) => {
+        const child = spawn("python3", ["-c", program], {
+          stdio: ["pipe", "ignore", "pipe"],
+          env: { ...process.env, ...env },
+        });
+        let stderr = "";
+        child.stderr.on("data", (b: Buffer) => {
+          stderr += b.toString("utf-8");
+        });
+        child.on("error", (err) => reject(err));
+        child.on("exit", (code) => {
+          if (code !== 0) {
+            reject(
+              new Error(
+                `wire sink subprocess exited ${code}; stderr=${stderr}`,
+              ),
+            );
+            return;
+          }
+          resolve();
+        });
+        child.stdin.end(
+          JSON.stringify({
+            message: invocation.message,
+            context: invocation.context,
+          }),
+        );
+      });
+  }
+
+  it(
+    "delivers the distinct MONITOR STALLED subject on both SMTP and webhook, then the distinct RECOVERED subject on transition",
+    async () => {
+      const dir = mkdtempSync(path.join(tmpdir(), "watchdog-wire-"));
+      const hp = path.join(dir, "hits.txt");
+      const cp = path.join(dir, "hits.txt.checkpoint");
+      const lp = path.join(dir, "hits.txt.lastok");
+      const alertsLogPath = path.join(dir, "ledger-alerts.jsonl");
+
+      const sealed = "line1\nline2\n";
+      const buf = Buffer.from(sealed, "utf-8");
+      writeFileSync(hp, buf);
+      writeFileSync(cp, `${buf.length} ${sha256(buf)}\n`);
+
+      const webhook = await startWebhookCapture();
+      const smtp = await startSmtpCapture();
+
+      const sink = makeWireSink(alertsLogPath, {
+        MORNINGSTAR_ALERT_WEBHOOK_URL: `http://127.0.0.1:${webhook.port}/alert`,
+        MORNINGSTAR_ALERT_EMAIL_TO: "ops@example.com",
+        MORNINGSTAR_ALERT_EMAIL_FROM: "ledger@example.com",
+        MORNINGSTAR_ALERT_SMTP_HOST: "127.0.0.1",
+        MORNINGSTAR_ALERT_SMTP_PORT: String(smtp.port),
+        MORNINGSTAR_WORKFLOW_NAME: "api-server-e2e-162",
+        // Make sure no stale auth lingers from the parent env.
+        MORNINGSTAR_ALERT_SMTP_USER: "",
+        MORNINGSTAR_ALERT_SMTP_PASSWORD: "",
+      });
+
+      const { buildStatus } = createLedgerChecker({
+        hitsPath: hp,
+        checkpointPath: cp,
+        lastOkPath: lp,
+      });
+
+      let clockMs = 20_000_000;
+      const monitor = startLedgerMonitor({
+        buildStatus,
+        sink,
+        intervalMs: 1_000,
+        hitsPath: hp,
+        checkpointPath: cp,
+        logger: { info: () => {}, warn: () => {}, error: () => {} },
+        now: () => clockMs,
+      });
+
+      try {
+        // Cross the 2× stall threshold → watchdog fires.
+        clockMs += 2_500;
+        await monitor.checkWatchdog();
+
+        expect(webhook.captured).toHaveLength(1);
+        expect(smtp.messages).toHaveLength(1);
+
+        // Webhook: JSON body with the distinct `subject` field and
+        // the watchdog-specific context fields plumbed through.
+        const stallPayload = JSON.parse(webhook.captured[0]!.body) as Record<
+          string,
+          unknown
+        >;
+        expect(stallPayload["failure_mode"]).toBe("monitor_stalled");
+        expect(stallPayload["source"]).toBe("api-server-monitor-watchdog");
+        expect(stallPayload["monitor_interval_seconds"]).toBe(1);
+        expect(stallPayload["stall_threshold_seconds"]).toBe(2);
+        expect(typeof stallPayload["stall_age_seconds"]).toBe("number");
+        expect(typeof stallPayload["subject"]).toBe("string");
+        const stallSubject = String(stallPayload["subject"]);
+        expect(stallSubject).toContain("MONITOR STALLED");
+        expect(stallSubject).toContain("push alerts may be silent");
+        expect(stallSubject).toContain("api-server-e2e-162");
+        expect(stallSubject).not.toContain("Ledger integrity alert");
+
+        // SMTP: Subject header matches the same distinct line, and
+        // the body carries the stall-specific fields (not the
+        // tamper expected/actual hash columns).
+        const stallEmail = smtp.messages[0]!;
+        expect(stallEmail.subject).toContain("MONITOR STALLED");
+        expect(stallEmail.subject).toContain("push alerts may be silent");
+        expect(stallEmail.subject).toContain("api-server-e2e-162");
+        expect(stallEmail.subject).not.toContain("Ledger integrity alert");
+        expect(stallEmail.body).toContain("failure_mode: monitor_stalled");
+        expect(stallEmail.body).toContain("stall_threshold_seconds: 2");
+        expect(stallEmail.body).toContain("monitor_interval_seconds: 1");
+        expect(stallEmail.body).toContain("do NOT restore hits.txt");
+        // The tamper-recovery doc pointer must not show up here.
+        expect(stallEmail.body).not.toContain("REPRODUCE.md");
+
+        // Dedup: another stalled check while still stalled stays
+        // silent on both transports.
+        clockMs += 5_000;
+        await monitor.checkWatchdog();
+        expect(webhook.captured).toHaveLength(1);
+        expect(smtp.messages).toHaveLength(1);
+
+        // Real tick lands → recovery fires once on next watchdog.
+        await monitor.tick();
+        await monitor.checkWatchdog();
+
+        expect(webhook.captured).toHaveLength(2);
+        expect(smtp.messages).toHaveLength(2);
+
+        const recoverPayload = JSON.parse(
+          webhook.captured[1]!.body,
+        ) as Record<string, unknown>;
+        expect(recoverPayload["failure_mode"]).toBe("recovered");
+        expect(recoverPayload["previous_failure_mode"]).toBe(
+          "monitor_stalled",
+        );
+        expect(recoverPayload["source"]).toBe("api-server-monitor-watchdog");
+        const recoverSubject = String(recoverPayload["subject"]);
+        expect(recoverSubject).toContain("Ledger monitor RECOVERED");
+        expect(recoverSubject).toContain("api-server-e2e-162");
+        expect(recoverSubject).not.toContain("MONITOR STALLED");
+        expect(recoverSubject).not.toContain("Ledger integrity alert");
+
+        const recoverEmail = smtp.messages[1]!;
+        expect(recoverEmail.subject).toContain("Ledger monitor RECOVERED");
+        expect(recoverEmail.subject).toContain("api-server-e2e-162");
+        expect(recoverEmail.subject).not.toContain("MONITOR STALLED");
+        expect(recoverEmail.body).toContain("failure_mode: recovered");
+        expect(recoverEmail.body).toContain(
+          "previous_failure_mode: monitor_stalled",
+        );
+        expect(recoverEmail.body).toContain("do NOT restore hits.txt");
+        expect(recoverEmail.body).not.toContain("REPRODUCE.md");
+      } finally {
+        monitor.stop();
+        await webhook.close();
+        await smtp.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
+    },
+    60_000,
+  );
+});
