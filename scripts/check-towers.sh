@@ -2225,6 +2225,20 @@ BRICKS=(
   "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_self"
   "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_nonneg"
   "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_isPseudoDist"
+  # Task #188 — bi-invariance plumbing closure on the Task #170
+  # stand-in `d_SU3`. Extends the file with a new `IsBiInvariantOnSU3`
+  # predicate (left- and right-invariance clauses under
+  # `Matrix.specialUnitaryGroup (Fin 3) ℂ` multiplication, the two
+  # clauses intentionally omitted from `IsPseudoDistOnSU3` in
+  # Task #170 due to perceived `HMul`-on-Submonoid-carrier plumbing
+  # cost) plus an inhabitedness witness on the stand-in:
+  #   * `d_SU3_isBiInvariant` — trivially true because `d_SU3 ≡ 0`.
+  # The `*` resolves under `Mathlib.LinearAlgebra.UnitaryGroup`
+  # alone (already imported), the same path `MassGap.lean` uses for
+  # `(1 : SU3) * 1 = 1` in `SU3Connection_one_one`. Does NOT
+  # construct the real Killing-form distance; YM stays
+  # `Status: Open`. Wall 531 → 532.
+  "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_isBiInvariant"
   "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan_geometric"
   # Batch 162 / TRI PARALLEL #2 — three honest stand-ins for Yang-Mills
   # Surface #1 (OS reconstruction / mass-gap support). Each is a

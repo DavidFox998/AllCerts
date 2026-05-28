@@ -167,6 +167,25 @@ def IsPseudoDistOnSU3 (d : SU3 → SU3 → ℝ) : Prop :=
   (∀ g h : SU3, 0 ≤ d g h) ∧
   (∀ g : SU3, d g g = 0)
 
+/-- **`IsBiInvariantOnSU3 d`** — the two group-action clauses of a
+genuine bi-invariant distance on SU(3):
+
+  4. left-invariance:  `d (k * g) (k * h) = d g h`
+  5. right-invariance: `d (g * k) (h * k) = d g h`
+
+These were intentionally omitted from `IsPseudoDistOnSU3` (Task #170)
+because the relevant `HMul` on the `Matrix.specialUnitaryGroup`
+`Submonoid` carrier was not in scope under the minimal import surface.
+Task #188 closes that gap: `Mathlib.LinearAlgebra.UnitaryGroup` already
+gives `(1 : SU3) * 1 = 1` (used in `MassGap.lean` brick
+`SU3Connection_one_one`), so the same `*` resolves here.
+
+The real Killing-form bi-invariant distance satisfies both clauses
+genuinely; the stand-in `d_SU3 ≡ 0` satisfies them trivially. -/
+def IsBiInvariantOnSU3 (d : SU3 → SU3 → ℝ) : Prop :=
+  (∀ k g h : SU3, d (k * g) (k * h) = d g h) ∧
+  (∀ k g h : SU3, d (g * k) (h * k) = d g h)
+
 /-! ## Bricks -/
 
 /-- **Brick 1 (`d_SU3_self`).** The stand-in distance vanishes on
@@ -196,6 +215,30 @@ theorem d_SU3_isPseudoDist : IsPseudoDistOnSU3 d_SU3 := by
   · intro _ _; show (0 : ℝ) = 0; rfl
   · intro _ _; exact le_refl _
   · intro _; show (0 : ℝ) = 0; rfl
+
+/-- **Brick 4 (`d_SU3_isBiInvariant`).** Inhabitedness witness for
+the bi-invariance predicate: the stand-in `d_SU3` satisfies left- and
+right-invariance under the `Matrix.specialUnitaryGroup (Fin 3) ℂ`
+multiplication.
+
+Trivially true because `d_SU3 ≡ 0`, so every clause reduces to
+`0 = 0`. This brick closes the Task #188 plumbing gap (the
+`HMul`-on-Submonoid-carrier elaboration concern recorded in the
+`IsPseudoDistOnSU3` docstring): both `k * g` and `g * k` now
+resolve under `Mathlib.LinearAlgebra.UnitaryGroup` alone, the same
+import already used by `MassGap.lean`.
+
+**Honest scoping reminder.** This does NOT construct the real
+Killing-form bi-invariant distance on SU(3) — it only proves the
+stand-in `d_SU3 ≡ 0` satisfies the bi-invariance predicate
+vacuously. YM tower stays `Status: Open`. Replacing `d_SU3` with
+the genuine Killing-form distance is the tripwire: that real
+distance also satisfies bi-invariance, but only after a Lie-group
+Riemannian construction that is not in mathlib v4.12.0. -/
+theorem d_SU3_isBiInvariant : IsBiInvariantOnSU3 d_SU3 := by
+  refine ⟨?_, ?_⟩
+  · intro _ _ _; show (0 : ℝ) = 0; rfl
+  · intro _ _ _; show (0 : ℝ) = 0; rfl
 
 end RiemannianGeometry
 end YM
