@@ -512,6 +512,48 @@ export default function DashboardPage() {
     );
   }, [rebuildHistory, historyRefereeFilter]);
 
+  const [rerollHistoryRefereeFilter, setRerollHistoryRefereeFilter] =
+    useState<string>("");
+
+  const rerollRefereeSummaries = useMemo(() => {
+    const map = new Map<
+      string,
+      { total: number; ok: number; fail: number; lastOk: string | null; lastFail: string | null }
+    >();
+    const entries = checkpointRerollHistory?.entries ?? [];
+    for (const entry of entries) {
+      const key = refereeKey(entry.refereeName);
+      const existing = map.get(key) ?? {
+        total: 0,
+        ok: 0,
+        fail: 0,
+        lastOk: null as string | null,
+        lastFail: null as string | null,
+      };
+      existing.total += 1;
+      if (entry.ok) {
+        existing.ok += 1;
+        if (!existing.lastOk) existing.lastOk = entry.timestamp;
+      } else {
+        existing.fail += 1;
+        if (!existing.lastFail) existing.lastFail = entry.timestamp;
+      }
+      map.set(key, existing);
+    }
+    return Array.from(map.entries())
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => b.total - a.total);
+  }, [checkpointRerollHistory]);
+
+  const filteredRerollEntries = useMemo(() => {
+    const entries = checkpointRerollHistory?.entries ?? [];
+    if (!rerollHistoryRefereeFilter) return entries;
+    return entries.filter(
+      (e: { refereeName?: string | null }) =>
+        refereeKey(e.refereeName) === rerollHistoryRefereeFilter,
+    );
+  }, [checkpointRerollHistory, rerollHistoryRefereeFilter]);
+
   useEffect(() => {
     if (logPanelRef.current) {
       logPanelRef.current.scrollTop = logPanelRef.current.scrollHeight;
@@ -2505,15 +2547,117 @@ export default function DashboardPage() {
                   <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                     Recent checkpoint re-rolls
                   </span>
-                  <span
-                    className="font-mono text-[11px] text-muted-foreground"
-                    data-testid="text-checkpoint-reroll-history-count"
-                  >
-                    {entries.length} of last {capacity}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="checkpoint-reroll-history-referee-filter"
+                      className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground"
+                    >
+                      Referee
+                    </label>
+                    <select
+                      id="checkpoint-reroll-history-referee-filter"
+                      value={rerollHistoryRefereeFilter}
+                      onChange={(e) =>
+                        setRerollHistoryRefereeFilter(e.target.value)
+                      }
+                      className="font-mono text-[11px] bg-background border border-border px-1.5 py-0.5"
+                      data-testid="select-checkpoint-reroll-history-referee-filter"
+                    >
+                      <option value="">all</option>
+                      {rerollRefereeSummaries.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {refereeLabel(s.key)} ({s.total})
+                        </option>
+                      ))}
+                    </select>
+                    {rerollHistoryRefereeFilter ? (
+                      <button
+                        type="button"
+                        onClick={() => setRerollHistoryRefereeFilter("")}
+                        className="font-mono text-[11px] underline text-muted-foreground hover:text-foreground"
+                        data-testid="button-checkpoint-reroll-history-clear-filter"
+                      >
+                        clear
+                      </button>
+                    ) : null}
+                    <span
+                      className="font-mono text-[11px] text-muted-foreground"
+                      data-testid="text-checkpoint-reroll-history-count"
+                    >
+                      {rerollHistoryRefereeFilter
+                        ? `${filteredRerollEntries.length} of ${entries.length}`
+                        : `${entries.length} of last ${capacity}`}
+                    </span>
+                  </div>
                 </div>
+                {rerollRefereeSummaries.length > 0 ? (
+                  <ul
+                    className="divide-y divide-border border-b border-border bg-muted/10"
+                    data-testid="list-checkpoint-reroll-history-referee-summary"
+                  >
+                    {rerollRefereeSummaries.map((s) => {
+                      const isActive = rerollHistoryRefereeFilter === s.key;
+                      return (
+                        <li
+                          key={s.key}
+                          className={`flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 font-mono text-[11px] ${
+                            isActive ? "bg-muted/40" : ""
+                          }`}
+                          data-testid={`row-checkpoint-reroll-history-summary-${s.key}`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRerollHistoryRefereeFilter(
+                                isActive ? "" : s.key,
+                              )
+                            }
+                            className={`md:w-40 truncate text-left underline-offset-2 hover:underline ${
+                              s.key === ANONYMOUS_KEY
+                                ? "text-muted-foreground italic"
+                                : "text-foreground"
+                            } ${isActive ? "font-bold" : ""}`}
+                            title={
+                              isActive
+                                ? "Click to clear filter"
+                                : `Filter to ${refereeLabel(s.key)}`
+                            }
+                            data-testid={`button-checkpoint-reroll-history-summary-${s.key}`}
+                          >
+                            {refereeLabel(s.key)}
+                          </button>
+                          <span className="text-muted-foreground md:w-16">
+                            {s.total} total
+                          </span>
+                          <span className="text-green-700 dark:text-green-400 md:w-16">
+                            {s.ok} ok
+                          </span>
+                          <span className="text-red-700 dark:text-red-400 md:w-16">
+                            {s.fail} fail
+                          </span>
+                          <span className="text-muted-foreground">
+                            last ok:{" "}
+                            {s.lastOk ? formatTimestamp(s.lastOk) : "—"}
+                          </span>
+                          <span className="text-muted-foreground">
+                            last fail:{" "}
+                            {s.lastFail ? formatTimestamp(s.lastFail) : "—"}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+                {filteredRerollEntries.length === 0 ? (
+                  <p
+                    className="px-3 py-2 font-mono text-[11px] text-muted-foreground italic"
+                    data-testid="text-checkpoint-reroll-history-empty"
+                  >
+                    No checkpoint re-rolls match the current filter.
+                  </p>
+                ) : null}
                 <ul className="divide-y divide-border">
-                  {entries.map((entry, i) => (
+                  {filteredRerollEntries.map((entry, i) => (
                     <li
                       key={`${entry.timestamp}-${i}`}
                       className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 font-mono text-[11px]"
