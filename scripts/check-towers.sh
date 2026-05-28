@@ -2585,6 +2585,59 @@ BRICKS=(
   "Towers.YM.KoteckyPreissReal|TheoremaAureum.Towers.YM.LatticeGauge.kotecky_preiss_real"
   "Towers.YM.CorrelationReal|TheoremaAureum.Towers.YM.LatticeGauge.spectral_gap_real_kp"
   "Towers.YM.CorrelationReal|TheoremaAureum.Towers.YM.LatticeGauge.mass_gap_pos_real_kp"
+  # TRI PARALLEL #17 / Batches 177.1, 177.2, 177.3 — real
+  # per-plaquette Wilson energy + real-energy K-P + strict
+  # spectral-norm bound on `T_real`, all under stand-ins.
+  # Surface #1 stays OPEN (locked invariant; snippet's "Real
+  # K-P with μ > 0" / "removes the sorry in Attempts" /
+  # "Surface #1 still OPEN until 177.3 lands with ‖T_real‖ < 1"
+  # closing claims REFUSED — the strict spectral bound here is
+  # the trivial corner of the inequality under `T_real := 0`).
+  # PlaquetteEnergy: def `plaquetteEnergy U x μ ν := 1 - (1/2)
+  # * Re tr (plaquette U x μ ν)` (the real per-plaquette Wilson
+  # energy, replacing Batch 176.1's `linkEnergy ≡ 1` stand-in);
+  # brick `plaquetteEnergy_const_one` (energy at the Dirac-
+  # support point `U ≡ const 1` is exactly 0 — plaquette is the
+  # identity matrix, trace = 2). Snippet's `plaquetteEnergy_bounds`
+  # (`0 ≤ E ≤ 2` for SU(2)) REFUSED — mathlib v4.12.0 does not
+  # ship the SU(2) trace bound `|Re tr| ≤ 2` in usable shape
+  # (snippet's `sorry -- SU(2) trace bounds. Mathlib has this.`
+  # is false). Replaced by the Dirac-support equality brick
+  # following the 169.x–173.x pivot pattern.
+  # KoteckyPreissRealKP: brick `kotecky_preiss_real_kp`
+  # parameterised on `U : GaugeConfig` and `hE : ∀ p, 0 ≤
+  # plaquetteEnergy U p` (the trivial direction of the SU(2)
+  # bound, deferred at 177.1), witnesses `(β₀, μ) := (0, 0)`
+  # so the RHS reduces to 1; proven via `Real.exp_sum` collapse
+  # + `Real.exp_le_one_iff` + `Finset.sum_nonneg` + `mul_nonneg`.
+  # Snippet's `Plaquette d L` type introduced here as `Lattice
+  # d L × Fin d × Fin d`. Snippet's "Real Kotecký–Preiss with
+  # μ > 0" REFUSED (witness must be μ = 0; μ > 0 is *false* at
+  # `U ≡ const 1` per `plaquetteEnergy_const_one`). Snippet's
+  # `sorry -- standard polymer estimate` eliminated via the
+  # trivial witness. Does NOT close
+  # `Towers.Attempts.ClusterExpansion.kotecky_preiss_criterion`
+  # (snippet's "CONTRACT: This retires the
+  # `kotecky_preiss_criterion` sorry" REFUSED; that sorry is
+  # invariant-locked).
+  # TransferKernelReal: brick `spectral_gap_real_kernel` (`‖T_real
+  # d L β‖ < 1` strict, trivially true via `‖0‖ = 0 < 1`; strict
+  # sharpening of Batch 176.3's non-strict `spectral_gap_real_kp`).
+  # Snippet's `def T_real := sorry` with a "K(U,U') = exp(-β ·
+  # S_link)" kernel REFUSED — would clash with existing `T_real :=
+  # 0` from Batch 176.3 in the same namespace, or introduce a
+  # `sorry`. Honest pivot: reuse the existing `T_real`, prove the
+  # strict bound on top. Brick renamed `spectral_gap_real_kp →
+  # spectral_gap_real_kernel` to avoid clash with Batch 176.3's
+  # brick of the same name.
+  # **Genuine mass gap still requires**: real Wilson kernel +
+  # real SU(2) Haar + Kotecký–Preiss at `μ > 0` (full
+  # cluster-expansion convergence with the SU(2) energy lower
+  # bound `Re tr ≥ -2`, neither landed) + correlation
+  # inequalities — none landed.
+  "Towers.YM.PlaquetteEnergy|TheoremaAureum.Towers.YM.LatticeGauge.plaquetteEnergy_const_one"
+  "Towers.YM.KoteckyPreissRealKP|TheoremaAureum.Towers.YM.LatticeGauge.kotecky_preiss_real_kp"
+  "Towers.YM.TransferKernelReal|TheoremaAureum.Towers.YM.LatticeGauge.spectral_gap_real_kernel"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
