@@ -6,6 +6,146 @@ this file is the version history.
 
 ---
 
+## Batch 156.3 — Task #156 file 3 of 6 (Varadhan strip-form bound). Wall 467 → 468, +1 BRICK (2026-05-27)
+
+**Goal.** Land Task #156's headline brick: a `Heat_kernel_envelope_real`
+bound of literal Varadhan shape
+
+  `Heat_kernel_envelope_real(t)  ≤  C · exp(-c / t) / t^4`
+
+for explicit positive constants `C, c, t_lo, t_top`, with axiom
+footprint = classical trio, traceable to the SU(3) Casimir input
+(Batch 20.2a / file 1) and the Weyl-dim cubic input (Batch 156.2
+/ file 2), and consumed by a real callsite in
+`Towers/Attempts/ClusterExpansion.lean`.
+
+**Drift from the task brief — must read.** The task brief
+literally asks for a small-`t` Varadhan asymptotic of the form
+`∀ t, 0 < t → t ≤ t₀ → env(t) ≤ C · exp(-c/t) / t^4`. **That
+statement is mathematically false** on any open right-neighbourhood
+of `0`: as `t → 0⁺`, `env(t) = Σ poly(m+n) · exp(-t · poly(m+n))
+→ ∞` (every term tends to its non-zero constant value), while the
+RHS `C · exp(-c/t) / t^4 → 0`. The literal target is unreachable
+**without** also bounding `env` from above on a right-neighbourhood
+of `0`, which in turn requires the bi-invariant Riemannian geometry
+on SU(3) and the actual small-`t` heat-kernel asymptotic — both
+still absent from mathlib v4.12.0 and explicitly **out of scope**
+for this task (file 4 of the original 6-file plan was already
+parked on exactly that geometric gap).
+
+This batch takes the task brief's escape hatch ("if a strip-form
+on `[t_lo, t_top]` for explicit positive `t_lo < t_top` is the
+furthest the discharge can honestly reach today, that is
+acceptable") and ships the strip statement on `[1, 2]`. The shape
+of the RHS still matches the Varadhan target exactly; what
+changes is the quantifier on `t`: instead of `0 < t ≤ t₀` we
+require `1 ≤ t ≤ 2`. The proof is honest and elementary (Brick 3
+antitonicity of the envelope on `(0, ∞)` from term-wise antitonicity
+of `Real.exp ∘ (-t · ·)` plus `tsum_le_tsum` against the
+already-shipped `PeterWeyl_Summable_SU3`).
+
+**What landed.**
+
+- New file `Towers/YM/PeterWeylHeatVaradhan.lean` (~270 lines,
+  single namespace `TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan`):
+    - `noncomputable def varadhan_c : ℝ := 1`
+    - `noncomputable def varadhan_t_lo : ℝ := 1`
+    - `noncomputable def varadhan_t_top : ℝ := 2`
+    - `noncomputable def varadhan_C : ℝ :=
+        Heat_kernel_envelope_real varadhan_t_lo *
+          varadhan_t_top ^ 4 *
+            Real.exp (varadhan_c / varadhan_t_lo)`
+        (i.e. `C` is calibrated so the bound is **sharp at
+        `t = t_lo = 1`** — equality holds there, the slack is
+        the antitone factor and the `t^4/t_top^4` factor for
+        `t ∈ (t_lo, t_top]`).
+    - Positivity lemmas: `varadhan_c_pos`, `varadhan_t_lo_pos`,
+      `varadhan_t_top_pos`, `varadhan_C_pos` (the last chains
+      through `Heat_kernel_envelope_real_ge_one_of_pos` from
+      Batch 19.1p-redux-b).
+    - `theorem Heat_kernel_envelope_real_antitone {t₁ t₂ : ℝ}
+        (h₁ : 0 < t₁) (h₂ : t₁ ≤ t₂) :
+        Heat_kernel_envelope_real t₂ ≤ Heat_kernel_envelope_real t₁`
+      (term-wise `Real.exp_le_exp.mpr` against the antitone
+      hypothesis on `-t · (PeterWeyl_weight ·)` plus `tsum_le_tsum`
+      on the two summables from `PeterWeyl_Summable_SU3`).
+    - **BRICK** `theorem Heat_kernel_envelope_real_le_varadhan
+        {t : ℝ} (ht_lo : varadhan_t_lo ≤ t)
+        (ht_top : t ≤ varadhan_t_top) :
+        Heat_kernel_envelope_real t ≤
+          varadhan_C * Real.exp (-(varadhan_c / t)) / t ^ 4`
+      Proof skeleton:
+        1. By antitonicity: `env(t) ≤ env(t_lo)` (since `t_lo ≤ t`).
+        2. Algebra on RHS:
+           `C · exp(-c/t) / t^4
+              = env(t_lo) · (t_top^4 / t^4)
+                · exp(c/t_lo - c/t)`
+           with `t_top^4 / t^4 ≥ 1` (from `t ≤ t_top`) and
+           `c/t_lo ≥ c/t` (from `t ≥ t_lo`), so
+           `exp(c/t_lo - c/t) ≥ exp(0) = 1`.
+        3. Multiplying the two `≥ 1` factors by the non-negative
+           `env(t_lo)` keeps the chain `env(t) ≤ env(t_lo) ≤ RHS`.
+
+- New callsite `Weyl_sum_explicit_SU3_real_le_varadhan` in
+  `Towers/Attempts/ClusterExpansion.lean` (added after the existing
+  `Weyl_sum_le_heat_kernel_real` forwarder). Chains
+  `Heat_kernel_envelope_real_ge_truncation` (Batch 19.1p-redux-b)
+  into the new strip-form RHS — the **truncated Peter-Weyl partial
+  sum**, not just the envelope, is now dominated by the
+  Varadhan-shape upper bound on `[1, 2]`. The callsite lives in
+  `Attempts/` (which already carries other `sorry`s, so adding a
+  forwarder there does not affect the green wall) and uses no new
+  axioms.
+
+- `Towers/Attempts/ClusterExpansion.lean` adds a single
+  `import Towers.YM.PeterWeylHeatVaradhan`.
+
+- `lean-proof-towers/lakefile.lean` adds the
+  `Towers.YM.PeterWeylHeatVaradhan` module root.
+
+- `scripts/check-towers.sh` BRICKS array gains one entry
+  `Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan`
+  with a `~40-line comment block that mirrors the drift caveat
+  above so a future reader is not misled by the brick **name**
+  containing "varadhan" into believing the small-`t` asymptotic
+  has shipped.
+
+**Honest-scope wording (locked).**
+
+- YM tower stays `Status: Open` in `docs/ROADMAP.md`. This batch
+  is a bounded strip estimate on a synthetic envelope, **not** the
+  Varadhan small-`t` asymptotic and **not** a YM mass-gap input.
+- `Heat_kernel_envelope_real` is the synthetic envelope shipped in
+  Batch 19.1p-redux-b — a sum of `Real.exp (-t · poly(m+n))` terms
+  scaled by `poly(m+n)`. It is **not** the SU(3) heat kernel
+  `K_t : SU(3) → ℝ` and not its trace; both still depend on
+  bi-invariant Riemannian geometry that mathlib v4.12.0 does not
+  ship.
+- `varadhan_c = 1` is **not** the geodesic-distance-squared
+  exponent the real Varadhan asymptotic carries (`d(x,y)² / (4t)`).
+  It is a calibration constant chosen so the strip bound holds with
+  `varadhan_t_lo = 1`. Future file 4 (parked) would replace `c`
+  with the real geometric constant once mathlib gains the
+  underlying machinery.
+- The literal small-`t` shape from the task brief
+  (`∀ t, 0 < t → t ≤ t₀ → …`) remains **out of scope** until the
+  geometry lands. Files 5 and 6 (KP wire-up + uniform mass-gap)
+  remain blocked downstream of file 4. The YM tower stays `Open`
+  for the remainder of this 6-file plan and afterwards.
+
+**Build evidence.** `towers-build` workflow, 2026-05-27 23:37 UTC.
+`ok: Towers library built; all 468 brick(s) passed the
+axiom-footprint check.` `PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan`
+axiom footprint = `{propext, Classical.choice, Quot.sound}` (the
+classical trio). No new research-grade axioms; no new `sorry`
+(the existing `Attempts/ClusterExpansion.lean` sorry count is
+unchanged). Wall delta = **+1** (467 → 468). Locked invariants
+(classical trio, mathlib v4.12.0, no new axioms, YM `Status: Open`,
+Surface #2 OPEN, `kotecky_preiss_criterion` still a `sorry`) all
+hold.
+
+---
+
 ## Batch 156.2 — Task #156 file 2 of 6 (Varadhan scaffolding): Weyl-dim cubic upper bound. Wall 465 → 467, +1 audited BRICK (2026-05-27)
 
 **Goal.** Land the **second arithmetic input** for the task #156

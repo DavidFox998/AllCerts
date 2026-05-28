@@ -47,6 +47,7 @@ import Towers.YM.OSReconstruction
 import Towers.YM.SpectralGap
 import Towers.YM.ClusterExpansion
 import Towers.YM.PeterWeylHeat
+import Towers.YM.PeterWeylHeatVaradhan
 
 namespace TheoremaAureum
 namespace Towers
@@ -669,6 +670,45 @@ theorem Weyl_sum_le_heat_kernel_real (t : ℝ) (ht : 0 < t) (N : ℕ) :
     TheoremaAureum.Towers.YM.ClusterExpansion.Weyl_sum_explicit_SU3_real t N ≤
       TheoremaAureum.Towers.YM.PeterWeylHeat.Heat_kernel_envelope_real t :=
   TheoremaAureum.Towers.YM.PeterWeylHeat.Heat_kernel_envelope_real_ge_truncation t ht N
+
+/-! ============================================================
+    Task #156 / Varadhan strip-form callsite.
+
+    Chains `Heat_kernel_envelope_real_ge_truncation` (Batch
+    19.1p-redux-b, Task #155) into the new strip-form Varadhan-shape
+    bound `Heat_kernel_envelope_real_le_varadhan` (Task #156,
+    `Towers/YM/PeterWeylHeatVaradhan.lean`). Result: the truncated
+    Peter-Weyl partial sum on the strip `[varadhan_t_lo,
+    varadhan_t_top] = [1, 2]` is dominated by the
+    `varadhan_C · exp(-(varadhan_c / t)) / t^4` Varadhan-shape RHS.
+
+    Honest scope. This is a **strip** statement, not the small-`t`
+    Varadhan asymptotic — see the file preamble of
+    `Towers/YM/PeterWeylHeatVaradhan.lean` for why the literal
+    small-`t` shape with positive `c` is mathematically false on
+    any open neighbourhood of `0`. YM tower stays `Status: Open`.
+============================================================ -/
+
+theorem Weyl_sum_explicit_SU3_real_le_varadhan
+    (t : ℝ)
+    (ht_lo :
+      TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.varadhan_t_lo ≤ t)
+    (ht_top :
+      t ≤ TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.varadhan_t_top)
+    (N : ℕ) :
+    TheoremaAureum.Towers.YM.ClusterExpansion.Weyl_sum_explicit_SU3_real t N ≤
+      TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.varadhan_C *
+        Real.exp
+          (-(TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.varadhan_c / t))
+        / t ^ 4 := by
+  have htpos : 0 < t :=
+    lt_of_lt_of_le
+      TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.varadhan_t_lo_pos ht_lo
+  exact le_trans
+    (TheoremaAureum.Towers.YM.PeterWeylHeat.Heat_kernel_envelope_real_ge_truncation
+      t htpos N)
+    (TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan
+      ht_lo ht_top)
 
 end ClusterExpansion
 end Attempts

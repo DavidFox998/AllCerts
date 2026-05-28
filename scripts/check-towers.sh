@@ -1940,6 +1940,47 @@ BRICKS=(
   # NOT a heat-kernel statement. NOT Varadhan. ℕ-polynomial only.
   # YM tower stays Status: Open. mathlib v4.12.0 only.
   "Towers.YM.WeylDim|TheoremaAureum.Towers.YM.WeylDim.dim_cubic_bound"
+  # ---------------------------------------------------------------
+  # Task #156 — Varadhan small-`t` asymptotic for the SU(3) heat-kernel
+  # envelope, **strip form** (2026-05-27). One trio-clean brick in
+  # `Towers/YM/PeterWeylHeatVaradhan.lean`: a Varadhan-shape upper
+  # bound
+  #   `Heat_kernel_envelope_real t ≤`
+  #     `varadhan_C · Real.exp (-(varadhan_c / t)) / t^4`
+  # on the **finite strip** `[varadhan_t_lo, varadhan_t_top] = [1, 2]`,
+  # with explicit positive `varadhan_c = 1` and `varadhan_C :=`
+  # `env(t_lo) · t_top^4 · exp(c/t_lo)` (positive via
+  # `Heat_kernel_envelope_real_ge_one_of_pos` from Batch 19.1p-redux-b).
+  # Closes by composing antitonicity of `env` in `t` on `(0, ∞)`
+  # (each `exp(-(t · C₂))` decreases in `t`; both partial sums
+  # `Summable` via `PeterWeyl_Summable_SU3`, so `tsum_le_tsum`
+  # applies) with the strip algebra `t_top^4/t^4 ≥ 1`,
+  # `exp(c/t_lo - c/t) ≥ exp 0 = 1` ⇒ `C·exp(-c/t)/t^4 ≥ env(t_lo)
+  # ≥ env(t)` on the strip.
+  #
+  # **Drift from the task's "Done looks like" line (honest scope,
+  # locked).** The task asked for the unrestricted small-`t` shape
+  # `∀ t, 0 < t → t ≤ t₀ → env(t) ≤ C · exp(-c/t) / t^4`. That
+  # statement is **mathematically false** at any positive `(C, c, t₀)`:
+  # as `t → 0⁺`, LHS `env(t) → +∞` (Weyl-law `t^{-d/2} = t^{-4}`
+  # heat-trace blow-up on SU(3), `d = dim_ℝ SU(3) = 8`) while RHS
+  # `C·exp(-c/t)/t^4 → 0` (`exp(-c/t)` crushes `t^{-4}` to zero
+  # exponentially). The `exp(-c/t)` factor is the **off-diagonal**
+  # Varadhan/Molchanov shape `K_t(x,y) ~ (4πt)^{-d/2}·exp(-d_g(x,y)²/4t)`,
+  # which collapses to pure `t^{-d/2}` on the diagonal `x = y` where
+  # `d_g(x,x) = 0`. The strip form below ships the task's escape
+  # hatch ("or honest documentation of why the linear bound suffices
+  # for the chosen C, c"): the strip avoids the small-`t` regime
+  # entirely, so the literal-shape inequality holds inside the
+  # `[t_lo, t_top]` window. YM tower stays `Status: Open`
+  # (`docs/ROADMAP.md` § 2); Surface #2 stays OPEN;
+  # `kotecky_preiss_criterion` remains a `sorry` in
+  # `Towers/Attempts/ClusterExpansion.lean`. Real callsite consuming
+  # this brick: `Weyl_sum_explicit_SU3_real_le_varadhan` in
+  # `Towers/Attempts/ClusterExpansion.lean` (forwarder chaining
+  # `Heat_kernel_envelope_real_ge_truncation` from Batch 19.1p-redux-b
+  # into the new strip bound). mathlib v4.12.0 only.
+  "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
