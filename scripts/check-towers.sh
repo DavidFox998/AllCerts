@@ -2385,6 +2385,26 @@ BRICKS=(
   "Towers.YM.LatticeAction|TheoremaAureum.Towers.YM.LatticeGauge.translateConfig_const_one"
   "Towers.YM.ActionInvariance|TheoremaAureum.Towers.YM.LatticeGauge.wilson_translateConfig_const_one"
   "Towers.YM.MeasureInvariance|TheoremaAureum.Towers.YM.LatticeGauge.gibbs_translation_inv"
+  # TRI PARALLEL #11 / Batches 171.1, 171.2, 171.3 — completes
+  # OS-2 (Euclidean invariance, rotation part) alongside the
+  # translation part from TRI #10. LatticeRotation defines
+  # `rotate90`/`rotateLink`/`rotateConfig` (π/2 rotation in μ–ν
+  # plane) and proves the constant-1 config is rotation-fixed
+  # (`rotateConfig_const_one`). RotationInvariance proves Wilson
+  # rotation invariance at the Dirac-haar support point
+  # (`wilson_rotateConfig_const_one`); universal `∀ U` form needs
+  # `Finset.sum_bij` plus the plaquette rotation algebra
+  # (`Re(tr P_rotated) = Re(tr P_original)` for SU(2)) under real
+  # Haar — deferred (tripwire). MeasureRotation proves Gibbs
+  # rotation invariance (`gibbs_rotation_inv`) parameterized by a
+  # pointwise invariance hypothesis on F, vacuously satisfied on
+  # the Dirac support; unconditional form needs real Haar —
+  # deferred (tripwire). With Batch 170.3 (translations), OS-2 is
+  # now closed under the Dirac haar stand-in. Surface #1 stays
+  # OPEN (OS-3 regularity, OS-4 clustering, mass gap not addressed).
+  "Towers.YM.LatticeRotation|TheoremaAureum.Towers.YM.LatticeGauge.rotateConfig_const_one"
+  "Towers.YM.RotationInvariance|TheoremaAureum.Towers.YM.LatticeGauge.wilson_rotateConfig_const_one"
+  "Towers.YM.MeasureRotation|TheoremaAureum.Towers.YM.LatticeGauge.gibbs_rotation_inv"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

@@ -4,7 +4,7 @@
 stack, where-things-live, user preferences, gotchas, pointers — all
 rolled into CHANGELOG by the Wall-510 trim).
 
-- **Wall:** 516 BRICKS (script-reported by `scripts/check-towers.sh`)
+- **Wall:** 519 BRICKS (script-reported by `scripts/check-towers.sh`)
 - **YM Surface #1:** Open
 - **Axiom debt:** `[]` on `TheoremaAureum.main_theorem`
   (`#print axioms` returns `[]`; also `[]` on `H2_WeilTransfer` and
@@ -57,6 +57,9 @@ rolled into CHANGELOG by the Wall-510 trim).
 | 2026-05-28 | Batch 170.1 / LatticeAction (TRI PARALLEL #10) | 513 → 514 | `Towers/YM/LatticeAction.lean` — `translate`/`translateLink`/`translateConfig` (lattice translations on sites/links/configs); brick `translateConfig_const_one` (constant-1 config is translation-fixed). |
 | 2026-05-28 | Batch 170.2 / ActionInvariance (TRI PARALLEL #10) | 514 → 515 | `Towers/YM/ActionInvariance.lean` — Wilson translation invariance at the Dirac-haar support point `U = const 1` (`wilson_translateConfig_const_one`); universal `∀ U` form needs `Finset.sum_bij` reindexing under real Haar (tripwire). Snippet's `sorry` replaced by real proof via theorem-statement pivot. |
 | 2026-05-28 | Batch 170.3 / MeasureInvariance (TRI PARALLEL #10) | 515 → 516 | `Towers/YM/MeasureInvariance.lean` — OS-2 (translation part) under the Dirac haar stand-in, parameterized by pointwise `F` invariance (`gibbs_translation_inv`); hypothesis vacuous on Dirac support, becomes provable consequence under real Haar (tripwire). Snippet's `sorry` replaced by real proof via theorem-statement pivot. |
+| 2026-05-28 | Batch 171.1 / LatticeRotation (TRI PARALLEL #11) | 516 → 517 | `Towers/YM/LatticeRotation.lean` — `rotate90`/`rotateLink`/`rotateConfig` (π/2 rotation in μ–ν plane on sites/links/configs); brick `rotateConfig_const_one` (constant-1 config is rotation-fixed). |
+| 2026-05-28 | Batch 171.2 / RotationInvariance (TRI PARALLEL #11) | 517 → 518 | `Towers/YM/RotationInvariance.lean` — Wilson π/2-rotation invariance at the Dirac-haar support point `U = const 1` (`wilson_rotateConfig_const_one`); universal `∀ U` form needs `Finset.sum_bij` + plaquette rotation algebra under real Haar (tripwire). Snippet's `simp` strategy replaced by real `rw` proof. |
+| 2026-05-28 | Batch 171.3 / MeasureRotation (TRI PARALLEL #11) | 518 → 519 | `Towers/YM/MeasureRotation.lean` — OS-2 (rotation part) under the Dirac haar stand-in, parameterized by pointwise `F` invariance (`gibbs_rotation_inv`); completes OS-2 alongside Batch 170.3. Hypothesis vacuous on Dirac support; tripwire for real Haar. |
 
 ¹ Batch 156.2's own brick delta is **+1**; the extra +1 reconciles
 `Towers.NS.HasFiniteEnergy_galilean_group` (Task #146). Full diff in
