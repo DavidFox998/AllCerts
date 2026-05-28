@@ -2047,6 +2047,44 @@ BRICKS=(
   # backward compatibility (additive only — no deletions).
   "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_cubic"
   "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.PeterWeyl_Summable_SU3_quadratic"
+  # ---------------------------------------------------------------
+  # Task #173 — Tighten the SU(3) heat-kernel envelope below the
+  # cubic bound (2026-05-28). Two new trio-clean bricks in
+  # `Towers/YM/PeterWeylQuadratic.lean` strengthening Task #157's
+  # `Weyl_dim_SU3_explicit_real_le_cubic` (`(dim:ℝ) ≤ ((m+n)+2)^3`)
+  # by the missing factor of `1/2` the task brief calls out:
+  #
+  #   3. `Weyl_dim_SU3_explicit_real_le_half_prod` — honest
+  #      quadratic-times-linear real-valued bound
+  #      `(dim:ℝ) ≤ (m+1)(n+1)(m+n+2)/2`, the literal lift of the
+  #      SU(3) Weyl-dim formula to ℝ. Slack vs. the natural
+  #      definition is only the integer-division floor (≤ 1/2 per
+  #      label). Proof routes through `Nat.div_mul_le_self` on the
+  #      natural-number floor and a single `push_cast` step.
+  #
+  #   4. `Weyl_dim_SU3_explicit_real_le_half_cubic` — the tighter
+  #      cubic bound the task asks for, `(dim:ℝ) ≤ ((m+n)+2)^3 / 2`.
+  #      Composed from Brick 3 plus the AM-GM-with-slack squeeze
+  #      `(m+1)(n+1) ≤ (m+n+2)^2` (gap = `m² + n² + mn + 3m + 3n + 3
+  #      ≥ 0`, discharged by `nlinarith` with `sq_nonneg` hints).
+  #
+  # Wall: 488 → 490. **Honest scope (locked).** YM tower stays
+  # `Status: Open` (`docs/ROADMAP.md` § 2). Surface #2 stays OPEN
+  # (4 open-gap blocks in `docs/Surface2_ResearchProgram.tex`;
+  # `kotecky_preiss_criterion` remains a `sorry` in
+  # `Towers/Attempts/ClusterExpansion.lean`). The new bricks are
+  # pure arithmetic / real-envelope inequalities — NOT a
+  # heat-kernel asymptotic, NOT Varadhan, NOT a per-plaquette
+  # activity bound, NOT KP, NOT a mass-gap statement. The
+  # downstream Varadhan strip in `Towers/YM/PeterWeylHeatVaradhan.lean`
+  # still uses the looser Task #157 cubic envelope; rewiring it to
+  # consume the new half-cubic bound is a follow-up. mathlib
+  # v4.12.0 only. The old Task #157 bricks
+  # (`Weyl_dim_SU3_explicit_real_le_cubic`,
+  # `PeterWeyl_Summable_SU3_quadratic`) are left in place
+  # unmodified (additive only — no deletions).
+  "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_half_prod"
+  "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_half_cubic"
   # -----------------------------------------------------------------
   # Batch 157.1 — Reflection-positivity *predicate* (Option B,
   # probability-measure integration functional). Replaces the

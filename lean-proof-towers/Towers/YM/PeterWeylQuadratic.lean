@@ -219,6 +219,71 @@ theorem PeterWeyl_Summable_SU3_quadratic {β : ℝ} (hβ : 0 < β) :
     mul_nonneg (sq_nonneg _) (Real.exp_pos _).le
   exact Summable.of_nonneg_of_le hsum_nonneg hbound henv_summable
 
+/-! ## Brick 3 — Honest quadratic-times-linear real-valued bound (Task #173)
+
+`(Weyl_dim_SU3_explicit (m,n) : ℝ) ≤
+   ((m : ℝ) + 1) * ((n : ℝ) + 1) * ((m : ℝ) + n + 2) / 2`.
+
+Tightens Brick 1's `Weyl_dim_SU3_explicit_real_le_cubic` from
+`((m+n)+2)^3` down to the honest **exact** real-valued form — the
+literal lift of `(m+1)(n+1)(m+n+2)/2` to `ℝ`, with the slack
+coming only from the integer-division floor (at most `1/2`).
+
+Proof: the natural-division floor satisfies
+`2 · ((m+1)(n+1)(m+n+2) / 2) ≤ (m+1)(n+1)(m+n+2)` via
+`Nat.div_mul_le_self`; cast once and divide by 2.
+
+Used downstream by `Weyl_dim_SU3_explicit_real_le_half_cubic`
+(Brick 4 below) and feeds a sharper Varadhan strip in
+`Towers/YM/PeterWeylHeatVaradhan.lean` once the off-diagonal
+work is wired up. -/
+theorem Weyl_dim_SU3_explicit_real_le_half_prod (mn : Weyl_label) :
+    (Weyl_dim_SU3_explicit mn : ℝ) ≤
+      ((mn.1 : ℝ) + 1) * ((mn.2 : ℝ) + 1) * ((mn.1 : ℝ) + mn.2 + 2) / 2 := by
+  have hfloor :
+      (mn.1 + 1) * (mn.2 + 1) * (mn.1 + mn.2 + 2) / 2 * 2
+        ≤ (mn.1 + 1) * (mn.2 + 1) * (mn.1 + mn.2 + 2) :=
+    Nat.div_mul_le_self _ _
+  have hcast :
+      ((((mn.1 + 1) * (mn.2 + 1) * (mn.1 + mn.2 + 2) / 2 : ℕ) : ℝ)) * 2
+        ≤ ((mn.1 : ℝ) + 1) * ((mn.2 : ℝ) + 1) * ((mn.1 : ℝ) + mn.2 + 2) := by
+    have hR := (Nat.cast_le (α := ℝ)).mpr hfloor
+    push_cast at hR
+    linarith
+  unfold Weyl_dim_SU3_explicit
+  linarith
+
+/-! ## Brick 4 — Half-cubic real-valued bound (Task #173)
+
+`(Weyl_dim_SU3_explicit (m,n) : ℝ) ≤ ((m : ℝ) + n + 2) ^ 3 / 2`.
+
+Tightens Brick 1's `Weyl_dim_SU3_explicit_real_le_cubic`
+(`(dim:ℝ) ≤ ((m+n)+2)^3`) by the missing factor of `1/2` that
+the task brief calls out as "currently slack". Routed through
+Brick 3's honest quadratic-times-linear form, then squeezed by
+`(m+1)(n+1) ≤ (m+n+2)^2` (AM-GM with slack: the gap is
+`m² + n² + mn + 3m + 3n + 3 ≥ 0`).
+
+Used by the in-progress Varadhan strip work in
+`Towers/YM/PeterWeylHeatVaradhan.lean` to halve the slack of the
+PeterWeyl-shape antidiagonal envelope. -/
+theorem Weyl_dim_SU3_explicit_real_le_half_cubic (mn : Weyl_label) :
+    (Weyl_dim_SU3_explicit mn : ℝ) ≤ ((mn.1 : ℝ) + mn.2 + 2) ^ 3 / 2 := by
+  have hprod := Weyl_dim_SU3_explicit_real_le_half_prod mn
+  have hm : (0 : ℝ) ≤ (mn.1 : ℝ) := Nat.cast_nonneg _
+  have hn : (0 : ℝ) ≤ (mn.2 : ℝ) := Nat.cast_nonneg _
+  have hsum_nn : (0 : ℝ) ≤ (mn.1 : ℝ) + mn.2 + 2 := by linarith
+  have hquad :
+      ((mn.1 : ℝ) + 1) * ((mn.2 : ℝ) + 1) ≤ ((mn.1 : ℝ) + mn.2 + 2) ^ 2 := by
+    nlinarith [sq_nonneg ((mn.1 : ℝ) - mn.2), sq_nonneg ((mn.1 : ℝ) + mn.2),
+               mul_nonneg hm hn, hm, hn]
+  have hcubic_nat :
+      ((mn.1 : ℝ) + 1) * ((mn.2 : ℝ) + 1) * ((mn.1 : ℝ) + mn.2 + 2)
+        ≤ ((mn.1 : ℝ) + mn.2 + 2) ^ 3 := by
+    have := mul_le_mul_of_nonneg_right hquad hsum_nn
+    nlinarith [this]
+  linarith
+
 end PeterWeylQuadratic
 end YM
 end Towers
