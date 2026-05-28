@@ -16,15 +16,43 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const insertedRows: Array<Record<string, unknown>> = [];
+const insertedRowsByTable = new Map<symbol, Array<Record<string, unknown>>>();
 let selectOffsetResult: Array<{ id: number }> = [];
+let historyRowsResult: Array<Record<string, unknown>> = [];
+let lastListLimit: number | null = null;
+const deleteCallsByTable = new Map<symbol, number>();
+
+const REBUILD_TABLE_KEY = Symbol("lean_rebuild_history");
+const REROLL_TABLE_KEY = Symbol("ledger_checkpoint_reroll_history");
 
 vi.mock("@workspace/db", () => {
-  const insertChain = {
+  const insertChain = (tableKey: symbol) => ({
     values: vi.fn(async (v: Record<string, unknown>) => {
       insertedRows.push(v);
+      const arr = insertedRowsByTable.get(tableKey) ?? [];
+      arr.push(v);
+      insertedRowsByTable.set(tableKey, arr);
+    }),
+  });
+  // `db.select(undefined)` is the "list rows" path (limit→rows directly).
+  // `db.select({id: ...})` is the "find cutoff" path (limit→offset→rows).
+  // Both are exercised by recordCheckpointRerollAttempt + listCheckpointRerollHistory.
+  // The list chain honors the requested `.limit(n)` by slicing the
+  // fixture rows — this is what the route uses to cap the response
+  // at CHECKPOINT_REROLL_HISTORY_CAPACITY. A mock that ignored `n`
+  // would let a route regression (wrong cap, missing `.limit()`)
+  // pass silently.
+  const listChain = {
+    from: () => ({
+      orderBy: () => ({
+        limit: async (n: number) => {
+          lastListLimit = n;
+          return historyRowsResult.slice(0, n);
+        },
+      }),
     }),
   };
-  const selectChain = {
+  const cutoffChain = {
     from: () => ({
       orderBy: () => ({
         limit: () => ({
@@ -33,16 +61,27 @@ vi.mock("@workspace/db", () => {
       }),
     }),
   };
-  const deleteChain = {
-    where: async () => undefined,
-  };
+  const deleteChain = (tableKey: symbol) => ({
+    where: async () => {
+      deleteCallsByTable.set(
+        tableKey,
+        (deleteCallsByTable.get(tableKey) ?? 0) + 1,
+      );
+    },
+  });
   return {
     db: {
-      insert: vi.fn(() => insertChain),
-      select: vi.fn(() => selectChain),
-      delete: vi.fn(() => deleteChain),
+      insert: vi.fn((table: { __key: symbol }) => insertChain(table.__key)),
+      select: vi.fn((arg?: unknown) =>
+        arg === undefined ? listChain : cutoffChain,
+      ),
+      delete: vi.fn((table: { __key: symbol }) => deleteChain(table.__key)),
     },
-    leanRebuildHistoryTable: { id: Symbol("id") },
+    leanRebuildHistoryTable: { id: Symbol("id"), __key: REBUILD_TABLE_KEY },
+    ledgerCheckpointRerollHistoryTable: {
+      id: Symbol("id"),
+      __key: REROLL_TABLE_KEY,
+    },
   };
 });
 
@@ -140,7 +179,11 @@ beforeEach(() => {
   delete process.env["LEAN_REBUILD_TOKEN"];
   delete process.env["LEAN_REBUILD_TOKENS"];
   insertedRows.length = 0;
+  insertedRowsByTable.clear();
   selectOffsetResult = [];
+  historyRowsResult = [];
+  lastListLimit = null;
+  deleteCallsByTable.clear();
   spawnHandler = null;
   lastSpawnedChild = null;
   __testing.resetAuthState();
@@ -565,6 +608,159 @@ describe("POST /api/ledger/checkpoint/reroll — auth, cooldown, and helper outc
     });
     expect(second.status).toBe(429);
     expect(Number(second.headers.get("retry-after"))).toBeGreaterThan(0);
+  });
+});
+
+describe("Checkpoint reroll history — write + read path (Task #141)", () => {
+  afterEach(() => {
+    __testing.setRerollSpawner(null);
+    __testing.resetCheckpointRerollState();
+  });
+
+  it("POST /api/ledger/checkpoint/reroll persists a history row that GET /api/ledger/checkpoint/reroll/history echoes back with refereeName + ip + ok + durationMs", async () => {
+    process.env["LEAN_REBUILD_TOKENS"] = "alice:tokA";
+    __testing.setRerollSpawner(async () => ({
+      ok: true,
+      exitCode: 0,
+      stdout: "OK: checkpoint re-rolled (before=100, after=200)\n",
+      stderr: "",
+      error: null,
+    }));
+
+    const post = await call({
+      method: "POST",
+      path: "/api/ledger/checkpoint/reroll",
+      ip: "203.0.113.7",
+      authorization: "Bearer tokA",
+      refereeName: "spoofed",
+    });
+    expect(post.status).toBe(200);
+    expect(post.json.ok).toBe(true);
+
+    // Exactly one row landed in the reroll-history table (rebuild
+    // table is untouched).
+    const rerollInserts = insertedRowsByTable.get(REROLL_TABLE_KEY) ?? [];
+    expect(rerollInserts).toHaveLength(1);
+    expect(insertedRowsByTable.get(REBUILD_TABLE_KEY) ?? []).toHaveLength(0);
+    const persisted = rerollInserts[0];
+    expect(persisted).toMatchObject({
+      ok: true,
+      exitCode: 0,
+      error: null,
+      // Named token wins over X-Referee-Name header.
+      refereeName: "alice",
+      ip: "203.0.113.7",
+    });
+    expect(typeof persisted.durationMs).toBe("number");
+    expect(persisted.timestamp).toBeInstanceOf(Date);
+
+    // Now feed that same row back through the list query so the GET
+    // endpoint sees it.
+    historyRowsResult = [
+      {
+        id: 1,
+        timestamp: persisted.timestamp as Date,
+        durationMs: persisted.durationMs as number,
+        exitCode: persisted.exitCode as number,
+        ok: persisted.ok as boolean,
+        error: persisted.error as string | null,
+        refereeName: persisted.refereeName as string | null,
+        ip: persisted.ip as string | null,
+      },
+    ];
+
+    const get = await call({
+      path: "/api/ledger/checkpoint/reroll/history",
+    });
+    expect(get.status).toBe(200);
+    expect(get.json.capacity).toBe(20);
+    expect(get.json.entries).toHaveLength(1);
+    expect(get.json.entries[0]).toMatchObject({
+      ok: true,
+      exitCode: 0,
+      error: null,
+      refereeName: "alice",
+      ip: "203.0.113.7",
+    });
+    expect(typeof get.json.entries[0].durationMs).toBe("number");
+    expect(get.json.entries[0].durationMs).toBeGreaterThanOrEqual(0);
+    expect(typeof get.json.entries[0].timestamp).toBe("string");
+    expect(() => new Date(get.json.entries[0].timestamp)).not.toThrow();
+  });
+
+  it("trims to the 20-row capacity: when the cutoff query reports an overflow row, recordCheckpointRerollAttempt deletes the older rows", async () => {
+    process.env["LEAN_REBUILD_TOKEN"] = "shared";
+    __testing.setRerollSpawner(async () => ({
+      ok: true,
+      exitCode: 0,
+      stdout: "OK\n",
+      stderr: "",
+      error: null,
+    }));
+    // Simulate "there are already >20 rows" — the cutoff query
+    // returns the 21st-newest row's id, and the route must issue a
+    // delete-where for everything older.
+    selectOffsetResult = [{ id: 42 }];
+
+    const post = await call({
+      method: "POST",
+      path: "/api/ledger/checkpoint/reroll",
+      authorization: "Bearer shared",
+    });
+    expect(post.status).toBe(200);
+    expect(post.json.ok).toBe(true);
+
+    // The cutoff-driven delete fired exactly once, against the
+    // reroll table (not the rebuild table).
+    expect(deleteCallsByTable.get(REROLL_TABLE_KEY)).toBe(1);
+    expect(deleteCallsByTable.get(REBUILD_TABLE_KEY) ?? 0).toBe(0);
+  });
+
+  it("GET /api/ledger/checkpoint/reroll/history caps at 20 rows when the DB holds more, in newest-first order", async () => {
+    // Seed 25 rows (more than the 20-row cap), id-descending so the
+    // mock's slice(0, n) returns the newest first. The list mock
+    // honors the requested `.limit(n)` — so this test would fail
+    // both if the route stopped calling `.limit(20)` AND if the
+    // route's capacity constant drifted away from 20.
+    const base = new Date("2026-05-28T00:00:00Z").getTime();
+    historyRowsResult = Array.from({ length: 25 }, (_, i) => ({
+      id: 100 - i,
+      timestamp: new Date(base - i * 60_000),
+      durationMs: 1000 + i,
+      exitCode: 0,
+      ok: true,
+      error: null,
+      refereeName: i % 2 === 0 ? "alice" : null,
+      ip: `10.0.0.${i + 1}`,
+    }));
+
+    const get = await call({
+      path: "/api/ledger/checkpoint/reroll/history",
+    });
+    expect(get.status).toBe(200);
+    expect(get.json.capacity).toBe(20);
+    // Route asked the DB for exactly 20 rows (not 25, not 100).
+    expect(lastListLimit).toBe(20);
+    expect(get.json.entries).toHaveLength(20);
+    // Newest first — first entry is the freshest row, last entry
+    // is the 20th-newest. The 21st–25th rows (durationMs 1020-1024)
+    // must NOT appear.
+    expect(get.json.entries[0]).toMatchObject({
+      durationMs: 1000,
+      refereeName: "alice",
+      ip: "10.0.0.1",
+    });
+    expect(get.json.entries[19]).toMatchObject({
+      durationMs: 1019,
+      refereeName: null,
+      ip: "10.0.0.20",
+    });
+    const durations = get.json.entries.map(
+      (e: { durationMs: number }) => e.durationMs,
+    );
+    expect(Math.max(...durations)).toBe(1019);
+    expect(durations).not.toContain(1020);
+    expect(durations).not.toContain(1024);
   });
 });
 
