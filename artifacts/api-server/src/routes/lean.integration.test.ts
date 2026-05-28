@@ -110,7 +110,12 @@ vi.mock("node:fs", async (orig) => {
     default: actual,
     existsSync: (p: import("node:fs").PathLike) => {
       const s = String(p);
-      if (s.endsWith("regenerate.sh") || s.endsWith("VERIFY.txt")) return true;
+      if (
+        s.endsWith("regenerate.sh") ||
+        s.endsWith("VERIFY.txt") ||
+        s.endsWith("reroll-checkpoint.py")
+      )
+        return true;
       return actual.existsSync(p);
     },
     readFileSync: ((p: import("node:fs").PathOrFileDescriptor, ...rest: unknown[]) => {
@@ -761,6 +766,192 @@ describe("Checkpoint reroll history — write + read path (Task #141)", () => {
     expect(Math.max(...durations)).toBe(1019);
     expect(durations).not.toContain(1020);
     expect(durations).not.toContain(1024);
+  });
+});
+
+async function openRerollStream(opts: {
+  ip?: string;
+  authorization?: string;
+  refereeName?: string;
+}): Promise<Response> {
+  const headers: Record<string, string> = {
+    "x-test-ip": opts.ip ?? "10.0.0.1",
+  };
+  if (opts.authorization) headers["authorization"] = opts.authorization;
+  if (opts.refereeName !== undefined)
+    headers["x-referee-name"] = opts.refereeName;
+  return fetch(`${baseUrl}/api/ledger/checkpoint/reroll/stream`, {
+    method: "POST",
+    headers,
+  });
+}
+
+describe("POST /api/ledger/checkpoint/reroll/stream — Task #160 (SSE coverage)", () => {
+  afterEach(() => {
+    __testing.resetCheckpointRerollState();
+  });
+
+  it("returns 503 JSON when no token is configured", async () => {
+    const res = await openRerollStream({ authorization: "Bearer x" });
+    expect(res.status).toBe(503);
+    expect(res.headers.get("content-type")).toMatch(/json/);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toMatch(/disabled/i);
+    expect(res.headers.get("retry-after")).toBeNull();
+    expect(insertedRows).toHaveLength(0);
+  });
+
+  it("returns 401 JSON on a wrong bearer token (no Retry-After)", async () => {
+    process.env["LEAN_REBUILD_TOKEN"] = "shared";
+    const res = await openRerollStream({ authorization: "Bearer nope" });
+    expect(res.status).toBe(401);
+    expect(res.headers.get("retry-after")).toBeNull();
+    expect(res.headers.get("content-type")).toMatch(/json/);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toMatch(/invalid|unauthor/i);
+    expect(insertedRows).toHaveLength(0);
+  });
+
+  it("returns 409 JSON when another re-roll is already in flight", async () => {
+    process.env["LEAN_REBUILD_TOKEN"] = "shared";
+    // Hold the first stream open by never emitting close on its child.
+    let firstChild: FakeChild | null = null;
+    spawnHandler = (child) => {
+      firstChild = child;
+      child.stdout.emit("data", Buffer.from("STEP: starting\n"));
+      // intentionally do not close — keeps checkpointRerollInFlight=true.
+    };
+    const first = await openRerollStream({ authorization: "Bearer shared" });
+    expect(first.status).toBe(200);
+    // Wait until the in-flight flag is set.
+    for (let i = 0; i < 50 && !firstChild; i++) {
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    expect(firstChild).not.toBeNull();
+
+    const second = await openRerollStream({ authorization: "Bearer shared" });
+    expect(second.status).toBe(409);
+    expect(second.headers.get("content-type")).toMatch(/json/);
+    const body = (await second.json()) as { error?: string };
+    expect(body.error).toMatch(/already in flight/i);
+
+    // Clean up: close the first stream so afterEach can reset state.
+    (firstChild as unknown as FakeChild).emit("close", 0, null);
+    await consumeSse(first);
+  });
+
+  it("streams STEP: / PROGRESS: lines and a result event with ok:true on a successful re-roll", async () => {
+    process.env["LEAN_REBUILD_TOKENS"] = "alice:tokA";
+    spawnHandler = (child) => {
+      child.stdout.emit(
+        "data",
+        Buffer.from(
+          "STEP: verifying existing checkpoint\nPROGRESS: 50%\nSTEP: writing new checkpoint\nOK: checkpoint re-rolled (before=100, after=200)\n",
+        ),
+      );
+      child.emit("close", 0, null);
+    };
+
+    const res = await openRerollStream({
+      authorization: "Bearer tokA",
+      refereeName: "mallory",
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toMatch(/event-stream/);
+
+    const events = await consumeSse(res);
+    const lines = events.filter((e) => e.event === "line");
+    const result = events.find((e) => e.event === "result");
+
+    // The STEP: / PROGRESS: / OK lines all arrived as line frames
+    // (one per newline-terminated chunk), proving the dashboard's
+    // panel-reroll-live-log can render incremental progress.
+    expect(lines.length).toBeGreaterThanOrEqual(4);
+    expect(
+      lines.some(
+        (l) =>
+          l.data.stream === "stdout" &&
+          l.data.line === "STEP: verifying existing checkpoint",
+      ),
+    ).toBe(true);
+    expect(
+      lines.some(
+        (l) => l.data.stream === "stdout" && l.data.line === "PROGRESS: 50%",
+      ),
+    ).toBe(true);
+    expect(
+      lines.some(
+        (l) =>
+          l.data.stream === "stdout" &&
+          l.data.line === "STEP: writing new checkpoint",
+      ),
+    ).toBe(true);
+
+    expect(result).toBeTruthy();
+    expect(result!.data.ok).toBe(true);
+    expect(result!.data.exitCode).toBe(0);
+    expect(result!.data.error).toBeNull();
+    expect(result!.data.stdout).toContain("STEP: writing new checkpoint");
+    expect(typeof result!.data.durationMs).toBe("number");
+
+    // History row persisted with the named-token referee (not the
+    // spoofed X-Referee-Name header).
+    const rerollInserts = insertedRowsByTable.get(REROLL_TABLE_KEY) ?? [];
+    expect(rerollInserts).toHaveLength(1);
+    expect(rerollInserts[0]).toMatchObject({
+      ok: true,
+      exitCode: 0,
+      error: null,
+      refereeName: "alice",
+    });
+  });
+
+  it("streams a refused (exit 2) result envelope without persisting ok=true", async () => {
+    process.env["LEAN_REBUILD_TOKEN"] = "shared";
+    spawnHandler = (child) => {
+      child.stderr.emit(
+        "data",
+        Buffer.from("REFUSE: existing checkpoint fails verification\n"),
+      );
+      child.emit("close", 2, null);
+    };
+
+    const res = await openRerollStream({ authorization: "Bearer shared" });
+    expect(res.status).toBe(200);
+    const events = await consumeSse(res);
+    const stderrLines = events.filter(
+      (e) => e.event === "line" && e.data.stream === "stderr",
+    );
+    expect(stderrLines.some((l) => /REFUSE/.test(l.data.line))).toBe(true);
+
+    const result = events.find((e) => e.event === "result");
+    expect(result).toBeTruthy();
+    expect(result!.data.ok).toBe(false);
+    expect(result!.data.exitCode).toBe(2);
+    expect(result!.data.error).toMatch(/refused/i);
+
+    const rerollInserts = insertedRowsByTable.get(REROLL_TABLE_KEY) ?? [];
+    expect(rerollInserts).toHaveLength(1);
+    expect(rerollInserts[0]).toMatchObject({ ok: false, exitCode: 2 });
+  });
+
+  it("enforces the shared rebuild cooldown (429 + Retry-After) after a successful streamed re-roll", async () => {
+    process.env["LEAN_REBUILD_TOKEN"] = "shared";
+    spawnHandler = (child) => {
+      child.stdout.emit("data", Buffer.from("OK\n"));
+      child.emit("close", 0, null);
+    };
+    const first = await openRerollStream({ authorization: "Bearer shared" });
+    expect(first.status).toBe(200);
+    const firstEvents = await consumeSse(first);
+    expect(firstEvents.find((e) => e.event === "result")?.data.ok).toBe(true);
+
+    const second = await openRerollStream({ authorization: "Bearer shared" });
+    expect(second.status).toBe(429);
+    expect(second.headers.get("content-type")).toMatch(/json/);
+    expect(Number(second.headers.get("retry-after"))).toBeGreaterThan(0);
+    const body = (await second.json()) as { error?: string };
+    expect(body.error).toMatch(/cooldown/i);
   });
 });
 
