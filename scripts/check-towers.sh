@@ -2188,6 +2188,41 @@ BRICKS=(
   "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_nonneg"
   "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_isPseudoDist"
   "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan_geometric"
+  # Batch 162 / TRI PARALLEL #2 — three honest stand-ins for Yang-Mills
+  # Surface #1 (OS reconstruction / mass-gap support). Each is a
+  # consistency / inhabitedness brick on its predicate shape; none
+  # closes Surface #1 and the YM tower stays `Status: Open` in
+  # `docs/ROADMAP.md`.
+  #
+  # 162.1 — `Towers/YM/MassGapStandin.lean`:
+  #   * `massGap_standin_example` — witnesses `hasMassGapLowerBound 1`
+  #     (the "∃ C > 0 and μ > 0" inhabitedness predicate). The original
+  #     snippet wired into `integrated_tail_standin f`, but that lemma
+  #     takes `(δ T : ℝ) (hδ : 0 < δ) (hδT : δ < T) (hT : T ≤ 1)` and
+  #     produces an `∃ C, …` witness — it is not a function `f → ℝ`,
+  #     so the snippet's bound is malformed. Honest pivot drops the
+  #     wiring and lands the positivity-conjunction predicate.
+  # 162.2 — `Towers/YM/SpectralGapCore.lean`:
+  #   * `hasMassGap_zero` — witnesses `HasMassGap ℂ (0 : ℂ →L[ℂ] ℂ) 1`
+  #     using the real part of the inner product. The original snippet
+  #     wrote `⟪x, T x⟫_ℂ ≤ …`, but `ℂ` has no default `≤` instance;
+  #     pivot takes `.re` (the standard hermitian-bound shape).
+  # 162.3 — `Towers/YM/TransferOperator.lean`:
+  #   * `spectral_radius_transfer_zero` — `spectralRadius ℂ
+  #     (TransferOperator H) = 0` via `spectralRadius_zero`. Original
+  #     snippet defined `TransferOperator := 1` and called
+  #     `spectralRadius_one`, which does NOT exist in mathlib v4.12.0
+  #     (only `spectralRadius_zero` does). Honest pivot: operator
+  #     becomes `0`, brick becomes `= 0`. Replacing `TransferOperator`
+  #     with a real Markov-like operator will intentionally break the
+  #     brick — that breakage is the tripwire for landing a real
+  #     transfer operator.
+  # Wall: 482 → 485. YM tower stays `Status: Open`. Surface #1 stays
+  # OPEN. NOT a real YM mass gap, NOT a real spectral gap, NOT a real
+  # transfer operator.
+  "Towers.YM.MassGapStandin|TheoremaAureum.Towers.YM.OS.massGap_standin_example"
+  "Towers.YM.SpectralGapCore|TheoremaAureum.Towers.YM.OS.hasMassGap_zero"
+  "Towers.YM.TransferOperator|TheoremaAureum.Towers.YM.OS.spectral_radius_transfer_zero"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
