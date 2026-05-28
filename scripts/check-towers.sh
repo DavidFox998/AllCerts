@@ -1981,6 +1981,49 @@ BRICKS=(
   # `Heat_kernel_envelope_real_ge_truncation` from Batch 19.1p-redux-b
   # into the new strip bound). mathlib v4.12.0 only.
   "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan"
+  # ---------------------------------------------------------------
+  # Task #157 — Tighter envelope bricks for the SU(3) Peter-Weyl
+  # heat-kernel series (2026-05-28). Two new trio-clean bricks in
+  # `Towers/YM/PeterWeylQuadratic.lean` strengthening the slack
+  # Batch 19.1p-redux-a bounds in `Towers/YM/PeterWeyl.lean`:
+  #
+  #   1. `Weyl_dim_SU3_explicit_real_le_cubic` — real-valued cubic
+  #      upper bound `(dim : ℝ) ≤ ((m+n : ℝ) + 2)^3` on the
+  #      PeterWeyl-shape `Weyl_dim_SU3_explicit`. Companion to
+  #      Batch 156.2's `Towers/YM/WeylDim.lean :: dim_cubic_bound`
+  #      (which targets the integer-valued standalone `dim_SU3`).
+  #      Slack vs. the existing degree-4 product bound
+  #      `Weyl_dim_SU3_explicit_real_le_poly`, but in the
+  #      `(m+n)` antidiagonal shape needed downstream by the
+  #      Varadhan small-`t` work.
+  #
+  #   2. `PeterWeyl_Summable_SU3_quadratic` (headline) — same
+  #      Summable conclusion as Batch 19.1p-redux-a's
+  #      `PeterWeyl_Summable_SU3`, but proved via the QUADRATIC
+  #      Casimir bound from `Towers/YM/Casimir.lean`
+  #      (`Casimir_SU3_explicit_real_ge_quadratic`) instead of the
+  #      linear one. Dropping the nonneg `¾(m+n)²` term keeps the
+  #      linear `3(m+n)` slice, yielding a factor-of-3 sharper
+  #      decay rate `exp(-(3β)·m)·exp(-(3β)·n)`. Squeezes against
+  #      the same `summable_poly_succ_exp_neg_real` envelope at
+  #      rate `3β > 0`. The old `PeterWeyl_Summable_SU3` (which
+  #      uses the linear Casimir bound) is left in place.
+  #
+  # Wall: 468 → 470. **Honest scope (locked).** YM tower stays
+  # `Status: Open` (`docs/ROADMAP.md` § 2). Surface #2 stays OPEN
+  # (4 open-gap blocks in `docs/Surface2_ResearchProgram.tex`;
+  # `kotecky_preiss_criterion` remains a `sorry` in
+  # `Towers/Attempts/ClusterExpansion.lean`). The new bricks are
+  # arithmetic + real-analysis envelope inequalities, NOT a
+  # heat-kernel asymptotic, NOT Varadhan, NOT a per-plaquette
+  # activity bound, NOT KP, NOT a mass-gap statement. mathlib
+  # v4.12.0 only. The old slack bricks
+  # (`Casimir_SU3_explicit_real_ge_linear`,
+  # `Weyl_dim_SU3_explicit_real_le_poly`,
+  # `PeterWeyl_Summable_SU3`) are left in place unmodified for
+  # backward compatibility (additive only — no deletions).
+  "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_cubic"
+  "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.PeterWeyl_Summable_SU3_quadratic"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
