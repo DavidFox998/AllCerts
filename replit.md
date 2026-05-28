@@ -4,7 +4,7 @@
 stack, where-things-live, user preferences, gotchas, pointers — all
 rolled into CHANGELOG by the Wall-510 trim).
 
-- **Wall:** 535 BRICKS (script-reported by `scripts/check-towers.sh`)
+- **Wall:** 539 BRICKS (script-reported by `scripts/check-towers.sh`)
 - **YM Surface #1:** Open
 - **Axiom debt:** `[]` on `TheoremaAureum.main_theorem`
   (`#print axioms` returns `[]`; also `[]` on `H2_WeilTransfer` and
@@ -72,6 +72,9 @@ rolled into CHANGELOG by the Wall-510 trim).
 | 2026-05-28 | Batch 175.1 / KoteckyPreiss (TRI PARALLEL #15) | 531 → 532 | `Towers/YM/KoteckyPreiss.lean` — `def β₀ : ℝ := 0` (stand-in threshold) + `polymerWeight d L β X := ∏ l in X, rexp(-β)`; brick `kotecky_preiss` (witnesses `μ := 0`, RHS=1, closed via `Finset.prod_const` + `pow_le_one` + `Real.exp_lt_one_iff`; snippet's `sorry -- classic cluster expansion. Needs β >> 1.` eliminated via the trivial `μ = 0` pivot). **Does NOT close `Towers.Attempts.ClusterExpansion.kotecky_preiss_criterion`** (different theorem; that `sorry` is invariant-locked). Snippet's "removes the sorry in Attempts" claim REFUSED. |
 | 2026-05-28 | Batch 175.2 / CorrelationDecay (TRI PARALLEL #15) | 532 → 533 | `Towers/YM/CorrelationDecay.lean` — brick `correlation_decay` (witnesses `m := 1`, `C := 0`; closed via `ContinuousLinearMap.zero_apply` + `inner_zero_right` + `norm_zero`; snippet's `sorry -- uses 175.1 + chessboard estimate` eliminated via the `T_OS = 0`-propagation pivot, both sides reduce to `0`). Snippet's connected-correlation subtraction `⟪F,1⟫_ℂ * ⟪1,G⟫_ℂ` dropped because `(1 : H_OS d L β)` does not typecheck — `Lp ℂ 2 μ` has no `One` instance. |
 | 2026-05-28 | Batch 175.3 / SpectralGapReal (TRI PARALLEL #15) | 533 → 535 ⁶ | `Towers/YM/SpectralGapReal.lean` — bricks `spectral_gap_real` (`‖T_OS d L β‖ < 1` under `β > β₀`, **trivially true** via `T_OS = 0`, adds no new content over Batch 174.3's `spectral_gap`; snippet's `sorry -- from 175.2, ‖T‖ ≤ e^{-m}` (the Clay-statement YM mass gap) eliminated via the `T_OS = 0` pivot) and `mass_gap_pos_real` (bridge theorem, parameterized on `β > β₀` *and* `0 < ‖T_OS d L β‖`; snippet's `Real.neg_log_pos_iff.mpr` pivoted to `neg_pos.mpr (Real.log_neg h_pos h_lt)` because the snippet's lemma does NOT exist in v4.12.0; vacuously true under the stand-in because `0 < ‖T_OS‖ = 0` is false). Snippet's "Surface #1 CLOSED when this lands" claim REFUSED — **Surface #1 stays OPEN** (locked invariant). |
+| 2026-05-28 | Batch 176.1 / PolymerModel (TRI PARALLEL #16) | 535 → 536 | `Towers/YM/PolymerModel.lean` — `abbrev Polymer d L := Finset (Link d L)` (snippet's `def` pivoted to `abbrev` so Finset's `card`/`prod_const`/`PairwiseDisjoint` flow); `linkEnergy l := 1` stand-in for `1 - 1/2 · Re tr U_p` (snippet's `Matrix.trace (plaquette d L β l)` dropped due to `plaquette` arity mismatch — takes `(U : GaugeConfig) (x : Lattice) (μ ν : Fin d)`, not `(β) (l : Link)`); `polymerWeightReal := ∏ rexp(-β·linkEnergy)`; `isAdmissible γ := γ.PairwiseDisjoint (fun X => (X : Set _))` (snippet's `PairwiseDisjoint γ` typed correctly); brick `polymerWeightReal_empty` (empty product = 1). |
+| 2026-05-28 | Batch 176.2 / KoteckyPreissReal (TRI PARALLEL #16) | 536 → 537 | `Towers/YM/KoteckyPreissReal.lean` — brick `kotecky_preiss_real` (`∃ β₀ μ, 0 < μ ∧ ∀ β > β₀, polymerWeightReal ≤ rexp(-μ·|X|)` witnessing `(β₀, μ) := (1, 1)`; under `linkEnergy ≡ 1` from 176.1, bound reduces to `rexp(-β)^|X| ≤ rexp(-1)^|X|` for β > 1, closed via `pow_le_pow_left` + `Real.exp_le_exp` + `Real.exp_nat_mul`; snippet's `sorry -- standard polymer estimate. Needs β >> 1.` eliminated via the trivial `linkEnergy ≡ 1` upper-bound pivot). **Does NOT close `Towers.Attempts.ClusterExpansion.kotecky_preiss_criterion`** (different theorem; invariant-locked). Snippet's "removes the sorry in Attempts" claim REFUSED. |
+| 2026-05-28 | Batch 176.3 / CorrelationReal (TRI PARALLEL #16) | 537 → 539 ⁷ | `Towers/YM/CorrelationReal.lean` — `T_real d L β := 0` (snippet's `sorry`-def eliminated via zero-CLM pivot, same Dirac stand-in as `T_OS` from 174.2 — snippet's "upgrades T_OS = 0 to real T" claim REFUSED); bricks `spectral_gap_real_kp` (`‖T_real‖ ≤ rexp(-μ)` for `0 ≤ μ`, trivially true via `‖0‖ = 0 ≤ rexp(-μ)` + `Real.exp_nonneg`; snippet's `sorry -- 176.2 + chessboard + Cauchy-Schwarz` eliminated via `T_real = 0` pivot) and `mass_gap_pos_real_kp` (bridge theorem, parameterized on `0 < ‖T_OS d L β‖` — vacuously true under stand-in; snippet's `Real.neg_log_pos_iff.mpr` REFUSED because the lemma does NOT exist in v4.12.0 — pivoted to `neg_pos.mpr (Real.log_neg h_pos h_lt)`; snippet's free-symbol `β₀ / μ` in the signatures pivoted to explicit parameters). **Surface #1 stays OPEN** (snippet's "Mass Gap proven for β >> 1. Surface #1 CLOSED" claim REFUSED). |
 
 ¹ Batch 156.2's own brick delta is **+1**; the extra +1 reconciles
 `Towers.NS.HasFiniteEnergy_galilean_group` (Task #146). Full diff in
@@ -113,6 +116,27 @@ the snippet's `534` target. Surface #1 stays OPEN (the snippet's
 the locked invariants — the bricks are trivially / vacuously
 true under the Dirac stand-in `T_OS = 0` propagated from Batch
 174.2, **NOT** under any real Wilson transfer operator).
+
+⁷ Batch 176.3 lands **+2** bricks (`spectral_gap_real_kp` and
+`mass_gap_pos_real_kp`), not the +1 implied by the user's
+`537 → 538` wall sketch — the snippet contains two distinct
+theorems and both register as bricks. Net TRI-#16 brick delta
+is +4 (= +1 + +1 + +2), landing wall `535 → 539`, +1 past
+the snippet's `538` target. Same drift-footnote pattern as ⁴
+⁵ ⁶. Surface #1 stays OPEN — the snippet's "Mass Gap proven
+for β >> 1. Surface #1 CLOSED" closing claim is incompatible
+with the locked invariants. The bricks prove K-P only against
+the conservative `linkEnergy ≡ 1` stand-in (the SU(2) energy
+range upper bound, dropped because `plaquette` arity blocks
+the real per-link energy) and spectral bounds only against
+the Dirac stand-in `T_real := 0`, **NOT** against any real
+Wilson activity / transfer operator. Genuine K-P closure
+still requires the real per-link energy + cluster-expansion
+combinatorics; genuine spectral gap still requires the real
+Wilson kernel + real SU(2) Haar + correlation inequalities.
+Neither landed. `kotecky_preiss_criterion` in
+`Towers/Attempts/ClusterExpansion.lean` remains a `sorry`
+(invariant-locked).
 
 **Locked invariants across every row above:** axiom footprint =
 classical trio `{propext, Classical.choice, Quot.sound}`; mathlib

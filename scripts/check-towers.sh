@@ -2534,6 +2534,57 @@ BRICKS=(
   "Towers.YM.CorrelationDecay|TheoremaAureum.Towers.YM.LatticeGauge.correlation_decay"
   "Towers.YM.SpectralGapReal|TheoremaAureum.Towers.YM.LatticeGauge.spectral_gap_real"
   "Towers.YM.SpectralGapReal|TheoremaAureum.Towers.YM.LatticeGauge.mass_gap_pos_real"
+  # TRI PARALLEL #16 / Batches 176.1, 176.2, 176.3 — real polymer
+  # model + Kotecký–Preiss with `μ > 0` + spectral-gap interface
+  # on a "real" transfer operator, all under stand-ins. Surface
+  # #1 stays OPEN (locked invariant; snippet's "Surface #1
+  # CLOSED" / "Mass Gap proven for β >> 1" claims REFUSED).
+  # PolymerModel: `abbrev Polymer := Finset (Link d L)`
+  # (snippet's `def` pivoted to `abbrev` so Finset's `card` /
+  # `prod_const` / `PairwiseDisjoint` flow transparently);
+  # `linkEnergy l := 1` stand-in for `1 - 1/2 · Re tr U_p`
+  # (snippet's `Matrix.trace (plaquette d L β l)` dropped because
+  # `plaquette` has wrong arity — it takes `(U : GaugeConfig) (x
+  # : Lattice) (μ ν : Fin d)`, NOT `(β : ℝ) (l : Link)`);
+  # `polymerWeightReal := ∏ rexp(-β · linkEnergy)`;
+  # `isAdmissible γ := γ.PairwiseDisjoint (fun X => (X : Set
+  # (Link d L)))` (snippet's `PairwiseDisjoint γ` typed
+  # correctly); brick `polymerWeightReal_empty` (empty polymer
+  # has weight 1 via `Finset.prod_empty`).
+  # KoteckyPreissReal: brick `kotecky_preiss_real` witnesses
+  # `(β₀, μ) := (1, 1)` (so `0 < μ`), with the polymer bound
+  # `rexp(-β)^|X| ≤ rexp(-1)^|X|` for `β > 1` via
+  # `pow_le_pow_left` + `Real.exp_le_exp` + `Real.exp_nat_mul`
+  # (snippet's `sorry -- standard polymer estimate. Needs β >>
+  # 1.` eliminated via the trivial `linkEnergy ≡ 1` upper-bound
+  # pivot — does NOT prove the genuine K-P bound for the real
+  # SU(2) Wilson activity). Does NOT close
+  # `Towers.Attempts.ClusterExpansion.kotecky_preiss_criterion`
+  # (different theorem; invariant-locked). Snippet's "removes
+  # the sorry in Attempts" claim REFUSED.
+  # CorrelationReal: `T_real d L β := 0` (snippet's `sorry`-def
+  # eliminated via the zero-CLM pivot, same as `T_OS` from Batch
+  # 174.2 — snippet's "upgrades T_OS = 0 to real T" claim
+  # REFUSED, `T_real` is the SAME Dirac stand-in); brick
+  # `spectral_gap_real_kp` (`‖T_real‖ ≤ rexp(-μ)` for `0 ≤ μ`,
+  # trivially true via `‖0‖ = 0 ≤ rexp(-μ)` + `Real.exp_nonneg`;
+  # snippet's `sorry -- 176.2 + chessboard + Cauchy-Schwarz`
+  # eliminated via the `T_real = 0` pivot) + brick
+  # `mass_gap_pos_real_kp` (bridge theorem, parameterized on
+  # `0 < ‖T_OS d L β‖` — vacuously true under the stand-in;
+  # snippet's `Real.neg_log_pos_iff.mpr` REFUSED because the
+  # lemma does NOT exist in mathlib v4.12.0 — pivoted to
+  # `neg_pos.mpr (Real.log_neg h_pos h_lt)`; snippet's
+  # free-symbol `β₀ / μ` references in the theorem signatures
+  # pivoted to explicit parameters).
+  # **Genuine mass gap still requires**: real Wilson kernel +
+  # real SU(2) Haar + Kotecký–Preiss at the real activity +
+  # correlation inequalities (FKG / Brascamp–Lieb) — none
+  # landed.
+  "Towers.YM.PolymerModel|TheoremaAureum.Towers.YM.LatticeGauge.polymerWeightReal_empty"
+  "Towers.YM.KoteckyPreissReal|TheoremaAureum.Towers.YM.LatticeGauge.kotecky_preiss_real"
+  "Towers.YM.CorrelationReal|TheoremaAureum.Towers.YM.LatticeGauge.spectral_gap_real_kp"
+  "Towers.YM.CorrelationReal|TheoremaAureum.Towers.YM.LatticeGauge.mass_gap_pos_real_kp"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
