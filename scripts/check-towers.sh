@@ -2270,6 +2270,8 @@ BRICKS=(
   "Towers.YM.ClusteringImpliesGap|TheoremaAureum.Towers.YM.OS.clustering_implies_gap"
   "Towers.YM.TransferImpliesClustering|TheoremaAureum.Towers.YM.OS.transfer_implies_clustering"
   "Towers.YM.TailImpliesTransfer|TheoremaAureum.Towers.YM.OS.tail_implies_transfer"
+  "Towers.YM.ShiftOperator|TheoremaAureum.Towers.YM.OS.norm_shift_apply"
+  "Towers.YM.NontrivialGap|TheoremaAureum.Towers.YM.OS.nontrivial_gap"
 )
 
 VERIFIER_DIR="$(mktemp -d)"
