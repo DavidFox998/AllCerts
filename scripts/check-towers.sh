@@ -2152,6 +2152,42 @@ BRICKS=(
   # nothing about any Yang-Mills field operator being tempered.
   # Surface #1 stays Open.
   "Towers.YM.TemperednessCore|TheoremaAureum.Towers.YM.OS.tempered_of_clm"
+  # Task #170 (2026-05-28): honest stand-in for the SU(3) bi-invariant
+  # Riemannian distance that the off-diagonal Varadhan / Molchanov
+  # small-`t` asymptotic
+  #   `K_t(x, e) ≲ t^{-d/2} · exp(-d_g(x, e)² / (4t))`
+  # would consume. mathlib v4.12.0 has no Killing-form Riemannian
+  # metric on SU(3) (no `BiInvariantMetric` API, no `Dist
+  # (Matrix.specialUnitaryGroup …)` instance), so per the established
+  # stand-in pattern (Batches 157–161) we land:
+  #   * `d_SU3_self` — the stand-in distance vanishes on the
+  #     diagonal (trivially: `d_SU3 ≡ 0`),
+  #   * `d_SU3_nonneg` — the stand-in distance is nonneg
+  #     (trivially: `d_SU3 ≡ 0`),
+  #   * `d_SU3_isPseudoDist` — inhabitedness witness for the
+  #     `IsPseudoDistOnSU3` predicate (symmetric, nonneg,
+  #     zero-on-diagonal). Bi-invariance under group action is
+  #     intentionally omitted (Submonoid Mul plumbing not in scope
+  #     without ballooning imports). Proves the predicate is
+  #     *consistent*, NOT that we have constructed the real
+  #     Killing-form distance.
+  # Plus one downstream brick on `PeterWeylHeatVaradhan.lean`:
+  #   * `Heat_kernel_envelope_real_le_varadhan_geometric` — the
+  #     strip-form Varadhan-shape envelope bound now carrying the
+  #     **geometric** `exp(-(d_SU3 x 1)² / (4t))` factor instead of
+  #     the synthetic `exp(-(c/t))`. Because `d_SU3 ≡ 0` the factor
+  #     collapses to `exp 0 = 1` and the brick chains off the
+  #     existing strip bound plus `exp(-(c/t)) ≤ 1`. Tripwire:
+  #     replacing `d_SU3` with the real Killing-form distance will
+  #     intentionally break this proof — that breakage is the
+  #     signal that a real off-diagonal Varadhan bound has landed.
+  # Wall: 478 → 482. YM tower stays `Status: Open` in
+  # `docs/ROADMAP.md` § 2. NOT a real Varadhan asymptotic, NOT a
+  # YM mass-gap bound.
+  "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_self"
+  "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_nonneg"
+  "Towers.YM.RiemannianGeometry|TheoremaAureum.Towers.YM.RiemannianGeometry.d_SU3_isPseudoDist"
+  "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_real_le_varadhan_geometric"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

@@ -153,10 +153,10 @@ plaquette / `F_μν` / mass-gap, NOT the Sobolev H¹ norm / Leray–Hopf
 solution. For per-batch prose and tactic notes see
 `docs/CHANGELOG.md`.
 
-**Current wall: 478 BRICKS** (script-reported by `scripts/check-towers.sh`).
-Last verified build: `towers-build` workflow, 2026-05-28 15:08 UTC —
-`ok: Towers library built; all 478 brick(s) passed the
-axiom-footprint check.` Run ID `towers-build_20260528_150811_808`.
+**Current wall: 482 BRICKS** (script-reported by `scripts/check-towers.sh`).
+Last verified build: `towers-build` workflow, 2026-05-28 15:52 UTC —
+`ok: Towers library built; all 482 brick(s) passed the
+axiom-footprint check.` Run ID `towers-build_20260528_155202_714`.
 
 | Date | Task / Batch | Δ Wall | Headline (full prose in `docs/CHANGELOG.md`) |
 |---|---|---|---|
@@ -175,6 +175,7 @@ axiom-footprint check.` Run ID `towers-build_20260528_150811_808`.
 | 2026-05-28 | Batch 159.1 / ClusteringCore (TRI PARALLEL) | 475 → 476 | `Towers/YM/ClusteringCore.lean` — `clusters_zero` (zero-zero pair trivially clusters under any measure; inhabitedness witness for the `clusters` cluster-decay predicate, same pattern as Batch 157.2). Honest stand-in for the rejected `clusters_product`, which required `integral_prod_mul` / `measure_prod` lemmas mathlib v4.12.0 does not export under those names. Does **NOT** prove cluster decay for any YM measure. Surface #1 stays OPEN. |
 | 2026-05-28 | Batch 160.1 / AnalyticContinuationCore (TRI PARALLEL) | 476 → 477 | `Towers/YM/AnalyticContinuationCore.lean` — `exp_neg_continues` (real exp `t ↦ exp(-t·H)` analytically continues to entire `z ↦ exp(-z·H)`; predicate `analyticallyContinues`). Discharged via explicit composition `Complex.differentiable_exp.comp (differentiable_id.neg.mul_const (H : ℂ))` — `fun_prop` was tried first but failed with "No theorems found for `Complex.exp`" in our minimal import surface. Does **NOT** prove YM Schwinger → Wightman analytic continuation. Surface #1 stays OPEN. |
 | 2026-05-28 | Batch 161.1 / TemperednessCore (TRI PARALLEL) | 477 → 478 | `Towers/YM/TemperednessCore.lean` — `tempered_of_clm` (every continuous ℂ-linear functional on any complex normed space `E` satisfies the opNorm-bound predicate `tempered`, via `ContinuousLinearMap.le_opNorm`). Honest stand-in for the rejected Schwartz-space version — mathlib v4.12.0 does not equip `SchwartzMap ℝ ℂ` with a global `Norm` instance (only the seminorm family), so we generalize away from Schwartz to a generic `E`. Does **NOT** prove the full Schwartz-semi-norm-family temperedness, and says nothing about any YM field operator. Surface #1 stays OPEN. |
+| 2026-05-28 | Task #170 / RiemannianGeometry + Varadhan-geometric | 478 → 482 | `Towers/YM/RiemannianGeometry.lean` — stand-in `d_SU3 g h := 0` for the SU(3) bi-invariant Riemannian distance (mathlib v4.12.0 has no Killing-form metric / no `Dist (Matrix.specialUnitaryGroup …)` instance), plus three pseudometric bricks `d_SU3_self` / `d_SU3_nonneg` / `d_SU3_isPseudoDist` (predicate records symmetry + nonneg + zero-on-diagonal). **Scope drift from the Task #170 brief, locked:** bi-invariance under group action `d (k·g) (k·h) = d g h` is *intentionally not encoded* (Submonoid `Mul` plumbing on the carrier of `specialUnitaryGroup` is not in scope without ballooning imports) — predicate renamed `IsBiInvariantOnSU3` → `IsPseudoDistOnSU3` and the third brick renamed accordingly. Downstream: `PeterWeylHeatVaradhan.lean` gains `Heat_kernel_envelope_real_le_varadhan_geometric` carrying the **geometric** `exp(-(d_SU3 x 1)² / (4t))` factor instead of the synthetic `exp(-c/t)`; with `d_SU3 ≡ 0` the factor collapses to `exp 0 = 1` and the brick wraps the existing strip bound. Replacing `d_SU3` with the real Killing-form distance will **intentionally** break this brick — the tripwire that signals a real off-diagonal Varadhan bound has landed. Does **NOT** prove the small-`t` Varadhan / Molchanov asymptotic for any YM heat kernel. YM tower stays `Status: Open`. |
 
 ¹ Batch 156.2's own brick delta is **+1**; the extra +1 reconciles
 `Towers.NS.HasFiniteEnergy_galilean_group` (Task #146, already in

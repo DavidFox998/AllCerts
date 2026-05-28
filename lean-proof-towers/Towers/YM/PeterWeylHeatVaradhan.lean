@@ -90,6 +90,7 @@ stays OPEN.
 import Towers.YM.PeterWeyl
 import Towers.YM.PeterWeylHeat
 import Towers.YM.Casimir
+import Towers.YM.RiemannianGeometry
 import Mathlib.Analysis.SpecialFunctions.Exp
 import Mathlib.Topology.Algebra.InfiniteSum.Order
 
@@ -101,6 +102,7 @@ namespace PeterWeylHeatVaradhan
 open TheoremaAureum.Towers.YM.ClusterExpansion
 open TheoremaAureum.Towers.YM.PeterWeyl
 open TheoremaAureum.Towers.YM.PeterWeylHeat
+open TheoremaAureum.Towers.YM.RiemannianGeometry
 
 /-! ## Helper — antitonicity of the envelope in `t` on `(0, ∞)` -/
 
@@ -258,6 +260,105 @@ theorem Heat_kernel_envelope_real_le_varadhan
             mul_le_mul_of_nonneg_left hexp_ineq
               (mul_nonneg hep_nonneg htop4_pos.le)
   linarith
+
+/-! ## Geometric (off-diagonal Varadhan-shape) brick — Task #170 -/
+
+/-- **Geometric decay constant** `c_geom(x) := d_SU3(x, 1)² / 4`.
+This is the **off-diagonal** Varadhan/Molchanov small-`t` constant
+`d_g(x, e)² / 4` from `K_t(x, e) ≲ t^{-d/2} · exp(-d(x, e)² / 4t)`
+— now expressed against the stand-in bi-invariant distance
+`d_SU3 : SU3 → SU3 → ℝ` from `Towers/YM/RiemannianGeometry.lean`.
+
+Because `d_SU3 ≡ 0` in the current stand-in, `c_geom(x) = 0` for
+every `x`. Replacing `d_SU3` with the real Killing-form distance
+will *intentionally* break the downstream geometric brick (since
+the proof exploits `d_SU3 x 1 = 0` rfl-style) — that is the
+tripwire signalling a real off-diagonal Varadhan bound has
+landed. -/
+noncomputable def varadhan_geometric_c (x : SU3) : ℝ :=
+  (d_SU3 x (1 : SU3)) ^ 2 / 4
+
+/-- The stand-in geometric decay constant is zero. Trivially, since
+`d_SU3 x 1 = 0` rfl. Tripwire: replacing `d_SU3` with the real
+Killing-form distance will break this lemma (the cut-locus is not
+a single point on SU(3)). -/
+theorem varadhan_geometric_c_zero (x : SU3) :
+    varadhan_geometric_c x = 0 := by
+  unfold varadhan_geometric_c d_SU3
+  ring
+
+/-- **Geometric-form Varadhan-shape upper bound on the SU(3)
+Peter-Weyl heat-kernel envelope, strip form (Task #170).** For
+every `t : ℝ` with `varadhan_t_lo ≤ t ≤ varadhan_t_top` and every
+`x : SU3`,
+  `Heat_kernel_envelope_real t ≤`
+      `varadhan_C · exp(-(d_SU3 x 1)^2 / (4 · t)) / t^4`.
+
+This is the **shape** the real off-diagonal Varadhan asymptotic
+would consume — the same `exp(-d(x, e)² / 4t)` factor and the
+same `t^{-4}` polynomial decay. Because the stand-in distance
+`d_SU3 ≡ 0` (file `Towers/YM/RiemannianGeometry.lean`), the
+`exp(-d(x, 1)² / (4t))` factor collapses to `exp 0 = 1` and the
+brick is provable from the existing strip bound
+`Heat_kernel_envelope_real_le_varadhan` plus `exp(-c/t) ≤ 1` for
+`c, t > 0`.
+
+**Honest scope (locked).** This is NOT the real off-diagonal
+Varadhan / Molchanov asymptotic — see the file preamble and the
+`RiemannianGeometry.lean` docstring. The signature carries the
+geometric `d²/4` constant so that downstream consumers (KP
+wire-up, files 5-6 of Task #156) can be written against the
+right shape, but no claim is made that `d_SU3` is the genuine
+SU(3) Killing-form distance. YM tower stays `Status: Open`. -/
+theorem Heat_kernel_envelope_real_le_varadhan_geometric
+    {t : ℝ} (ht_lo : varadhan_t_lo ≤ t) (ht_top : t ≤ varadhan_t_top)
+    (x : SU3) :
+    Heat_kernel_envelope_real t ≤
+      varadhan_C *
+        Real.exp (-((d_SU3 x (1 : SU3)) ^ 2 / (4 * t))) / t ^ 4 := by
+  have htpos : 0 < t := lt_of_lt_of_le varadhan_t_lo_pos ht_lo
+  have ht4_pos : 0 < t ^ 4 := pow_pos htpos 4
+  -- Step 1: existing strip bound.
+  have hstrip :
+      Heat_kernel_envelope_real t ≤
+        varadhan_C * Real.exp (-(varadhan_c / t)) / t ^ 4 :=
+    Heat_kernel_envelope_real_le_varadhan ht_lo ht_top
+  -- Step 2: the geometric exp factor collapses to `1`.
+  have hd : d_SU3 x (1 : SU3) = 0 := rfl
+  have hgeom_zero : (d_SU3 x (1 : SU3)) ^ 2 / (4 * t) = 0 := by
+    rw [hd]; ring
+  have hexp_geom :
+      Real.exp (-((d_SU3 x (1 : SU3)) ^ 2 / (4 * t))) = 1 := by
+    rw [hgeom_zero, neg_zero, Real.exp_zero]
+  -- Step 3: `exp(-(c/t)) ≤ 1` since `c, t > 0`.
+  have hcoverpos : 0 ≤ varadhan_c / t :=
+    div_nonneg varadhan_c_pos.le htpos.le
+  have hexp_le_one :
+      Real.exp (-(varadhan_c / t)) ≤ 1 := by
+    calc Real.exp (-(varadhan_c / t))
+        ≤ Real.exp 0 := Real.exp_le_exp.mpr (by linarith)
+      _ = 1 := Real.exp_zero
+  -- Step 4: turn the geometric RHS into `varadhan_C / t^4` and chain.
+  have hVC_pos : 0 < varadhan_C := varadhan_C_pos
+  have h_geom_rhs :
+      varadhan_C *
+          Real.exp (-((d_SU3 x (1 : SU3)) ^ 2 / (4 * t))) / t ^ 4 =
+        varadhan_C / t ^ 4 := by
+    rw [hexp_geom, mul_one]
+  rw [h_geom_rhs]
+  -- And the strip RHS is `≤ varadhan_C / t^4` since `exp(-c/t) ≤ 1`.
+  have hnum :
+      varadhan_C * Real.exp (-(varadhan_c / t)) ≤ varadhan_C := by
+    calc varadhan_C * Real.exp (-(varadhan_c / t))
+        ≤ varadhan_C * 1 :=
+          mul_le_mul_of_nonneg_left hexp_le_one hVC_pos.le
+      _ = varadhan_C := mul_one _
+  have hstrip_le :
+      varadhan_C * Real.exp (-(varadhan_c / t)) / t ^ 4 ≤
+        varadhan_C / t ^ 4 := by
+    rw [div_le_div_iff ht4_pos ht4_pos]
+    nlinarith [hnum, ht4_pos]
+  exact le_trans hstrip hstrip_le
 
 end PeterWeylHeatVaradhan
 end YM
