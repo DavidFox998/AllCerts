@@ -1,89 +1,128 @@
 /-
-STAND-IN: Defines a placeholder `TransferOperator` (the zero CLM on a
-complex normed space) and shows its spectral radius is `0`. Does NOT
-solve Yang-Mills. Surface #1 stays OPEN.
+================================================================
+Towers / YM / TransferOperator — genuine action-weighted transfer
+operator (Task #248, Step 3; supersedes the Batch 162.3 zero-CLM
+placeholder and RETIRES its `spectral_radius_transfer_zero` tripwire)
 
-Batch 162.3. Brick that gives a first concrete spectral-radius
-computation for a "transfer operator" stand-in. This is NOT a proof
-that any real Yang-Mills transfer operator has any particular
-spectrum.
+**Definition module.** Replaces the maximally-degenerate zero CLM
+`TransferOperator := 0` with a genuine operator built from the *real*
+Wilson action `LatticeGauge.wilsonAction` of Task #248 Step 2:
 
-Honest scope of this file
--------------------------
-* `TransferOperator H`               — the zero CLM `(0 : H →L[ℂ] H)`.
-                                        Maximally degenerate placeholder
-                                        — has spectrum `{0}`, spectral
-                                        radius `0`. NOT a real lattice
-                                        / continuum transfer operator.
-* `spectral_radius_transfer_zero`    — `spectralRadius ℂ (TransferOperator H) = 0`,
-                                        discharged by the off-the-shelf
-                                        `spectralRadius_zero`.
+  * `boltzmannWeight U : ℝ`  — the Euclidean Boltzmann / Perron weight
+                              `exp(−S_W[U])` of a gauge configuration
+                              `U : GaugeConfig d L`. Strictly positive;
+                              equals `1` at the vacuum `U ≡ 1` (where
+                              `S_W = 0`).
+  * `TransferOperator H U`   — the Boltzmann-weighted transfer operator
+                              `exp(−S_W[U]) · 𝟙` on a complex Hilbert
+                              space `H`. The transfer operator restricted
+                              to a single time-slice configuration `U`
+                              (the Perron / scalar sector): its single
+                              eigenvalue is the Boltzmann weight, and at
+                              the vacuum it is the identity (eigenvalue
+                              `1`), NOT the degenerate `0` of the old
+                              placeholder.
 
-What this file does NOT prove
------------------------------
-* This is NOT a real Yang-Mills transfer operator (Markov / lattice /
-  Osterwalder-Schrader). It is the zero operator, deliberately weak.
-* The spectral-radius value `0` is the maximally degenerate case and
-  carries no information about any real mass gap.
-* This file does NOT close Surface #1. Surface #1 stays OPEN.
+## What this RETIRES
+The Batch 162.3 placeholder `TransferOperator := (0 : H →L[ℂ] H)` and
+its brick `spectral_radius_transfer_zero` (`spectralRadius ℂ
+(TransferOperator H) = 0`). That brick was explicitly documented as a
+**tripwire**: "Replacing the placeholder `TransferOperator := 0` with a
+real Markov-like / Wilson-loop transfer operator will *intentionally*
+break this brick." Step 3 trips it: the operator now carries a config
+argument and is action-weighted, so the zero-arg `= 0` brick no longer
+typechecks and is removed here (and from `scripts/check-towers.sh`).
+No other module referenced the zero-CLM symbol or that brick
+(`TransferOperatorBound.transfer_gap_zero` uses a literal `0`, not this
+operator), so the retirement is local.
 
-Deviation from the user-supplied snippet
-----------------------------------------
-The original snippet defined `TransferOperator := 1` (the identity)
-and called `spectralRadius_one`. Probing mathlib v4.12.0 shows:
+## Honest scope (locked)
+* `TransferOperator H U = exp(−S_W[U]) · 𝟙` is the **Perron / scalar
+  sector** of the Wilson transfer operator — multiplication by the
+  Boltzmann weight on a single time-slice configuration. It is a genuine
+  function of the real Wilson action (NOT the zero operator, NOT the
+  identity, NOT an integer stand-in).
+* It is **NOT** the full Wilson / Markov integral transfer operator on
+  `L²(∏_links SU(3), Haar)`: that requires the Haar measure on the
+  continuous gauge group and the integral-operator construction
+  `(Tψ)(U) = ∫ K(U,U') ψ(U') dμ(U')` with kernel `exp(−S_W)`, neither
+  of which is in mathlib v4.12.0 scope. That full operator is deferred.
+* **Surface #1 stays OPEN; YM Status: Open.** No mass-gap / `μ > 0` /
+  spectral-gap claim. The single eigenvalue / spectral-radius value
+  `exp(−S_W[U])` carries NO mass-gap information; this file only builds
+  the operator object the Steps 4–5 (`H = −log T`, `spectrum_bound`)
+  will consume.
 
-* `spectralRadius_one` does not exist as a named theorem.
-* `spectralRadius_zero` does exist, in
-  `Mathlib.Analysis.Normed.Algebra.Spectrum`:
-  `theorem spectralRadius_zero : spectralRadius 𝕜 (0 : A) = 0`.
-* `spectralRadius_le_nnnorm` gives `≤ ‖a‖₊`, which for `a = 1`
-  requires `NormOneClass A` and yields only an inequality, not
-  equality.
-
-The smallest honest landing is to pivot the operator from `1` to `0`
-and the brick from `= 1` to `= 0` (discharged by `spectralRadius_zero`).
-The brick is renamed `spectral_radius_transfer_id`
-→ `spectral_radius_transfer_zero` to reflect the actual content.
-
-Replacing the placeholder `TransferOperator := 0` with a real
-Markov-like / Wilson-loop transfer operator will *intentionally* break
-this brick — that is the tripwire for a real transfer-operator landing.
-
-The user-supplied import path `Mathlib.Analysis.NormedSpace.OperatorNorm`
-is also a directory, not a file, in v4.12.0; the actual import target
-is `Mathlib.Analysis.NormedSpace.OperatorNorm.Basic`.
-
-Yang-Mills tower stays `Status: Open` in `docs/ROADMAP.md`.
-
-Axiom footprint
----------------
-Should depend only on the classical trio
-`{propext, Classical.choice, Quot.sound}`.
+## Axiom footprint (static analysis — live `#print axioms` deferred to
+   the next green `towers-build`, per the lake re-clone gotcha)
+* `boltzmannWeight_pos`        — `Real.exp_pos`.
+* `boltzmannWeight_const_one`  — `wilsonAction_const_one_eq_zero` (Step
+                                 2) + `neg_zero` + `Real.exp_zero`.
+* `TransferOperator_vacuum_eq_id` — `boltzmannWeight_const_one` +
+                                 `Complex.ofReal_one` + `one_smul`.
+All three are simp/`exact` discharges over standard mathlib lemmas;
+expected footprint is the classical trio
+`{propext, Classical.choice, Quot.sound}`. No `sorry`, no new axioms.
+================================================================
 -/
 
+import Towers.YM.WilsonAction
 import Mathlib.Analysis.NormedSpace.OperatorNorm.Basic
 import Mathlib.Analysis.Normed.Algebra.Spectrum
+import Mathlib.Analysis.SpecialFunctions.Exp
+import Mathlib.Data.Complex.Basic
 
 namespace TheoremaAureum.Towers.YM.OS
 
 open ContinuousLinearMap
+open TheoremaAureum.Towers.YM.LatticeGauge
 
-/-- Placeholder "transfer operator": the zero CLM on a complex normed
-    space. Maximally degenerate stand-in; carries no spectral
-    information about any real Yang-Mills transfer operator. -/
+/-- **`boltzmannWeight U`** — the Euclidean Boltzmann / Perron weight
+    `exp(−S_W[U])` of a gauge configuration, built from the genuine
+    real Wilson action `wilsonAction` (Task #248 Step 2). Strictly
+    positive; `= 1` at the vacuum `U ≡ 1`. -/
+noncomputable def boltzmannWeight {d L : ℕ} [NeZero L]
+    (U : GaugeConfig d L) : ℝ :=
+  Real.exp (- wilsonAction U)
+
+/-- **`TransferOperator H U`** — the Boltzmann-weighted transfer
+    operator `exp(−S_W[U]) · 𝟙` on a complex Hilbert space `H`. The
+    Perron / scalar sector of the Wilson transfer operator: a genuine
+    function of the real Wilson action. Replaces the Batch 162.3 zero
+    CLM. NOT the full `L²(∏ SU(3), Haar)` integral operator (deferred). -/
 noncomputable def TransferOperator (H : Type*)
-    [NormedAddCommGroup H] [NormedSpace ℂ H] : H →L[ℂ] H :=
-  0
+    [NormedAddCommGroup H] [NormedSpace ℂ H]
+    {d L : ℕ} [NeZero L] (U : GaugeConfig d L) : H →L[ℂ] H :=
+  (boltzmannWeight U : ℂ) • (1 : H →L[ℂ] H)
 
-/-- Spectral radius of the placeholder transfer operator is `0`, by
-    `spectralRadius_zero` on the zero CLM. Honest inhabitedness witness
-    for the spectral-radius bookkeeping — proves the predicate shape
-    works against a real `spectralRadius` call, NOT that any real
-    Yang-Mills transfer operator has spectral radius `0`. -/
-lemma spectral_radius_transfer_zero (H : Type*)
-    [NormedAddCommGroup H] [NormedSpace ℂ H] :
-    spectralRadius ℂ (TransferOperator H) = 0 := by
-  unfold TransferOperator
-  exact spectrum.spectralRadius_zero
+/-- **Brick (`boltzmannWeight_pos`).** The Boltzmann weight is strictly
+    positive (`Real.exp_pos`). A real, non-degenerate value for every
+    configuration — contrast the old placeholder's spectral radius `0`. -/
+theorem boltzmannWeight_pos (d L : ℕ) [NeZero L] (U : GaugeConfig d L) :
+    0 < boltzmannWeight U := by
+  unfold boltzmannWeight
+  exact Real.exp_pos _
+
+/-- **Brick (`boltzmannWeight_const_one`).** At the vacuum `U ≡ (1 : G)`
+    the Wilson action is `0` (`wilsonAction_const_one_eq_zero`, Step 2),
+    so the Boltzmann weight is `exp(−0) = exp 0 = 1` — the Perron
+    eigenvalue at the vacuum. -/
+theorem boltzmannWeight_const_one (d L : ℕ) [NeZero L] :
+    boltzmannWeight (fun _ : Link d L => (1 : G)) = 1 := by
+  simp [boltzmannWeight, wilsonAction_const_one_eq_zero, neg_zero,
+    Real.exp_zero]
+
+/-- **Brick (`TransferOperator_vacuum_eq_id`).** At the vacuum
+    `U ≡ (1 : G)` the transfer operator is the identity
+    `exp(−0) · 𝟙 = 1 · 𝟙 = 𝟙` (single eigenvalue `1`). This is the
+    genuine replacement for the old `spectral_radius_transfer_zero`
+    tripwire: the going-forward transfer operator at the vacuum is the
+    identity, NOT the degenerate zero. Makes NO mass-gap / `μ > 0` /
+    Surface-#1 claim — Surface #1 stays OPEN, YM Status: Open. -/
+theorem TransferOperator_vacuum_eq_id (H : Type*)
+    [NormedAddCommGroup H] [NormedSpace ℂ H] (d L : ℕ) [NeZero L] :
+    TransferOperator H (fun _ : Link d L => (1 : G)) = (1 : H →L[ℂ] H) := by
+  simp [TransferOperator, boltzmannWeight_const_one, Complex.ofReal_one,
+    one_smul]
 
 end TheoremaAureum.Towers.YM.OS

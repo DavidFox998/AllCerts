@@ -2415,7 +2415,9 @@ BRICKS=(
   # transfer operator.
   "Towers.YM.MassGapStandin|TheoremaAureum.Towers.YM.OS.massGap_standin_example"
   "Towers.YM.SpectralGapCore|TheoremaAureum.Towers.YM.OS.hasMassGap_zero"
-  "Towers.YM.TransferOperator|TheoremaAureum.Towers.YM.OS.spectral_radius_transfer_zero"
+  "Towers.YM.TransferOperator|TheoremaAureum.Towers.YM.OS.boltzmannWeight_pos"
+  "Towers.YM.TransferOperator|TheoremaAureum.Towers.YM.OS.boltzmannWeight_const_one"
+  "Towers.YM.TransferOperator|TheoremaAureum.Towers.YM.OS.TransferOperator_vacuum_eq_id"
   "Towers.YM.TransferOperatorBound|TheoremaAureum.Towers.YM.OS.transfer_gap_zero"
   "Towers.YM.TwoPointDecay|TheoremaAureum.Towers.YM.OS.clustering_zero_from_transfer"
   "Towers.YM.MassGapFromDecay|TheoremaAureum.Towers.YM.OS.mass_gap_from_clustering_zero"
