@@ -1,6 +1,6 @@
 import { test, expect, type Route, type Request } from "@playwright/test";
 import http from "node:http";
-import type { AddressInfo } from "node:net";
+import type { AddressInfo, Socket } from "node:net";
 
 /**
  * Task #201: pin the live-log panel's behaviour against a *real broken
@@ -78,15 +78,26 @@ function integrityPayload(): Record<string, unknown> {
 
 /**
  * Boot a real HTTP server that emits a couple of SSE `line` frames and
- * then forcibly destroys the socket mid-PROGRESS — never sending a
- * `result` frame. CORS is wide open (and OPTIONS is handled) because
- * the dashboard reaches it via a cross-origin 307 redirect from the
- * Vite dev origin.
+ * then holds the connection open until the test calls `cut()`, at which
+ * point it forcibly destroys the socket mid-PROGRESS — never sending a
+ * `result` frame nor the chunked terminator, so the browser's
+ * `reader.read()` rejects with a network error.
+ *
+ * Driving the cut from the test (rather than a fixed server-side timer)
+ * removes the race against a CI browser that may be slow to follow the
+ * cross-origin 307 redirect and render the progress lines under
+ * full-suite load: with a timer, if it fired before the browser read
+ * the frames, the streamed PROGRESS line never rendered and the spec
+ * flaked. CORS is wide open (and OPTIONS is handled) because the
+ * dashboard reaches it via a cross-origin 307 redirect from the Vite
+ * dev origin.
  */
 function bootBrokenStreamServer(): Promise<{
   url: string;
+  cut: () => void;
   close: () => Promise<void>;
 }> {
+  let activeSocket: Socket | null = null;
   const srv = http.createServer((req, res) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Headers", "*");
@@ -110,20 +121,26 @@ function bootBrokenStreamServer(): Promise<{
       line: "STEP: verifying existing checkpoint",
     });
     send("line", { stream: "stderr", line: "PROGRESS: 50%" });
-    // Forcibly terminate mid-PROGRESS: destroy the underlying socket
-    // without ever sending a `result` frame. A short delay gives the
-    // browser time to read + render the two line frames first.
-    setTimeout(() => {
-      res.socket?.destroy();
-    }, 150);
+    // Hold the socket open. The test calls `cut()` only after it has
+    // confirmed the browser rendered the PROGRESS line, so the
+    // mid-stream termination is deterministic rather than timer-raced.
+    activeSocket = res.socket ?? null;
   });
   return new Promise((resolve) => {
     srv.listen(0, "127.0.0.1", () => {
       const port = (srv.address() as AddressInfo).port;
       resolve({
         url: `http://127.0.0.1:${port}/broken-stream`,
+        cut: () => {
+          activeSocket?.destroy();
+        },
         close: () =>
-          new Promise<void>((r) => srv.close(() => r())),
+          new Promise<void>((r) => {
+            // Destroy any still-open stream socket too, so `srv.close()`
+            // resolves even if the test bailed before calling `cut()`.
+            activeSocket?.destroy();
+            srv.close(() => r());
+          }),
       });
     });
   });
@@ -215,6 +232,12 @@ test.describe("dashboard: checkpoint reroll live log against a broken stream (ta
       await expect(livePanel).toBeVisible();
       const liveLog = page.locator('[data-testid="text-reroll-live-log"]');
       await expect(liveLog).toContainText("! PROGRESS: 50%");
+
+      // Now that the progress line has really rendered, force the
+      // mid-stream termination. Driving it from the test (rather than a
+      // server-side timer) guarantees the frames were read first, so the
+      // assertion below isn't racing a slow CI browser.
+      broken.cut();
 
       // The interruption is surfaced as a visible error instead of the
       // panel freezing on the last PROGRESS line.
