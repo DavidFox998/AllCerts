@@ -2166,21 +2166,37 @@ theorem Mayer_overlap_symm (γ₁ γ₂ : Polymer) :
   exact ⟨fun ⟨p, h1, h2⟩ => ⟨p, h2, h1⟩,
          fun ⟨p, h1, h2⟩ => ⟨p, h2, h1⟩⟩
 
-/-- **Per-plaquette activity stub (19.1s).** Real but minimal-honest
-placeholder for the single-plaquette truncated partition function
-`Z_p(β) = ∫_{SU(3)} e^{-β · Re tr U_p} dU_p` (Glimm-Jaffe Eq. 20.3.5).
+/-- **Per-plaquette activity (Task #214 — real single-plaquette
+estimate).** The single-plaquette truncated partition function for
+SU(3), `Z_p(β) = ∫_{SU(3)} e^{-β · Re tr U_p} dU_p` (Glimm-Jaffe
+Eq. 20.3.5), realised through its truncated Peter–Weyl spectral
+decomposition.
 
-The placeholder body is the *cardinality-suppression factor*
-`Real.exp (-1/β)`, identical across plaquettes. This is enough to give
-`polymer_activity_finite_N` a real multiplicative shape (`Finset.prod`
-over `γ`) without yet committing to a per-plaquette Peter-Weyl truncation.
-The real surface lifts `Weyl_sum_explicit_SU3_real (·) N` through
-`Finset.prod`; replacing the body here with that lift is the remaining
-19.1q work (and where the Mayer combinatorics start to bite).
+**Promoted from the 19.1s placeholder.** The body was previously the
+constant *cardinality-suppression factor* `Real.exp (-1/β)`, identical
+across plaquettes and NOT derived from any spectral data. It is now the
+real truncated Peter–Weyl heat-kernel sum
+`Weyl_sum_explicit_SU3_real (1/β) N` (19.1o) at heat-kernel parameter
+`t = 1/β` — the genuine finite truncation
+`Σ_{(m,n) : m+n ≤ N} dim(m,n)² · e^{-(1/β)·C₂(m,n)}` of the
+single-plaquette SU(3) partition function. This is exactly the body the
+coexisting `plaquette_activity_pw` gestured at; `plaquette_activity` is
+now that real estimate.
 
-`noncomputable` because `Real.exp` is noncomputable. -/
-noncomputable def plaquette_activity (β : ℝ) (_N : ℕ) (_p : Plaquette) : ℝ :=
-  Real.exp (-1 / β)
+The plaquette argument `_p` stays unused at this surface (the truncated
+Peter–Weyl sum is position-independent on the lattice; per-plaquette
+dependence enters once the action gains a real `F_μν`-coupling, parked).
+
+**Honest scope.** A `≤ Real.exp (-c/β)` upper bound on this real body is
+NOT available as a side fact — the `(0,0)` trivial-rep summand
+contributes `1² · e^0 = 1`, forcing `plaquette_activity β N p ≥ 1` (see
+`plaquette_activity_ge_one`). So the per-plaquette upper bound in
+`polymer_activity_bound_real` stays an explicit hypothesis. YM tower
+stays `Status: Open`.
+
+`noncomputable` because `Weyl_sum_explicit_SU3_real` is. -/
+noncomputable def plaquette_activity (β : ℝ) (N : ℕ) (_p : Plaquette) : ℝ :=
+  Weyl_sum_explicit_SU3_real (1 / β) N
 
 /-- **Polymer activity functional `ζ(β, N, γ)` (19.1s — promoted
 from `Towers/Attempts/`).** Real, sorry-free definition: the product
@@ -2194,40 +2210,94 @@ noncomputable def polymer_activity_finite_N
     (β : ℝ) (N : ℕ) (γ : Polymer) : ℝ :=
   ∏ p ∈ γ, plaquette_activity β N p
 
-/-- **BRICK (19.1s) — Kotecký-Preiss per-plaquette → polymer bound.**
-Given a uniform per-plaquette bound
-`plaquette_activity β N p ≤ Real.exp (-c/β)` together with
-nonnegativity of each factor, the polymer activity is bounded by
-`Real.exp (-c · γ.card / β)`. This is the canonical Kotecký-Preiss
-per-plaquette → polymer lift (Friedli-Velenik 2018 Defn. 5.1):
-`Finset.prod` of `exp(-c/β)`-bounded nonneg factors collapses to
-`exp(-c · γ.card / β)` via `Real.exp_nat_mul`.
+/-- **BRICK (Task #214) — `plaquette_activity` is nonneg.** Now that the
+body is the real truncated Peter–Weyl sum `Weyl_sum_explicit_SU3_real
+(1/β) N`, nonnegativity is a *theorem* (every summand is
+`dim² · e^{…} ≥ 0`) rather than an assumption — directly from
+`Weyl_sum_explicit_SU3_real_nonneg` (19.1o). This is the brick that lets
+`polymer_activity_bound_real` drop the nonneg conjunct from its
+hypothesis bundle. -/
+theorem plaquette_activity_nonneg (β : ℝ) (N : ℕ) (p : Plaquette) :
+    0 ≤ plaquette_activity β N p := by
+  unfold plaquette_activity
+  exact Weyl_sum_explicit_SU3_real_nonneg _ _
 
-**Honest scope.** The bound is *conditional* on the per-plaquette
-hypothesis. For the concrete 19.1s placeholder body
-`plaquette_activity := Real.exp (-1/β)`, the hypothesis is
-discharged exactly when `c ≤ 1`; the theorem itself does not
-specialize — downstream callers pick `c` and discharge. This is
-the SHAPE of the KP per-plaquette → polymer lift, with a placeholder
-per-plaquette factor, NOT a real bound on the single-plaquette
-SU(3) partition function. YM tower stays `Status: Open`.
+/-- **BRICK (Task #214) — `plaquette_activity` is bounded below by 1.**
+The `(0,0)` trivial-rep summand of the truncated Peter–Weyl sum
+contributes `dim(0,0)² · e^{-(1/β)·C₂(0,0)} = 1² · e^0 = 1`, and every
+other summand is nonneg. This is why the per-plaquette *upper* bound
+`≤ Real.exp (-c/β)` cannot be a side fact on the real body and stays an
+explicit hypothesis in `polymer_activity_bound_real`. Mirrors
+`plaquette_activity_pw_ge_one`. -/
+theorem plaquette_activity_ge_one (β : ℝ) (N : ℕ) (p : Plaquette) :
+    1 ≤ plaquette_activity β N p := by
+  unfold plaquette_activity Weyl_sum_explicit_SU3_real
+  set S : Finset (ℕ × ℕ) :=
+    ((Finset.range (N + 1)) ×ˢ (Finset.range (N + 1))).filter
+      (fun p : ℕ × ℕ => p.1 + p.2 ≤ N) with hS
+  have h00 : (0, 0) ∈ S := by
+    simp [hS, Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+  have hterm :
+      ((Weyl_dim_SU3_explicit (0, 0) : ℝ)) ^ 2 *
+        Real.exp (-((1 / β) * (Casimir_SU3_explicit (0, 0) : ℝ))) = 1 := by
+    have h1 : (Weyl_dim_SU3_explicit (0, 0) : ℝ) = 1 := by
+      rw [Weyl_dim_SU3_explicit_at_zero]; norm_num
+    have h2 : (Casimir_SU3_explicit (0, 0) : ℝ) = 0 := by
+      rw [Casimir_SU3_explicit_at_zero]; norm_num
+    rw [h1, h2]; simp
+  have hpos :
+      ∀ mn ∈ S, 0 ≤ ((Weyl_dim_SU3_explicit mn : ℝ)) ^ 2 *
+        Real.exp (-((1 / β) * (Casimir_SU3_explicit mn : ℝ))) := by
+    intro mn _
+    exact mul_nonneg (sq_nonneg _) (Real.exp_pos _).le
+  calc (1 : ℝ)
+      = ((Weyl_dim_SU3_explicit (0, 0) : ℝ)) ^ 2 *
+          Real.exp (-((1 / β) * (Casimir_SU3_explicit (0, 0) : ℝ))) := hterm.symm
+    _ ≤ ∑ mn ∈ S,
+          ((Weyl_dim_SU3_explicit mn : ℝ)) ^ 2 *
+            Real.exp (-((1 / β) * (Casimir_SU3_explicit mn : ℝ))) :=
+        Finset.single_le_sum (f := fun mn =>
+          ((Weyl_dim_SU3_explicit mn : ℝ)) ^ 2 *
+            Real.exp (-((1 / β) * (Casimir_SU3_explicit mn : ℝ)))) hpos h00
 
-`hβ` and `hc` are kept in the signature to mirror the natural
-KP hypothesis bundle (`β > 0`, `c ≥ 0`) even though the proof does
-not need them — the `Finset.prod` argument is sign-agnostic in `c`,
-and `β = 0` collapses harmlessly via Lean's `/ 0 = 0` convention.
-Sorry-free; axiom footprint `⊆ {propext, Classical.choice,
+/-- **BRICK (Task #214) — Kotecký-Preiss per-plaquette → polymer bound,
+real Peter–Weyl body.** Given a uniform per-plaquette upper bound
+`plaquette_activity β N p ≤ Real.exp (-c/β)`, the polymer activity is
+bounded by `Real.exp (-c · γ.card / β)`. This is the canonical
+Kotecký-Preiss per-plaquette → polymer lift (Friedli-Velenik 2018
+Defn. 5.1): `Finset.prod` of `exp(-c/β)`-bounded nonneg factors collapses
+to `exp(-c · γ.card / β)` via `Real.exp_nat_mul`.
+
+**Re-proved against the real body (Task #214).** With the old placeholder
+`plaquette_activity := Real.exp (-1/β)` the per-factor nonnegativity had
+to be assumed. Now that the body is the real truncated Peter–Weyl sum
+`Weyl_sum_explicit_SU3_real (1/β) N`, nonnegativity is discharged
+internally from `plaquette_activity_nonneg`, so the hypothesis bundle
+keeps only the genuine open input — the per-plaquette *upper* bound.
+
+**Honest scope.** The bound is *conditional* on the per-plaquette upper
+bound, which is NOT provable as a side fact on the real body
+(`plaquette_activity β N p ≥ 1` by `plaquette_activity_ge_one`, so the
+hypothesis forces `Real.exp (-c/β) ≥ 1`, i.e. `c ≤ 0`). The theorem does
+not specialize — downstream callers pick `c` and discharge. This is the
+SHAPE of the KP per-plaquette → polymer lift on top of a *real*
+single-plaquette SU(3) estimate; the genuine quantitative upper bound on
+the truncated partition function (and the Brydges-Federbush convergence
+it feeds) stays parked. YM tower stays `Status: Open`.
+
+`hβ` and `hc` are kept in the signature to mirror the natural KP
+hypothesis bundle (`β > 0`, `c ≥ 0`) even though the proof does not need
+them. Sorry-free; axiom footprint `⊆ {propext, Classical.choice,
 Quot.sound}`. -/
 theorem polymer_activity_bound_real
     (β c : ℝ) (_hβ : 0 < β) (_hc : 0 ≤ c) (N : ℕ) (γ : Polymer)
-    (hbound : ∀ p ∈ γ, 0 ≤ plaquette_activity β N p ∧
-                       plaquette_activity β N p ≤ Real.exp (-c / β)) :
+    (hbound : ∀ p ∈ γ, plaquette_activity β N p ≤ Real.exp (-c / β)) :
     polymer_activity_finite_N β N γ ≤ Real.exp (-c * γ.card / β) := by
   unfold polymer_activity_finite_N
   calc ∏ p ∈ γ, plaquette_activity β N p
       ≤ ∏ _p ∈ γ, Real.exp (-c / β) :=
-        Finset.prod_le_prod (fun p hp => (hbound p hp).1)
-                            (fun p hp => (hbound p hp).2)
+        Finset.prod_le_prod (fun p _ => plaquette_activity_nonneg β N p)
+                            (fun p hp => hbound p hp)
     _ = Real.exp (-c / β) ^ γ.card := Finset.prod_const _
     _ = Real.exp ((γ.card : ℝ) * (-c / β)) := (Real.exp_nat_mul _ _).symm
     _ = Real.exp (-c * γ.card / β) := by congr 1; ring
