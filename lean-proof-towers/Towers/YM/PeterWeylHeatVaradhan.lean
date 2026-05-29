@@ -90,6 +90,7 @@ stays OPEN.
 
 import Towers.YM.PeterWeyl
 import Towers.YM.PeterWeylHeat
+import Towers.YM.PeterWeylQuadratic
 import Towers.YM.Casimir
 import Towers.YM.RiemannianGeometry
 import Mathlib.Analysis.SpecialFunctions.Exp
@@ -384,6 +385,51 @@ theorem Heat_kernel_envelope_real_le_varadhan_geometric
     rw [div_le_div_iff ht4_pos ht4_pos]
     nlinarith [hnum, ht4_pos]
   exact le_trans hstrip hstrip_le
+
+/-! ## Half-cubic antidiagonal envelope summand bound — Task #193 -/
+
+/-- **Half-cubic sharpening of the SU(3) heat-kernel envelope
+summand (Task #193).** Each summand of `Heat_kernel_envelope_real t`
+— the genuine SU(3) Peter-Weyl spectral term
+`(dim λ)² · exp(-(t · C₂(λ)))` — is bounded by the **squared
+half-cubic** antidiagonal envelope
+
+  `(((m+n)+2)^3 / 2)^2 · exp(-(t · C₂(λ)))`,
+
+routed through Task #173's `Weyl_dim_SU3_explicit_real_le_half_cubic`
+(`(dim:ℝ) ≤ ((m+n)+2)^3 / 2`). This carries the literal `/2` factor
+of the half-cubic Weyl-dim bound through to the heat-kernel-envelope
+summand statement: against the older slack cubic bound from Task
+#157's `Weyl_dim_SU3_explicit_real_le_cubic` (`(dim:ℝ) ≤ ((m+n)+2)^3`)
+the same summand carries the bound `(dim:ℝ)² · exp ≤ ((m+n)+2)^6 · exp`,
+so routing through the half-cubic bound divides the antidiagonal
+envelope constant by `4` (one `1/2` per `dim` factor in `dim²`) —
+"halving the slack" exactly as the Task #173 brief flagged.
+
+Proof: square the half-cubic bound via `pow_le_pow_left` (both
+sides nonneg), then multiply by `exp(-(t · C₂)) ≥ 0`.
+
+**Honest scope (locked).** This is a *per-summand* (pointwise)
+antidiagonal envelope inequality on the genuine Peter-Weyl
+heat-kernel envelope term, NOT a summed `tsum`/strip bound and NOT
+a Varadhan small-`t` asymptotic — the strip amplitude `varadhan_C`
+is already exact (built from `Heat_kernel_envelope_real varadhan_t_lo`
+itself, with no Weyl-dim slack to halve). YM tower stays
+`Status: Open` in `docs/ROADMAP.md` § 2; Surface #2 stays OPEN. -/
+theorem Heat_kernel_envelope_summand_real_le_half_cubic
+    (t : ℝ) (mn : Weyl_label) :
+    (Weyl_dim_SU3_explicit mn : ℝ) ^ 2 *
+        Real.exp (-(t * (Casimir_SU3_explicit mn : ℝ))) ≤
+      (((mn.1 : ℝ) + mn.2 + 2) ^ 3 / 2) ^ 2 *
+        Real.exp (-(t * (Casimir_SU3_explicit mn : ℝ))) := by
+  have hdim_nonneg : (0 : ℝ) ≤ (Weyl_dim_SU3_explicit mn : ℝ) :=
+    Nat.cast_nonneg _
+  have hhalf := PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_half_cubic mn
+  have hsq :
+      (Weyl_dim_SU3_explicit mn : ℝ) ^ 2 ≤
+        (((mn.1 : ℝ) + mn.2 + 2) ^ 3 / 2) ^ 2 :=
+    pow_le_pow_left hdim_nonneg hhalf 2
+  exact mul_le_mul_of_nonneg_right hsq (Real.exp_pos _).le
 
 end PeterWeylHeatVaradhan
 end YM

@@ -2086,6 +2086,43 @@ BRICKS=(
   "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_half_prod"
   "Towers.YM.PeterWeylQuadratic|TheoremaAureum.Towers.YM.PeterWeylQuadratic.Weyl_dim_SU3_explicit_real_le_half_cubic"
   # -----------------------------------------------------------------
+  # Task #193 — Use the tighter half-cubic Weyl-dim bound to sharpen
+  # the Varadhan-strip antidiagonal envelope (2026-05-29). One new
+  # trio-clean brick in `Towers/YM/PeterWeylHeatVaradhan.lean` wiring
+  # Task #173's `Weyl_dim_SU3_explicit_real_le_half_cubic`
+  # (`(dim:ℝ) ≤ ((m+n)+2)^3 / 2`) into a per-summand bound on the
+  # genuine SU(3) Peter-Weyl heat-kernel envelope term:
+  #
+  #   `Heat_kernel_envelope_summand_real_le_half_cubic` —
+  #     `(dim λ)² · exp(-(t·C₂(λ))) ≤`
+  #       `(((m+n)+2)^3 / 2)^2 · exp(-(t·C₂(λ)))`.
+  #
+  # This carries the literal `/2` factor of the half-cubic bound
+  # through to the heat-kernel-envelope summand. Against the older
+  # slack Task #157 cubic bound `Weyl_dim_SU3_explicit_real_le_cubic`
+  # (`(dim:ℝ) ≤ ((m+n)+2)^3`) the same summand only gets
+  # `(dim)² · exp ≤ ((m+n)+2)^6 · exp`, so routing through the
+  # half-cubic bound divides the antidiagonal envelope constant by 4
+  # (one `1/2` per `dim` factor in `dim²`) — "halving the slack" the
+  # Task #173 brief flagged. Proof: square the half-cubic bound via
+  # `pow_le_pow_left` (both sides nonneg), then multiply by
+  # `exp(-(t·C₂)) ≥ 0`.
+  #
+  # **Honest scope / drift (locked).** This is a *per-summand*
+  # (pointwise) antidiagonal envelope inequality, NOT a summed
+  # `tsum`/strip bound. The existing strip lemma
+  # `Heat_kernel_envelope_real_le_varadhan` (and its geometric
+  # companion) is NOT modified: its amplitude `varadhan_C` is already
+  # exact — built from `Heat_kernel_envelope_real varadhan_t_lo`
+  # itself — so there is no Weyl-dim slack inside the strip bound to
+  # halve. The new brick is the honest place the half-cubic `/2`
+  # lands on the envelope. YM tower stays `Status: Open`
+  # (`docs/ROADMAP.md` § 2); Surface #2 stays OPEN;
+  # `kotecky_preiss_criterion` remains a `sorry`. mathlib v4.12.0
+  # only. The Task #157/#173 bricks are left in place unmodified
+  # (additive only — no deletions).
+  "Towers.YM.PeterWeylHeatVaradhan|TheoremaAureum.Towers.YM.PeterWeylHeatVaradhan.Heat_kernel_envelope_summand_real_le_half_cubic"
+  # -----------------------------------------------------------------
   # Batch 157.1 — Reflection-positivity *predicate* (Option B,
   # probability-measure integration functional). Replaces the
   # rejected 156.6 Varadhan attempt, which was blocked on absent
