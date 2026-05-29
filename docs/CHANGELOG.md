@@ -8,7 +8,15 @@ this file is the version history.
 
 ## Tower Status snapshot — 2026-05-29 12:47 PDT
 
-- **GREEN: 531 bricks** (`scripts/check-towers.sh` BRICKS; per
+**Task #248 complete — 2026-05-29 14:40 PDT.**
+- YM mass gap reduced to strict action positivity:
+  `∃ m>0, spectrum_bound (H U) m ↔ 0 < wilsonAction U`.
+- Scalar shadow `H = wilsonAction U • 𝟙` now replaces the id placeholder.
+- Surface #1 OPEN. YM Status: Open. No μ>0 claim.
+- Next: prove `0 < wilsonAction U` for `U ≠ const 1`.
+- Axioms: all new bricks trio-only. Only `sorry` in `MassGap574.lean`.
+
+- **GREEN: 532 bricks** (`scripts/check-towers.sh` BRICKS; per
   `replit.md`. Exact reconciliation — incl. Task #248 Steps 1–3 BRICKS
   additions — pending the next green `towers-build`).
 - **Registered YM walls** (lake-gated `[YM1-*]`, NOT in the BRICKS
@@ -89,6 +97,247 @@ Six steps, all landed:
 `YM_mass_gap` keeps its `sorry`, NOT registered, NOT in BRICKS.
 **Surface #1 stays OPEN, YM Status: Open. No mass-gap / μ>0 claim.**
 Next task (deferred bound): prove `0 < wilsonAction U` for `U ≠ const 1`.
+
+## Task #218 — widen the off-diagonal-shape heat-kernel bound on the upper side too (2026-05-29)
+
+Gave the *geometric* (off-diagonal-shape) Varadhan strip brick the same
+upper-side widening Task #194 gave the plain strip brick, so the two now
+cover the same `t`-window `[varadhan_t_lo, varadhan_t_top_widened]`.
+
+- **`Towers/YM/VaradhanStripWidened.lean`** (before `end
+  VaradhanStripWidened`):
+  - **`Heat_kernel_envelope_real_le_varadhan_geometric_widened_upper`** —
+    for `varadhan_t_lo ≤ t ≤ varadhan_t_top_widened` and `x : SU3` on the
+    diagonal locus `hx : d_SU3 x 1 = 0`,
+    `Heat_kernel_envelope_real t ≤ varadhan_C_widened ·
+    exp(-(d_SU3 x 1)²/(4t)) / t^4`. Geometric companion of the Task #194
+    `Heat_kernel_envelope_real_le_varadhan_widened_upper`: carries the
+    same `exp(-d(x,1)²/4t)` factor as the strip-form geometric brick
+    `Heat_kernel_envelope_real_le_varadhan_geometric`
+    (`PeterWeylHeatVaradhan.lean`), but widens the valid UPPER `t`-window
+    to `varadhan_t_top_widened = 2·varadhan_t_top` with the RHS amplitude
+    RETUNED to `varadhan_C_widened`. Proof mirrors the strip-form
+    geometric brick but reduces to the upper-widened strip bound; on the
+    diagonal the exp factor collapses to `1`, so the RHS becomes
+    `varadhan_C_widened / t^4` and `exp(-c/t) ≤ 1` closes it.
+  - Lives in `VaradhanStripWidened.lean` (NOT `PeterWeylHeatVaradhan.lean`,
+    despite the task's relevant-files list) because `varadhan_C_widened`,
+    `varadhan_t_top_widened`, and `Heat_kernel_envelope_real_le_varadhan_widened_upper`
+    are all owned by `VaradhanStripWidened.lean`, which *imports*
+    `PeterWeylHeatVaradhan.lean` — placing the brick upstream would be a
+    circular import. Added `open …RiemannianGeometry` for `SU3` / `d_SU3`.
+  - Retains the Task #189/#210 diagonal hypothesis `d_SU3 x 1 = 0`
+    (off-diagonal case stays the open Varadhan/Molchanov regime). Lower
+    endpoint stays at `varadhan_t_lo` (small-`t` inequality false below).
+
+- **+1 BRICK** (531 → 532) registered in `scripts/check-towers.sh`
+  `BRICKS`.
+- **Verified:** `lake env lean Towers/YM/VaradhanStripWidened.lean`
+  exits 0; `#print axioms
+  …Heat_kernel_envelope_real_le_varadhan_geometric_widened_upper` =
+  `[propext, Classical.choice, Quot.sound]` (classical trio), no `sorry`.
+  Done via direct `lake env lean` on a warm cache (after
+  `restore-lake-git.sh` worktree rehydrate + partial `cache get`; the
+  wiping `towers-build` / `check-towers.sh` NOT run per the gotcha).
+- Makes NO mass-gap / μ>0 / Surface-#1 / Surface-#2 claim — still a
+  bounded-`t` STRIP bound, NOT the small-`t` or off-diagonal asymptotic.
+  Surface #2 stays OPEN, YM **Status: Open**.
+
+## Task #217 — lift the half-cubic heat-kernel envelope bound to the whole tsum (2026-05-29)
+
+Lifted the Task #193 per-summand bound
+`Heat_kernel_envelope_summand_real_le_half_cubic` to the WHOLE infinite
+sum. Two files touched, three additive bricks (+3 → wall 531):
+
+- **`Towers/YM/PeterWeylQuadratic.lean`** (before `end
+  PeterWeylQuadratic`):
+  - **`summable_poly6_succ_exp_neg_real`** — degree-6 1D summability
+    helper: `Summable (fun k : ℕ => ((k:ℝ)+1)^6 · exp(-(a·k)))` for
+    `a > 0` (the antidiagonal product factor).
+  - **`PeterWeyl_Summable_SU3_half_cubic`** — for `t > 0`, the squared
+    half-cubic envelope `(((m+n)+2)^3/2)^2 · exp(-(t·C₂))` over
+    `Weyl_label = ℕ × ℕ` is `Summable`. Dominated by
+    `16·(m+1)^6(n+1)^6·exp(-3t·m)·exp(-3t·n)` via `m+n+2 ≤ 2(m+1)(n+1)`
+    (so `(m+n+2)^6/4 ≤ 16(m+1)^6(n+1)^6`) and the quadratic-Casimir
+    drop `3(m+n) ≤ C₂` (`Casimir_SU3_explicit_real_ge_quadratic`,
+    dropping the `¾(m+n)²` term). Mirrors
+    `PeterWeyl_Summable_SU3_quadratic`'s structure.
+- **`Towers/YM/PeterWeylHeatVaradhan.lean`** (before `end
+  PeterWeylHeatVaradhan`):
+  - **`Heat_kernel_envelope_real_le_tsum_half_cubic`** — for `t > 0`,
+    `Heat_kernel_envelope_real t ≤ ∑' (mn : ℕ×ℕ), (((mn.1+mn.2)+2)^3/2)^2
+    · exp(-(t·C₂))`, via `tsum_le_tsum` with `PeterWeyl_Summable_SU3 ht`
+    (LHS) and `PeterWeyl_Summable_SU3_half_cubic ht` (RHS) and the
+    per-summand Task #193 bound.
+
+- **+3 BRICKS** (528 → 531) registered in `scripts/check-towers.sh`
+  `BRICKS`.
+- **Verified:** both files `lake env lean … = exit 0` (warm cache, after
+  `restore-lake-git.sh` worktree rehydrate + `lake exe cache get`; the
+  wiping `towers-build` / `check-towers.sh` NOT run per the gotcha).
+  `#print axioms` on all three = `[propext, Classical.choice,
+  Quot.sound]` (classical trio).
+- Makes NO mass-gap / μ>0 / Surface-#1 claim — pure
+  summability/comparison analysis on the envelope. Surface #1 stays
+  OPEN, YM **Status: Open**.
+
+## Task #211 — SU(3) distance: chordal → genuine geodesic via matrix exp (2026-05-29)
+
+Upgraded `Towers/YM/RiemannianGeometry.lean` from the Task #189 chordal
+(Hilbert–Schmidt) `d_SU3` to a genuine **geodesic** (Riemannian) distance
+**`d_SU3_geodesic`** built from mathlib's *real* matrix exponential
+`NormedSpace.exp ℂ` (the "minimal exp-map dev" the brief asked for —
+reusing the Banach-algebra exp from
+`Mathlib.Analysis.Normed.Algebra.MatrixExponential` rather than vendoring a
+bespoke one). Definitions added:
+
+- **`IsSU3Lie X`** — membership in 𝔰𝔲(3): `star X = -X` (skew-Hermitian) ∧
+  `Matrix.trace X = 0` (traceless).
+- **`geodesicLengths g h`** — the set `{ √(hsNormSq X) : X ∈ 𝔰𝔲(3),
+  exp X = ↑gᴴ↑h }` of Killing/HS lengths of Lie-algebra logarithms of
+  `g⁻¹h`.
+- **`d_SU3_geodesic g h := sInf (geodesicLengths g h)`** — the bi-invariant
+  geodesic distance `inf { ‖X‖_HS : exp X = g⁻¹h }`.
+
+Genuine (non-vacuous) constructible clauses proved:
+- **`d_SU3_geodesic_nonneg`** (`Real.sInf_nonneg`; every length is a `√`),
+- **`d_SU3_geodesic_self`** (`X = 0` is a real log: `exp 0 = 1 = ↑gᴴ↑g` by
+  unitarity, `√0 = 0`),
+- **`d_SU3_geodesic_symm`** (the genuine involution `X ↦ -X`:
+  `exp(-X) = (exp X)⁻¹ = ↑hᴴ↑g` via `Matrix.exp_neg` +
+  `Matrix.inv_eq_right_inv`, length-preserving by `hsNormSq_neg`, so the
+  length sets are *equal*),
+- **`d_SU3_geodesic_le_of_mem`** (the genuine infimum property).
+
+Relating / comparability bricks:
+- **`d_SU3_eq_chordal_id`** — `d_SU3 g h = √(hsNormSq (↑gᴴ↑h - 1))`
+  (bi-invariance reduction of the chordal distance to the identity),
+- **`d_SU3_geodesic_eq_d_SU3_diag`** — both distances agree (= 0) on the
+  diagonal (unconditional comparability point),
+- **`d_SU3_le_geodesic_of_contracts`** — the genuine comparability **bound**
+  `d_SU3 g h ≤ d_SU3_geodesic g h`, a *reduction* from two explicit honest
+  hypotheses (NOT `sorry`): `ChordalContractsExp` (the contraction estimate
+  `‖exp X - 1‖_HS ≤ ‖X‖_HS` on 𝔰𝔲(3)) and `(geodesicLengths g h).Nonempty`
+  (existence of a Lie-algebra log = surjectivity of `exp` on compact SU(3)).
+
+**Remaining tripwire (locked).** The two hypotheses of the comparability
+bound are exactly the open analytic inputs: the spectral theorem for
+skew-Hermitian matrices (for `ChordalContractsExp`) and surjectivity of
+`exp` on compact connected Lie groups (for nonemptiness) — neither in
+mathlib v4.12.0. Without nonemptiness `sInf ∅ = 0`, so `d_SU3_geodesic` is
+honestly only a pseudo-distance lower scaffold off the diagonal; the
+triangle inequality / cut-locus analysis stays open. `d_SU3` is unchanged
+(still the chordal distance); the geodesic distance is an additive sibling.
+
+- **+7 BRICKS** (521 → 528) registered in `scripts/check-towers.sh`:
+  `d_SU3_geodesic_nonneg`, `d_SU3_geodesic_self`, `d_SU3_geodesic_symm`,
+  `d_SU3_geodesic_le_of_mem`, `d_SU3_eq_chordal_id`,
+  `d_SU3_geodesic_eq_d_SU3_diag`, `d_SU3_le_geodesic_of_contracts`.
+- **Verified:** `#print axioms` on all seven = `[propext,
+  Classical.choice, Quot.sound]` (classical trio) via `lake env lean` on a
+  self-contained copy (mathlib-only); full-file `lake env lean
+  Towers/YM/RiemannianGeometry.lean` exits 0, and the consumer
+  `Towers/YM/PeterWeylHeatVaradhan.lean` still exits 0. The wiping
+  `towers-build` / `check-towers.sh` was NOT run (lake-update re-clone
+  gotcha below). New imports: `Mathlib.Analysis.Normed.Algebra.MatrixExponential`,
+  `Mathlib.LinearAlgebra.Matrix.NonsingularInverse`,
+  `Mathlib.Data.Real.Archimedean`.
+- Makes NO mass-gap / μ>0 / Surface-#1 / Surface-#2 claim — Surface #1
+  and #2 stay OPEN, YM **Status: Open**.
+
+## Task #210 — genuine off-diagonal SU(3) heat-kernel envelope (strip form) (2026-05-29)
+
+Removed the diagonal gate `hx : d_SU3 x 1 = 0` from the geometric
+Varadhan brick. The original
+`Heat_kernel_envelope_real_le_varadhan_geometric` only bounded the
+heat-kernel envelope on the diagonal locus (where the decay factor
+`exp(-(d_SU3 x 1)²/4t) = 1`). The new headline brick
+**`Heat_kernel_envelope_real_le_varadhan_geometric_offdiag`** holds for
+EVERY `x : SU3` (including the off-diagonal locus `d_SU3 x 1 > 0`),
+carrying the genuine `exp(-(d_SU3 x 1)²/4t)` decay factor. All landed in
+`Towers/YM/PeterWeylHeatVaradhan.lean` (original gated brick kept
+intact). Added:
+
+- **`hsNormSq_nonneg`** — generic `0 ≤ hsNormSq M` for any `M : Matrix
+  (Fin 3) (Fin 3) ℂ` (sum of `Complex.normSq` entries via
+  `trace_fin_three` + `normSq_eq_conj_mul_self`; finished with
+  `linarith` over the 9 `normSq_nonneg` facts since `positivity` lacks a
+  `normSq` extension).
+- **`d_SU3_sq_le_twelve`** — `(d_SU3 x 1)² ≤ 12` for all `x : SU3`. Key
+  bound: from `hsNormSq (↑x - 1) = 6 - 2·Re(tr ↑x)` and
+  `hsNormSq (↑x + 1) = 6 + 2·Re(tr ↑x) ≥ 0` (via `hsNormSq_nonneg`),
+  so `Re(tr ↑x) ≥ -3`, hence `(d_SU3 x 1)² = 6 - 2·Re(tr ↑x) ≤ 12`.
+  Helper rewrites `hsNormSq_sub_one_eq`, `hsNormSq_add_one_eq` use the
+  unitary relation `star ↑x * ↑x = 1` and manual ring expansion
+  (`sub_mul`/`mul_sub` + `abel`; `noncomm_ring` not imported).
+- **`varadhan_C_offdiag`** / **`varadhan_C_offdiag_pos`** — recalibrated
+  amplitude carrying `exp(12/(4·t_lo))` (vs the original `varadhan_C`'s
+  `exp(1/t_lo)`), the constant needed to absorb the now-genuine decay
+  factor uniformly on the strip.
+
+The bound is the STRIP form only (`t ∈ [t_lo, t_top]`) — NOT the
+small-`t` Varadhan / Molchanov asymptotic (false in the literal
+unrestricted shape as `t → 0⁺`), and `d_SU3` remains the chordal
+pseudo-distance, NOT the geodesic distance.
+
+- **+3 BRICKS** (518 → 521) registered in `scripts/check-towers.sh`:
+  `hsNormSq_nonneg`, `d_SU3_sq_le_twelve`,
+  `Heat_kernel_envelope_real_le_varadhan_geometric_offdiag`.
+- **Verified:** `#print axioms` on all three = `[propext,
+  Classical.choice, Quot.sound]` (classical trio) via `lake env lean`
+  on the live file (warm oleans, lake-free of the wiping `towers-build`
+  / `check-towers.sh` per the gotcha). Full-file `lake env lean
+  Towers/YM/PeterWeylHeatVaradhan.lean` exits 0.
+- Makes NO mass-gap / μ>0 / Surface-#1 / Surface-#2 claim — Surface #1
+  and #2 stay OPEN, YM **Status: Open**.
+
+## Task #209 — SU(3) distance: pseudo-distance → metric predicate + tripwire (2026-05-29)
+
+Strengthened the SU(3) distance machinery in
+`Towers/YM/RiemannianGeometry.lean` from a pseudo-distance to a real
+*metric* **predicate** (no real geodesic distance constructed). Added:
+
+- **`IsMetricOnSU3 d`** — `IsPseudoDistOnSU3 d ∧ separation
+  (`d g h = 0 → g = h`) ∧ triangle inequality`. Makes the two axioms a
+  pseudo-distance is missing (separation, triangle) explicit.
+- **`cWit`** — concrete non-identity SU(3) element `diag(-1,-1,1)`,
+  built via the proven `diagNegOneOneMat` `!![…]` +
+  `mem_specialUnitaryGroup_iff` + `fin_cases`/`simp` idiom from
+  `MassGap.lean`. Brick **`cWit_ne_one`** : `cWit ≠ (1 : SU3)` (from the
+  `(0,0)` entry `-1 ≠ 1`).
+- **Tripwire `not_IsMetricOnSU3_const_zero`** — PROVES the `d ≡ 0`
+  stand-in (`fun _ _ => 0`) FAILS `IsMetricOnSU3`: its separation clause
+  applied to `cWit, 1` would force `cWit = 1`, contradicting
+  `cWit_ne_one`. Honestly records that the current Task #189 chordal
+  `d_SU3` (and the older `d_SU3 ≡ 0` stand-in) is only a
+  pseudo-distance, NOT a metric.
+
+Imports added: `Mathlib.LinearAlgebra.Matrix.Determinant.Basic`,
+`Mathlib.Data.Matrix.Notation`. **+2 BRICKS** (516 → 518) registered in
+`scripts/check-towers.sh`. Constructs NO real distance, makes NO
+mass-gap / μ>0 / Surface-#1 claim — Surface #1 stays OPEN, YM
+**Status: Open**.
+
+- **Drift note:** the task brief referenced the stale `d_SU3 ≡ 0`
+  stand-in; the live `d_SU3` is now the Task #189 chordal distance, so
+  the tripwire targets the explicit `fun _ _ => 0` (documented in the
+  file docstring) rather than `d_SU3` itself.
+- **Verified:** `#print axioms` on BOTH `cWit_ne_one` and
+  `not_IsMetricOnSU3_const_zero` = `[propext, Classical.choice,
+  Quot.sound]` (classical trio), via `lake env lean` on a self-contained
+  copy of the file (mathlib-only imports, no Towers deps). The wiping
+  `towers-build` / `check-towers.sh` was NOT run (lake-update re-clone
+  gotcha below).
+- **Env-recovery note:** an earlier verify attempt that ran
+  `lake env lean` from a *workflow* (after an environment reset had left
+  `.lake/packages/mathlib/.git` corrupt) triggered a mathlib re-fetch
+  that wiped the vendored worktree + build oleans. Recovered with
+  `scripts/restore-lake-git.sh` → `git checkout -f <pinned-rev>` (to
+  repopulate the mathlib worktree, which the restore script's
+  wrong-rev branch does NOT do on its own) → `lake exe cache get`. The
+  warm cache is back. Lesson reinforced: do NOT drive `lake` from a
+  fresh workflow when the vendored `.git` may be corrupt — restore
+  first.
 
 ## Task #208 — Mathlib build unblock + OS-surface deferral (2026-05-29)
 
