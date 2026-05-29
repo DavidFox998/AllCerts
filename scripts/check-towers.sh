@@ -2346,6 +2346,21 @@ BRICKS=(
   #     near `0`, see file preamble). The widened endpoints are slots
   #     for a future genuine refinement once a real off-diagonal
   #     Killing-form argument lands.
+  #   * `Heat_kernel_envelope_real_le_varadhan_widened_upper` (Task
+  #     #194) — a GENUINE extension of the valid `t`-range on the
+  #     widened UPPER side. Hypotheses `varadhan_t_lo ≤ t ≤
+  #     varadhan_t_top_widened` let `t` run strictly past the original
+  #     strip top `varadhan_t_top` up to `varadhan_t_top_widened =
+  #     2 · varadhan_t_top`, and the RHS amplitude is RETUNED to
+  #     `varadhan_C_widened` (the `varadhan_t_top ^ 4` factor replaced
+  #     by `varadhan_t_top_widened ^ 4`, i.e. a `2^4 = 16×` growth) to
+  #     absorb the larger polynomial factor. The proof re-runs the
+  #     antitonicity + strip-algebra of
+  #     `Heat_kernel_envelope_real_le_varadhan` with the RHS lower
+  #     bound taken at the widened top. The lower endpoint stays at
+  #     `varadhan_t_lo` (the small-`t` inequality is false on
+  #     `(0, varadhan_t_lo)`), so only the upper side widens. Still a
+  #     strip bound, NOT the small-`t` asymptotic — YM tower stays Open.
   #
   # File 5 — `Towers/YM/ContinuumHookup.lean` (continuum-limit
   # hookup, stand-in):
@@ -2382,6 +2397,7 @@ BRICKS=(
   "Towers.YM.VaradhanStripWidened|TheoremaAureum.Towers.YM.VaradhanStripWidened.varadhan_t_lo_widened_lt"
   "Towers.YM.VaradhanStripWidened|TheoremaAureum.Towers.YM.VaradhanStripWidened.varadhan_t_top_lt_widened"
   "Towers.YM.VaradhanStripWidened|TheoremaAureum.Towers.YM.VaradhanStripWidened.Heat_kernel_envelope_real_le_varadhan_widened"
+  "Towers.YM.VaradhanStripWidened|TheoremaAureum.Towers.YM.VaradhanStripWidened.Heat_kernel_envelope_real_le_varadhan_widened_upper"
   "Towers.YM.ContinuumHookup|TheoremaAureum.Towers.YM.ContinuumHookup.continuum_heat_envelope_bound"
   "Towers.YM.ContinuumHookup|TheoremaAureum.Towers.YM.ContinuumHookup.continuum_heat_envelope_bound_target_default"
   "Towers.YM.MassGapEnvelope|TheoremaAureum.Towers.YM.MassGapEnvelope.mass_gap_envelope_constant_pos"

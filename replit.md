@@ -6,7 +6,7 @@ sketches, drift footnotes, env var docs, stack, where-things-live,
 user preferences, gotchas, pointers — all rolled into CHANGELOG by
 the Wall-510 / Wall-539 / Wall-542 trims).
 
-- **Wall:** 542 BRICKS (script-reported by `scripts/check-towers.sh`)
+- **Wall:** 543 BRICKS (script-reported by `scripts/check-towers.sh`)
 - **YM Surface #1:** Open
 - **Axiom debt:** `[]` on `TheoremaAureum.main_theorem`
   (`#print axioms` returns `[]`; also `[]` on `H2_WeilTransfer` and
