@@ -6,6 +6,47 @@ this file is the version history.
 
 ---
 
+## YM surface-file repair — 3/4 fixed, LocalityOS3 stays deferred (2026-05-30)
+
+**Repair of the four invariant-locked YM surface files flagged by the Task #208
+clean `lake build Towers`. NO wall change; nothing newly registered in
+`scripts/check-towers.sh` BRICKS or as a `lakefile.lean` root. Axiom footprint
+unchanged (classical trio); no new `sorry`/`admit`/`sorryAx`; Surface #1/#2 stay
+OPEN; the `kotecky_preiss_criterion` `sorry` in
+`Towers/Attempts/ClusterExpansion.lean` is UNTOUCHED.**
+
+- **`Towers/YM/KoteckyPreiss.lean`** — compiles (verified `lake build`, EXIT=0).
+  Repaired under prior work (imports + `noncomputable`); the disclaimed-OPEN KP
+  placeholder `sorry` is unchanged.
+- **`Towers/YM/MassGapEnvelope.lean`** — compiles (verified `lake build`,
+  EXIT=0). Repaired under prior work (unsolved-goal / parse fixes). No
+  `m > 0` / mass-gap claim.
+- **`Towers/YM/ReflectionPositivity.lean`** — NOW compiles. The ONLY change is a
+  new `import Mathlib.MeasureTheory.Integral.Bochner` so the vestigial
+  `open Complex MeasureTheory` resolves (`unknown namespace 'MeasureTheory'`).
+  The theorem `reflection_positivity` is unchanged — its proof is
+  `Complex.normSq_nonneg _` and does NOT touch `gibbsMeasure` or any `∫`.
+  `#print axioms` = `[propext, Classical.choice, Quot.sound]` (verified live).
+  It is a deferred OS module (not a `lakefile.lean` root), so it stays out of
+  the default build; the fix only makes it compile *when* built.
+- **`Towers/YM/LocalityOS3.lean` — DEFERRED, left untouched (reverted to
+  original).** The Task #208 error table listed only "missing MeasureTheory
+  import + follow-on parse error", but that parse error (the `∫ … ∂` token) was
+  *masking* a deeper blocker: the theorem statement is
+  `∫ U, F U * G U ∂gibbsMeasure d L β = …`, and **`gibbsMeasure` no longer
+  exists** — commit `d7677e5` replaced the old `GibbsMeasure.lean`
+  (which defined `haarMeasure`/`partitionFn`/`gibbsMeasure`) with a vacuous
+  pure-core stub that defines only `partitionFn`. After adding the import the
+  build fails with `function expected at gibbsMeasure … sorryAx (Measure …)`.
+  Making it compile would require re-introducing a Dirac-stand-in `gibbsMeasure`
+  (a regression — that vacuous measure substrate was deliberately pared away)
+  or changing the theorem's statement. Per user direction the file is **left
+  deferred**, on disk, out of the default build (not a root). **LocalityOS3.lean
+  deferred with gibbsMeasure. Requires KP_convergence to revive.** It is one of
+  the ~24 frozen OS/KP modules awaiting Wall 570+ with the real SU(3) `H`. Any
+  re-introduction of `gibbsMeasure`, and any new literal `sorry` in a YM brick,
+  is a regression.
+
 ## Single-polymer activity decay — honest DCT reduction (2026-05-30)
 
 **What landed (NO wall change; nothing registered in `scripts/check-towers.sh`

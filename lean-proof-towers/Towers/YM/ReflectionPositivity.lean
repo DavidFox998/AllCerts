@@ -74,6 +74,7 @@ Should depend only on the classical trio
 ================================================================
 -/
 
+import Mathlib.MeasureTheory.Integral.Bochner
 import Towers.YM.PositiveLattice
 import Towers.YM.GibbsMeasure
 
