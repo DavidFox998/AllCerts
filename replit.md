@@ -132,6 +132,16 @@ history. Roadmap → `docs/ROADMAP.md`.
     by `inf_{U≠1} wilsonAction U > 0` (that infimum is `0`). So
     `kotecky_preiss_criterion` stays a disclaimed OPEN `sorry` (UNTOUCHED), no
     Surface #1 closure, YM stays `Status: Open`, no `m > 0` / mass-gap claim.
+  - **The single missing combinatorial input (Surface #1 = Clay), now
+    documented in the `Transfer.kotecky_preiss_criterion` docstring.** KP
+    convergence is downstream of ONE unproved cluster-entropy / Peierls
+    polymer-counting bound: `#{γ : |γ| = n, energy(γ) < ε} ≤ Cⁿ · ε^(α·n)`
+    (constants `C, α > 0`). That estimate is exactly what beats the geometric
+    `Cⁿ` entropy against the suppressed activity `|z(γ)| ≲ exp(-β·energy(γ))`
+    to force `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞` at **finite** `β₀`. It is the sole
+    dependency of `kotecky_preiss_criterion` and is genuine open combinatorics —
+    NOT proved, NOT attempted (per direction: do not attempt without the
+    counting estimate). Surface #1 stays OPEN.
 
 ## Locked invariants (every batch must hold these)
 

@@ -69,6 +69,18 @@ continuous and vanishing at the vacuum, so no `exp(-β·S_min)` decay). So
 #1 stays OPEN, YM stays `Status: Open`, and no `m > 0` / mass-gap / μ>0 claim is
 made or implied.
 
+**Documented the single missing combinatorial input (Surface #1 = Clay) — a
+follow-up doc-only edit to the `Transfer.kotecky_preiss_criterion` docstring (no
+proof attempted, per direction).** `kotecky_preiss_criterion` is downstream of
+ONE unproved cluster-entropy / Peierls polymer-counting bound:
+`#{γ : |γ| = n, energy(γ) < ε} ≤ Cⁿ · ε^(α·n)` (constants `C, α > 0`). That
+estimate is exactly what beats the geometric `Cⁿ` entropy against the suppressed
+activity `|z(γ)| ≲ exp(-β·energy(γ))` to force `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞` at
+a **finite** `β₀` — the sole dependency of the criterion. It is genuine open
+combinatorics: NOT proved, NOT attempted. Comment-only; axiom split unchanged
+(verified live again — two new proven decls trio-clean, the three OPEN decls
+report `sorryAx`).
+
 **Env note:** mathlib `.git` was again wiped by merge churn (tag `v4.12.0`
 missing, oleans intact); recovered via `restore-lake-git.sh` ×2 + tag recreate
 before verification. Verification used a tag-guarded `lean-verify` workflow

@@ -381,7 +381,25 @@ upper bound). It asserts **no** proven mass gap, **no** proven `m > 0`, and does
 **NOT** close Surface #1 — it merely *names* the open problem. It deliberately
 lives in a **distinct namespace** (`…YM.Transfer`) from the invariant-locked
 `kotecky_preiss_criterion` `sorry` in `Towers/Attempts/ClusterExpansion.lean` and
-does **not** touch it. NOT a registered brick, NOT in `BRICKS`. -/
+does **not** touch it. NOT a registered brick, NOT in `BRICKS`.
+
+**The missing combinatorial input (what this `sorry` actually requires — the
+Clay-grade open content, Surface #1).** This criterion is downstream of ONE
+unproved *cluster-entropy* (polymer-counting / Peierls-contour) bound:
+
+  `#{ γ : |γ| = n, energy(γ) < ε } ≤ Cⁿ · ε^(α·n)`        (for constants `C, α > 0`)
+
+i.e. the number of connected polymers `γ` through a fixed plaquette with size
+`|γ| = n` and total Wilson energy below `ε` grows at most geometrically in `n`
+while gaining a power `ε^(α·n)` from the small-energy constraint. THAT bound is
+exactly what makes the Kotecký–Preiss sum `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞`
+converge at a **finite** `β₀ < ∞`: each activity is suppressed,
+`|z(γ)| ≲ exp(-β · energy(γ))`, and the geometric `Cⁿ` entropy is beaten by the
+`ε^(α·n)` small-energy gain once `β` is large-but-finite. It is genuine open
+combinatorics — **NOT** proved here, **NOT** attempted (per direction: do not
+attempt without the counting estimate), and is the sole dependency of this
+criterion. Until it is supplied, `kotecky_preiss_criterion` stays a disclaimed
+`sorry`, Surface #1 stays OPEN, and no `m > 0` / mass-gap claim is made. -/
 theorem kotecky_preiss_criterion :
     ∃ β₀ : ℝ, 0 < β₀ ∧ ∀ β : ℝ, β₀ < β → ∃ gap : ℝ, 0 < gap ∧
       ∀ (L : ℕ) (f : Lp ℝ 2 (haarN (4 * L ^ 4))),
