@@ -3114,6 +3114,28 @@ BRICKS=(
   "Towers.YM.Wall255_KP_Entropy|TheoremaAureum.Towers.YM.Wall255.entropy_geometric_tsum"
   "Towers.YM.Wall255_KP_Entropy|TheoremaAureum.Towers.YM.Wall255.kp_entropy_weighted_summable"
   "Towers.YM.Wall255_KP_Entropy|TheoremaAureum.Towers.YM.Wall255.kp_polymer_entropy_weighted_summable"
+  # Wall256_MassGapConditional: HONEST CONDITIONAL Yang-Mills mass-gap apex.
+  # Lands the requested statement shape `∃ Δ>0, ∀ x y, |⟨W(x)W(y)⟩| ≤ C·exp(-Δ·‖x-y‖)`
+  # as a CONDITIONAL combinator mass_gap_pos_of_spectral_gap, NOT an unconditional
+  # mass gap. GENUINE/UNCONDITIONAL: neg_log_pos_of_lt_one (0<ρ<1 ⟹ Δ:=-log ρ>0,
+  # via Real.log_neg) and rpow_eq_exp_neg_rate (0<ρ ⟹ ρ^d = exp(-Δ·d), via
+  # Real.rpow_def_of_pos) — the honest spectral-radius → exponential-clustering
+  # algebra. CONDITIONAL: mass_gap_pos_of_spectral_gap derives the existential
+  # from TWO NAMED OPEN surfaces (hypotheses, NOT `by sorry`, so NO sorryAx):
+  # h1 : ρ<1 (the strict transfer-operator spectral gap = YM Surface #1; the real
+  # T_L only has ‖T_L‖≤1 and S_min=0, locked behind kotecky_preiss_criterion) and
+  # hcl : ∀ x y, |corr x y| ≤ C·ρ^(sep x y) (the KP geometric clustering output;
+  # OPEN — Wall255 beats the 7^n entropy only under the open q<1/7 surface, no
+  # unconditional KP exists). corr/sep are ABSTRACT; no Wilson correlator built.
+  # 3 public theorems; all sorry-free, #print axioms = classical trio (verified
+  # live, raw lean v4.12.0, EXIT=0). HONEST: proves NO mass gap (the entire
+  # content is the open h1+hcl); ρ<1 is NOT discharged (there is no
+  # kp_activity_lt_inv7; Wall255 did NOT prove q<1/7 or ρ≤1/8); makes NO mass-gap
+  # / μ>0 / Surface-#1 claim and does NOT discharge kotecky_preiss_criterion.
+  # YM stays Status: Open.
+  "Towers.YM.Wall256_MassGapConditional|TheoremaAureum.Towers.YM.Wall256.neg_log_pos_of_lt_one"
+  "Towers.YM.Wall256_MassGapConditional|TheoremaAureum.Towers.YM.Wall256.rpow_eq_exp_neg_rate"
+  "Towers.YM.Wall256_MassGapConditional|TheoremaAureum.Towers.YM.Wall256.mass_gap_pos_of_spectral_gap"
 )
 
 VERIFIER_DIR="$(mktemp -d)"

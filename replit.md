@@ -60,8 +60,29 @@ history. Roadmap → `docs/ROADMAP.md`.
     inputs; they prove NO NS existence/uniqueness/regularity result. NS stays
     `Status: Open`; Surface #1/#2 stay OPEN; YM untouched.
 
-- **Wall:** 585 BRICKS (`${#BRICKS[@]}` in `scripts/check-towers.sh`). The
+- **Wall:** 588 BRICKS (`${#BRICKS[@]}` in `scripts/check-towers.sh`). The
   source of truth for the count is the script, not this file.
+- **Wall256_MassGapConditional — HONEST CONDITIONAL YM mass-gap apex (bricks, in
+  BRICKS):** `Towers/YM/Wall256_MassGapConditional.lean` lands the REQUESTED
+  statement shape `∃ Δ>0, ∀ x y, |⟨W(x)W(y)⟩| ≤ C·exp(−Δ·‖x−y‖)` as an HONEST
+  CONDITIONAL combinator — NOT an unconditional mass gap. **(1)
+  GENUINE/UNCONDITIONAL:** `neg_log_pos_of_lt_one` (`0<ρ<1 ⟹ Δ:=−log ρ>0`, via
+  `Real.log_neg`) and `rpow_eq_exp_neg_rate` (`0<ρ ⟹ ρ^d = exp(−Δ·d)`, via
+  `Real.rpow_def_of_pos`) — the honest spectral-radius→exponential-clustering
+  algebra. **(2) CONDITIONAL:** `mass_gap_pos_of_spectral_gap` derives the
+  existential (rate `Δ:=−log ρ`) from TWO NAMED OPEN surfaces (hypotheses, NOT
+  `by sorry`, so NO `sorryAx`): `h1 : ρ<1` (the strict transfer-operator
+  spectral gap = YM Surface #1; the real `T_L` only has `‖T_L‖≤1`, `S_min=0`,
+  locked behind `kotecky_preiss_criterion`) and `hcl : ∀ x y, |corr x y| ≤
+  C·ρ^(sep x y)` (the KP geometric clustering output; OPEN — Wall255 beats the
+  `7ⁿ` entropy only under the open `q<1/7` surface, no unconditional KP exists).
+  `corr`/`sep` are ABSTRACT; NO Wilson correlator is constructed. 3 public
+  theorems; all `sorry`-free, `#print axioms` = classical trio (verified live,
+  raw `lean` v4.12.0, EXIT=0). HONEST: proves NO mass gap (the entire content is
+  the open `h1`+`hcl`); `ρ<1` is NOT discharged (there is NO `kp_activity_lt_inv7`
+  theorem and Wall255 did NOT prove `q<1/7` / `ρ≤1/8`); makes NO mass-gap / μ>0 /
+  Surface-#1 claim and does NOT discharge `kotecky_preiss_criterion`. YM stays
+  `Status: Open`.
 - **Wall254_OS_Positivity — HONEST CONDITIONAL Osterwalder–Schrader OS2
   combinator (bricks, in BRICKS):** `Towers/YM/Wall254_OS_Positivity.lean`
   routes reflection positivity through the genuine Gram-PSD heart. **(1)
