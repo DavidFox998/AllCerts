@@ -6,6 +6,117 @@ this file is the version history.
 
 ---
 
+## NS Tower 540 (Phases 1–6) + YM Transfer/polymer scaffolding — detailed history (2026-05-30)
+
+Full detail for the items summarized compactly in `replit.md`. None of these
+are bricks, none are in `BRICKS`, none are lakefile roots. NS stays
+`Status: Open`; Surface #1/#2 stay OPEN; YM untouched. All decls classical-trio
+(`[propext, Classical.choice, Quot.sound]`), no `sorryAx`, verified live unless
+explicitly marked a disclaimed OPEN `sorry`.
+
+### NS Tower 540 — the honest weak→strong chain (Fourier-side model)
+
+- **Phase 1 — `Towers/NS/FunctionSpaces.lean`.** Models Hˢ on the Fourier side
+  as the weighted `L²(ℝ³, ⟨ξ⟩^{2s}·vol; ℂ³)` space `Hsv s := Lp (EuclideanSpace
+  ℂ (Fin 3)) 2 (mu s)` (`mu s = volume.withDensity ⟨ξ⟩^{2s}`), with
+  `IsDivFree f := ∀ᵐ ξ, ⟪toVal ξ, f ξ⟫_ℂ = 0`. `divFreeSubmodule s` has PROVED
+  `0/+/•` closure; `Hdiv_free s` carries the real `NormedAddCommGroup` /
+  `InnerProductSpace ℂ` / `CompleteSpace` instances. `sorry`-free: the closed-set
+  lemma `divFreeSubmodule_isClosed` (L²-convergence ⇒ convergence in measure ⇒
+  a.e. subsequence ⇒ constraint passes to the pointwise limit) and `embed` (the
+  bounded `Hˢ ↪ Hˢ'` inclusion for `s' ≤ s`, op-norm ≤ 1, via `mu` monotonicity +
+  `Memℒp.mono_measure`). `embed` is the bounded INCLUSION, NOT a compact
+  (Rellich–Kondrachov) embedding.
+- **Phase 2 — `Towers/NS/Leray.lean` + `Towers/NS/Stokes.lean`** (two INDEPENDENT
+  files, each importing only Phase-1). Leray: the Helmholtz orthogonal projection
+  `leray_proj : Hˢ →L[ℂ] Hdiv_free s` (idempotent, `‖Pu‖ ≤ ‖u‖`, kernel lemmas);
+  ONE documented `sorry` = `leray_proj_ker_eq_grad` (the Helmholtz
+  `(divFreeSubmodule)ᗮ = gradSubmodule`). Stokes: the operator `stokes_op = -PΔ :
+  Hdiv_free (s+2) →L[ℂ] Hdiv_free s` as the `‖ξ‖²` Fourier multiplier — FULLY
+  `sorry`-free + classical-trio on every decl (`stokes_eLpNorm_le`,
+  `symbol_pow_weight_le`, `stokes_op`, `stokes_op_norm_le`, …). HONEST: NAMES and
+  BOUNDS the operator only — NO self-adjointness / sectoriality /
+  analytic-semigroup claim.
+- **Phase 3 — `Towers/NS/Energy.lean`.** `energy u t = ‖u t‖²` and `dissipation
+  ν u t = 2ν‖A u t‖²` on `Hdiv_free (s+2)`; trio-clean `energy_inequality`
+  combinator (from the energy *balance* hypothesis `hbal`), `energy_nonincreasing`.
+  Single NAMED Prop `integration_by_parts` (the Stokes self-adjoint pairing
+  `⟪A u, ι v⟫ = ⟪ι u, A v⟫`, absent from mathlib v4.12.0; the unconditional
+  energy inequality is FALSE for arbitrary `u`, so the balance is a premise).
+- **Phase 4A/4B — `Towers/NS/GalerkinApprox.lean` + `Towers/NS/Compactness.lean`.**
+  4A: the genuine finite-dimensional Galerkin projection `galerkinProj K n : Hˢ⁺²
+  →L Kₙ` (mathlib `orthogonalProjection` onto the finite-dim `Kₙ`, with the
+  `HasOrthogonalProjection` instance supplied as a *local* `haveI` so it never
+  pollutes global resolution), the sequence `galerkin_seq K u n t`, and bounds
+  `galerkinProj_norm_le` (`‖Pₙ‖ ≤ 1`), `galerkin_seq_norm_le` (uses
+  `Submodule.norm_coe` — coe-norm is NOT definitional on the deep Lp stack, so
+  `rfl` blows the heartbeat budget), `galerkin_seq_sq_le_energy`. 4B: `embedToLower`
+  (bounded NON-compact `Hˢ⁺² ↪ Hˢ`), `TendstoLocL2` (a modeled `Hˢ`-norm surrogate
+  for `L²_loc`), `AubinLionsCriterion` (the genuine Rellich–Kondrachov compactness
+  as a NAMED `Prop` HYPOTHESIS — the compact embedding is absent from mathlib
+  v4.12.0), and the honest combinator `galerkin_strong_convergence` routing the
+  4A bound through the assumed criterion.
+- **Phase 5 — `Towers/NS/WeakSolution.lean`.** `weak_solution_exists (u₀) (f) :
+  ∃ u, WeakNS u u₀ f` is PROVED as an honest combinator from THREE NAMED `Prop`
+  inputs (`galerkin_subsequence_converges`, `limit_satisfies_weak_form`,
+  `energy_inequality_passes_to_limit`). `WeakMomentum` is a MODELED **linear**
+  Stokes weak form (nonlinear `(u·∇)u` DROPPED); `WeakNS` is a MODELED surrogate
+  (init + WeakMomentum + force-free energy bound), NOT the literal Leray–Hopf
+  definition. Everything on `Hdiv_free (s+2)`, `ν = 1`.
+- **Phase 6 — `Towers/NS/Regularity.lean`.** `weak_implies_strong (h :
+  global_smooth_exists) (w : WeakSolution s) : ∃ T > 0, IsSmoothOn w.u T` is PROVED
+  as an honest combinator from the SINGLE NAMED `Prop` `global_smooth_exists` (the
+  NS global-regularity surface). `WeakSolution s` bundles the Phase-5 field + data
+  + `WeakNS` proof; `IsSmoothOn` is a MODELED surrogate for `C^∞((0,T) × ℝ³)`
+  (temporal `ContDiffOn ℝ ⊤` smoothness of the tested profiles `t ↦ ⟪u t, φ⟫`
+  only — genuine joint space–time smoothness needs the Sobolev `⋂ₛ Hˢ ↪ C^∞`
+  embedding across all indices, absent here). Per the Phase-6 order, because the
+  single sorry IS the surface, **NS Tower 540 is frozen at 251** (milestone
+  `NS-540-phase6-regularity`): the regularity surface is reached and left OPEN.
+
+### YM Transfer / polymer / positivity / measure scaffolding (NOT bricks)
+
+- **`Towers/YM/SU3Instances.lean`** — real SU(3) instance stack (`Group` /
+  `TopologicalGroup` / `CompactSpace` / `BorelSpace`), `haarSU3 = haarMeasure ⊤`,
+  `haarN n := Measure.pi (fun _ : Fin n => haarSU3)` (product Haar on `Fin n →
+  SU(3)`), `IsProbabilityMeasure` instances. Real Haar (NOT the Dirac stand-in);
+  makes NO `m>0`/μ>0 claim.
+- **`Towers/YM/Transfer.lean`** — the real integral transfer operator `T_L (L β) :
+  Lp ℝ 2 (haarN (4·L⁴)) → Lp ℝ 2 (haarN (4·L⁴))`, `(T_L f)(U) = ∫ V,
+  exp(-β·wilsonAction(V⁻¹·U))·f(V)`. `transfer_operator_norm_le` is the genuine
+  sub-Markov **contraction** `‖T_L L β f‖ ≤ ‖f‖` (i.e. `‖T_L‖ ≤ 1`, from
+  `actL ≥ 0` + `L¹ ≤ L²` on the probability measure) — explicitly NOT a strict
+  contraction / decay / spectral-gap / mass-gap claim (constants are
+  eigenfunctions with eigenvalue `Z(β) ≤ 1`; `S_min := inf_{U≠1} wilsonAction U =
+  0` so no `exp(-β·S_min)` decay). The mass gap would be the OPPOSITE inequality
+  (`T_L ≥ c·𝟙` on the zero-mean sector) and stays OPEN in the disclaimed
+  single-`sorry` `kotecky_preiss_criterion` (own namespace, reports `sorryAx`).
+  Plus the cluster-expansion *activity* `polymerActivity L β γ := ∫ w,
+  exp(-β·polymerEnergy (toGauge w) γ)` with `polymerActivity_nonneg`,
+  `integrable_polymerWeight`, `polymerActivity_empty` (`=1` for `γ=∅`),
+  `polymerActivity_antitone_in_beta`, `continuous_polymerEnergy_toGauge`, and the
+  honest DCT reduction `polymerActivity_tendsto_zero_of_null` (IF `haarN
+  {polymerEnergy=0}=0` THEN activity → 0 as β→∞, via dominated convergence). The
+  null-set input `trivial_polymer_set_null` (γ≠∅ ⇒ that set is Haar-null) is a
+  disclaimed OPEN `sorry` (needs `NoAtoms haarSU3` + a `Measure.pi` marginal
+  argument; the "codim 8·|γ|" count is lattice-size dependent — on `L=1` a
+  plaquette degenerates to a commutator, so it's the commuting variety), and
+  `polymerActivity_tendsto_zero` inherits its `sorryAx`. WHY this is NOT the mass
+  gap: even the full activity→0 is a *single* polymer's β→∞ limit; Kotecký–Preiss
+  needs a *uniform* convergent SUM `∑_{γ∋0} |z(γ)| e^{|γ|} < ∞` at a *finite* β₀
+  over connected/truncated weights, downstream of one unproved cluster-entropy /
+  Peierls counting bound `#{γ : |γ|=n, energy(γ)<ε} ≤ Cⁿ·ε^{α·n}` (genuine open
+  combinatorics, NOT attempted).
+- **`Towers/YM/WilsonPositivity.lean`** — `wilsonAction_nonneg`,
+  `plaquetteEnergy_eq_zero_iff`, `wilsonAction_eq_zero_iff` (`= 0 ↔ all plaquettes
+  trivial`, HONESTLY NOT `↔ U = 1`), `polymerEnergy` + `polymerEnergy_nonneg` +
+  `polymerEnergy_pos_of_nontrivial`. `Transfer.actL_nonneg` lifts
+  `wilsonAction_nonneg` through `toGauge`. Every lemma is
+  necessary-not-sufficient — pointwise positivity is NOT a uniform spectral gap
+  (off-vacuum infimum of `wilsonAction` is 0).
+
+---
+
 ## Wall gated on a real clean build (Task #240) (2026-05-30)
 
 **`scripts/check-towers.sh` can no longer report a healthy wall while the proof

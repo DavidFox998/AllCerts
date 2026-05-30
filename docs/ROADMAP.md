@@ -249,11 +249,28 @@ Status legend:
     live). The combinator routes the three unproved NAMED inputs into the
     conclusion; it proves NOTHING about NS by itself. Last combinator BEFORE
     Surface #1 (`global_smooth_exists`); does NOT touch it.
+  - **Phase 6 — Status: Complete; NS FROZEN at 251** (milestone
+    `NS-540-phase6-regularity`). `Towers/NS/Regularity.lean` (imports
+    WeakSolution) — the weak⇒strong (conditional) regularity step as an HONEST
+    combinator. `weak_implies_strong (h : global_smooth_exists) (w : WeakSolution
+    s) : ∃ T > 0, IsSmoothOn w.u T` is PROVED from the SINGLE NAMED `Prop`
+    `global_smooth_exists` (the NS global-regularity surface — every modeled weak
+    solution is smooth on a short interval; the Clay-grade open content, NAMED,
+    NEVER `by sorry`, so zero `sorryAx`). `WeakSolution s` bundles the Phase-5
+    field + data + `WeakNS` proof; `IsSmoothOn` is a MODELED surrogate for
+    `C^∞((0,T) × ℝ³)` (temporal `ContDiffOn ℝ ⊤` of the tested profiles
+    `t ↦ ⟪u t, φ⟫` only — genuine joint space–time smoothness needs the Sobolev
+    `⋂ₛ Hˢ ↪ C^∞` embedding across all indices, absent here and from mathlib
+    v4.12.0). `#print axioms` on `weak_implies_strong` and `global_smooth_exists`
+    = classical trio (verified live). Because the single sorry IS the surface, NS
+    Tower 540 is frozen at 251: the regularity surface is reached and left OPEN —
+    the combinator proves NOTHING about NS regularity by itself.
   - HONEST scope: these build spaces, name/bound operators, build the
     approximation scheme + its a-priori bound, NAME the compactness input, and
-    assemble the weak-existence combinator from NAMED analytic inputs; they
-    prove NO NS existence/uniqueness/regularity result and NO convergence of the
-    full sequence. NS stays `Status: Open`; Surface #1/#2 stay OPEN.
+    assemble the weak-existence + conditional-regularity combinators from NAMED
+    analytic inputs; they prove NO NS existence/uniqueness/regularity result and
+    NO convergence of the full sequence. NS stays `Status: Open`; Surface #1/#2
+    stay OPEN.
 
 ## 4. 280-curve cohort (M9 Weil-transfer discharge) — and BSD
 
