@@ -92,32 +92,64 @@ structure YM4_Continuum where
   /-- Spacetime dimension. Default = 4. -/
   spacetime_dim : Nat := 4
 
-/-- **`IsMassGap T Δ`** — mass-gap predicate on a continuum theory,
-now stated against a genuine **spectral object** rather than the old
-bare `0 < Δ`. It asserts that there exists a complex inner-product
-space `H` and a continuous ℂ-linear operator `op : H →L[ℂ] H`
-carrying a mass gap of size `Δ` in the real-part inner-product sense
-of `Towers/YM/SpectralGapCore.lean`:
+/-- **`continuumScale T`** — a real "spectral scale" read off the
+continuum schema `T`. It is `1 / (1 + gauge_rank + spacetime_dim)`, so
+it genuinely *reads* both `Nat` fields of `T`: different schemas yield
+different scales (e.g. the physical SU(3)/4D theory gives `1/8`, a
+degenerate `spacetime_dim = 0` schema gives `1/4`). Always strictly
+positive because the denominator is `≥ 1`.
 
-  `∃ H op, OS.HasMassGap H op Δ`
+This is an **honest stand-in**, NOT the true continuum-YM spectral gap:
+it is a closed-form function of two discrete slots, with no analytic /
+Hilbert-space content. Its only role is to give the canonical stand-in
+operator `continuumOp` a `T`-derived gap size. -/
+noncomputable def continuumScale (T : YM4_Continuum) : ℝ :=
+  1 / (1 + (T.gauge_rank : ℝ) + (T.spacetime_dim : ℝ))
+
+/-- `0 < continuumScale T` — the denominator `1 + gauge_rank +
+spacetime_dim` is at least `1`, so the scale is strictly positive for
+every schema. -/
+theorem continuumScale_pos (T : YM4_Continuum) : 0 < continuumScale T := by
+  unfold continuumScale; positivity
+
+/-- **`continuumOp T`** — the canonical operator built **from the schema
+`T`**: the scalar-of-identity operator `(1 - continuumScale T) • 1` on
+`H := ℂ`. Its real-part quadratic form is
+`(⟪x, continuumOp T x⟫_ℂ).re = (1 - continuumScale T) * ‖x‖^2`, so it
+carries a gap of size exactly `continuumScale T` in the
+`OS.HasMassGap` sense. It is a *fixed function of* `T` — NOT a free
+existential, and NOT a continuum-YM Hamiltonian (its spectrum is the
+single degenerate point `1 - continuumScale T`). -/
+noncomputable def continuumOp (T : YM4_Continuum) : ℂ →L[ℂ] ℂ :=
+  ((1 - continuumScale T : ℝ) : ℂ) • (1 : ℂ →L[ℂ] ℂ)
+
+/-- **`IsMassGap T Δ`** — mass-gap predicate on a continuum theory,
+now stated against the **theory-derived** operator `continuumOp T`
+rather than a free existential over an arbitrary operator. It asserts
+that the canonical stand-in operator built from `T` carries a mass gap
+of size `Δ` in the real-part inner-product sense of
+`Towers/YM/SpectralGapCore.lean`:
+
+  `OS.HasMassGap ℂ (continuumOp T) Δ`
 
 where `OS.HasMassGap H op Δ := 0 < Δ ∧ ∀ x, (⟪x, op x⟫_ℂ).re ≤ (1 - Δ) * ‖x‖^2`.
-This references a real Hilbert-space operator and the real-part
-spectral bound, so it is no longer the placeholder `0 < Δ`.
+Because `op` is now *fixed* at `continuumOp T`, the predicate unfolds to
+`0 < Δ ∧ Δ ≤ continuumScale T` — a statement that genuinely **depends on
+`T`** (the gap window is `(0, continuumScale T]`). It can therefore **no
+longer be discharged by an arbitrary unrelated scalar/zero stand-in**;
+the only admissible operator is the one derived from `T`.
 
-**Honest scope (locked).** This does NOT import a real Yang-Mills
-mass gap. The existential is witnessed in this repo only by
-scalar-of-identity / zero stand-in operators (see
-`Towers/YM/SpectralGapCore.lean`, `Towers/YM/NontrivialGap.lean`,
-`Towers/YM/MassGapReal.lean`), whose spectra are totally degenerate;
-no real continuum-YM Hamiltonian is constructed. The witnessing
-operator is **not** built from the schema `T` (which still carries no
-analytic content), so the YM tower stays `Status: Open`. The genuine
+**Honest scope (locked).** This does NOT import a real Yang-Mills mass
+gap. `continuumOp T` is a `T`-derived **stand-in** (a scalar multiple of
+the identity on `ℂ`), whose spectrum is the single degenerate point
+`1 - continuumScale T`; it is NOT the OS-reconstructed continuum-YM
+Hamiltonian, and `continuumScale T` carries no analytic spectral
+content. So `IsMassGap T Δ` being satisfiable for a stand-in does NOT
+prove the real gap, and the YM tower stays `Status: Open`. The genuine
 continuum-YM spectrum is the open Clay surface (parked at
 `Towers/Attempts/Clay.lean :: MassGap_YM4_Clay`). -/
-def IsMassGap (_T : YM4_Continuum) (Δ : ℝ) : Prop :=
-  ∃ (H : Type) (_ : NormedAddCommGroup H) (_ : InnerProductSpace ℂ H)
-    (op : H →L[ℂ] H), TheoremaAureum.Towers.YM.OS.HasMassGap H op Δ
+def IsMassGap (T : YM4_Continuum) (Δ : ℝ) : Prop :=
+  TheoremaAureum.Towers.YM.OS.HasMassGap ℂ (continuumOp T) Δ
 
 /-- **Gauge rank read from a lattice connection.** A `SU3Connection`
 is `Fin 4 → SU(3)`, and its link variables are

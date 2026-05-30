@@ -1912,16 +1912,24 @@ BRICKS=(
   #   1. `YM4_Continuum`        — schema type (structure with
   #                                `gauge_rank = 3`, `spacetime_dim = 4`).
   #   2. `IsMassGap`            — Task #196 upgraded this from the
-  #                                bare `0 < Δ` placeholder to the
-  #                                spectral statement
-  #                                `∃ H op, OS.HasMassGap H op Δ`
-  #                                (real-part inner-product gap on a
-  #                                complex Hilbert-space operator,
-  #                                `Towers/YM/SpectralGapCore.lean`).
-  #                                References a real Hilbert space /
-  #                                operator; witnesses are scalar/zero
-  #                                stand-ins, NOT a continuum-YM
-  #                                Hamiltonian, so YM stays Open.
+  #                                bare `0 < Δ` placeholder to a
+  #                                spectral statement; Task #221 then
+  #                                tied it to a *fixed* `T`-derived
+  #                                operator:
+  #                                `OS.HasMassGap ℂ (continuumOp T) Δ`
+  #                                (`Towers/YM/SpectralGapCore.lean`,
+  #                                `Towers/YM/Continuum.lean`), which
+  #                                unfolds to `0 < Δ ∧ Δ ≤
+  #                                continuumScale T`. No longer a free
+  #                                existential over `op`, so it cannot be
+  #                                discharged by an arbitrary unrelated
+  #                                stand-in; `continuumOp T` is still a
+  #                                `T`-derived scalar/identity stand-in,
+  #                                NOT a continuum-YM Hamiltonian, so YM
+  #                                stays Open. Helper defs
+  #                                `continuumScale` / `continuumScale_pos`
+  #                                / `continuumOp` are unregistered
+  #                                (verified transitively via `IsMassGap`).
   #   3. `lattice_to_continuum` — renormalization map from
   #                                `(a : ℝ, A : SU3Connection)` to a
   #                                `YM4_Continuum` whose fields now
@@ -2538,20 +2546,25 @@ BRICKS=(
   #   * `mass_gap_envelope_constant_pos` — the concrete positive real
   #     `varadhan_C / varadhan_t_top ^ 4` is `> 0`. Built from the
   #     strip-form Varadhan amplitude; carries NO spectral content.
-  #   * `IsMassGap_mass_gap_envelope_default` — Task #196 re-closed
-  #     this against the upgraded spectral `IsMassGap` predicate from
-  #     `Towers/YM/Continuum.lean` (now `∃ H op, OS.HasMassGap H op Δ`,
-  #     a real-part inner-product gap on a complex Hilbert-space
-  #     operator) at `Δ := mass_gap_envelope_constant`, using the
-  #     scalar-of-identity stand-in operator `op := ((1 - Δ : ℝ) : ℂ) • 1`
-  #     on `H := ℂ`. Task #220 now takes `(a : ℝ) (A : SU3Connection)`
-  #     and routes the continuum object through `lattice_to_continuum a A`
-  #     (Task #195's non-trivial input-dependent schema map) instead of
-  #     the bare `({} : YM4_Continuum)` literal; since `IsMassGap` ignores
-  #     its theory argument the witness/proof are unchanged. NOT a proof
-  #     that any real 4D pure-YM theory has a mass gap; the witnessing
-  #     operator is a scalar multiple of the identity (totally degenerate
-  #     spectrum), not a continuum-YM Hamiltonian.
+  #   * `IsMassGap_mass_gap_envelope_default` — Task #221 RE-STATED
+  #     this against the now *theory-derived* `IsMassGap` predicate from
+  #     `Towers/YM/Continuum.lean` (now `OS.HasMassGap ℂ (continuumOp T) Δ`
+  #     with `op` fixed at the `T`-derived `continuumOp T`, not a free
+  #     existential). Takes `(a : ℝ) (A : SU3Connection)`, routes the
+  #     continuum object through `lattice_to_continuum a A` (Task #195's
+  #     input-dependent schema map), and closes at the theory-derived gap
+  #     `Δ := continuumScale (lattice_to_continuum a A)`. DRIFT: it no
+  #     longer uses `Δ := mass_gap_envelope_constant` — that worked only
+  #     because the old witness was *tuned to Δ* (the `((1-Δ):ℂ)•1` cheat);
+  #     with the operator fixed, the huge Varadhan-scale constant
+  #     (`exp(100)`-order) falls outside the admissible window
+  #     `(0, continuumScale T]`, so the honest re-statement uses the
+  #     theory-derived gap. `mass_gap_envelope_constant` and its `_pos`
+  #     lemma remain (now an honest positive real, no longer fed into
+  #     `IsMassGap`). NOT a proof that any real 4D pure-YM theory has a
+  #     mass gap; `continuumOp T` is a `T`-derived scalar-of-identity
+  #     stand-in (totally degenerate spectrum), not a continuum-YM
+  #     Hamiltonian.
   #
   # Wall: 491 → 497. YM tower stays `Status: Open` in
   # `docs/ROADMAP.md` § 2. Surfaces #1 / #2 / #3 all stay OPEN.

@@ -57,6 +57,56 @@ the Wall-510 / Wall-539 / Wall-542 trims).
   `#print axioms` re-run is now possible via the resilient
   `towers-build` once it completes a clean clone+cache cycle.
 
+## Task #221 — make `IsMassGap T Δ` reference a T-derived operator (COMPLETE — 2026-05-29)
+
+Replaced the free existential in `IsMassGap` (`∃ H op, OS.HasMassGap H op Δ`,
+which any unrelated stand-in could discharge) with a predicate over an operator
+*derived from* the theory argument `T : YM4_Continuum`.
+
+- **`Towers/YM/Continuum.lean`** — three new helper defs + one re-stated def:
+  - `continuumScale (T) : ℝ := 1 / (1 + gauge_rank + spacetime_dim)`
+    (`noncomputable` — real division). Genuinely *reads* both `Nat` fields of
+    `T`: SU(3)/4D → `1/8`, a degenerate schema → a different scale.
+  - `continuumScale_pos (T) : 0 < continuumScale T` (`unfold; positivity`).
+  - `continuumOp (T) : ℂ →L[ℂ] ℂ := ((1 - continuumScale T : ℝ):ℂ) • 1`
+    (`noncomputable`). A FIXED FUNCTION OF `T`, scalar-of-identity on `H := ℂ`;
+    its real-part quadratic form is `(1 - continuumScale T)·‖x‖²`, carrying a
+    gap of size exactly `continuumScale T`.
+  - `IsMassGap (T) (Δ) := OS.HasMassGap ℂ (continuumOp T) Δ` — NO more
+    `∃ H op`. Unfolds to `0 < Δ ∧ Δ ≤ continuumScale T`.
+- **`Towers/YM/MassGapEnvelope.lean`** — re-stated the headline brick
+  `IsMassGap_mass_gap_envelope_default (a A)` to conclude
+  `IsMassGap (lattice_to_continuum a A) (continuumScale (lattice_to_continuum a A))`
+  (proof `refine ⟨continuumScale_pos _, ?_⟩` then the inner-product
+  `Complex.mul_re` / `inner_self_eq_norm_sq` pattern). Drift note: the old
+  exp(100)-order varadhan envelope constant is too large for a fixed
+  T-derived operator's gap window `(0, continuumScale T]`, so the brick now
+  closes against `continuumScale` (task explicitly permits re-stating). The
+  sibling constants `mass_gap_envelope_constant{,_pos,_widened_pos}` are kept.
+- **`Towers/Attempts/Clay.lean`** — `MassGap_YM4_Clay` (`∃ Δ, IsMassGap T Δ`)
+  keeps its parked `sorry` (now trivially provable, deliberately NOT proven —
+  represents the real OS Hamiltonian target). YM **Status: Open**, Surface #1
+  OPEN.
+- **No wall change.** `scripts/check-towers.sh` BRICKS array UNCHANGED (only
+  comment blocks refreshed); helper defs left unregistered. Machine truth:
+  `${#BRICKS[@]} = 549` (the replit.md "539" headline is stale drift).
+- **Verified** via the `towers-build` workflow (`check-towers.sh`): full Towers
+  library `lake build` = exit 0; "all 549 brick(s) passed the axiom-footprint
+  check"; `#print axioms` on `IsMassGap_mass_gap_envelope_default` (and the two
+  sibling constant bricks) = `[propext, Classical.choice, Quot.sound]`
+  (classical trio), no `sorry`.
+- **Infra gotcha discovered + fixed:** the destructive mathlib re-clone
+  (`git-remote-https … mathlib4`) that wipes oleans is triggered because the
+  restore-tar's vendored mathlib `.git` lacks the `v4.12.0` tag, so lake
+  fetches from remote to resolve `inputRev: v4.12.0`. Fix: create the tag
+  locally — `git -C .lake/packages/mathlib tag v4.12.0 809c3fb3b5c8…` (the
+  manifest `rev` already = HEAD). With the tag present `lake update` / `lake
+  build` resolve offline and stop re-cloning. (This local tag is NOT persisted
+  in the restore tar; recreate it after any `restore-lake-git.sh` worktree
+  rebuild if the wipe recurs.)
+- Makes NO mass-gap / μ>0 / Surface-#1-CLOSED claim — `continuumOp` is an
+  honest scalar-of-identity stand-in, NOT a continuum-YM Hamiltonian.
+
 ## Task #248 — Real Wilson Transfer Hamiltonian (COMPLETE — 2026-05-29 14:40 PDT)
 
 - YM mass gap reduced to strict action positivity:

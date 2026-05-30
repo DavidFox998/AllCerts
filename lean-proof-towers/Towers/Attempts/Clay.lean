@@ -38,17 +38,18 @@ no-auto-promotion guarantee.
 The statement uses the schema definitions (`YM4_Continuum`,
 `IsMassGap`, `AsymptoticFreedom` from `Towers/YM/Continuum.lean`).
 Task #196 upgraded `IsMassGap T Δ` from the bare `0 < Δ` placeholder
-to the spectral statement `∃ H op, OS.HasMassGap H op Δ` (real-part
-inner-product gap on a complex Hilbert-space operator). So the
-conclusion `∃ Δ, IsMassGap T Δ` now unfolds to
-`∃ Δ, ∃ H op, OS.HasMassGap H op Δ`, which is still *honestly
-discharge-able only* by a scalar/zero stand-in operator — NOT by any
-operator built from `T`. The `sorry` stays parked because the
-*real* Clay target requires the OS-reconstructed continuum-YM
-Hilbert space and Hamiltonian (Batches 20.1b → 20.1d), wiring the
-gap to a `T`-derived operator rather than a stand-in. Keeping the
-`sorry` in place across the placeholder ⇒ real-spectrum refactor is
-the whole point of parking it here.
+to a spectral statement; Task #221 then tied it to a *fixed*
+`T`-derived operator: `IsMassGap T Δ := OS.HasMassGap ℂ (continuumOp T) Δ`,
+which unfolds to `0 < Δ ∧ Δ ≤ continuumScale T`. So the conclusion
+`∃ Δ, IsMassGap T Δ` is now discharge-able only via the `T`-derived
+*stand-in* operator `continuumOp T` (a scalar multiple of the identity,
+spectrum `{1 - continuumScale T}`) — NOT via the real OS-reconstructed
+continuum-YM Hamiltonian. The `sorry` stays parked because the *real*
+Clay target requires that genuine Hilbert space and Hamiltonian
+(Batches 20.1b → 20.1d), wiring the gap to the true continuum-YM
+spectrum rather than a stand-in. Keeping the `sorry` in place across
+the placeholder ⇒ real-spectrum refactor is the whole point of parking
+it here.
 ================================================================
 -/
 

@@ -119,54 +119,51 @@ theorem mass_gap_envelope_constant_pos :
   have htop4 : 0 < varadhan_t_top ^ 4 := pow_pos varadhan_t_top_pos 4
   exact div_pos varadhan_C_pos htop4
 
-/-- **Final mass-gap envelope brick (re-closed against the spectral
-`IsMassGap`, routed through the lattice→continuum map).** Task #196
-upgraded `IsMassGap` in `Towers/YM/Continuum.lean` from the bare
-`0 < Δ` placeholder to the spectral statement
+/-- **Final mass-gap envelope brick (re-closed against the
+*theory-derived* operator — Task #221).** Task #196 upgraded
+`IsMassGap` from the bare `0 < Δ` placeholder to a spectral statement;
+Task #221 then tied it to a *fixed* operator built from the theory,
+`OS.HasMassGap ℂ (continuumOp T) Δ`, so it can no longer be discharged
+by an arbitrary unrelated stand-in (see `Towers/YM/Continuum.lean`).
 
-  `∃ H op, OS.HasMassGap H op Δ`
+This brick re-closes that predicate at the continuum theory
+`T := lattice_to_continuum a A` produced from lattice data (spacing
+`a : ℝ`, SU(3) connection `A : SU3Connection`), at the **theory-derived
+gap** `Δ := continuumScale T`. Since `continuumOp T = (1 - continuumScale
+T) • 1` on `H := ℂ`, the real-part bound holds with equality
+(`(⟪x, continuumOp T x⟫_ℂ).re = (1 - continuumScale T) * ‖x‖^2`), so the
+predicate closes at exactly the maximal admissible gap.
 
-(real-part inner-product gap on a complex Hilbert-space operator).
-This brick re-closes that new predicate at the continuum theory
-`lattice_to_continuum a A` produced from lattice data (spacing
-`a : ℝ`, SU(3) connection `A : SU3Connection`) and
-`Δ := mass_gap_envelope_constant`, using the honest
-scalar-of-identity stand-in operator `op := ((1 - Δ : ℝ) : ℂ) • 1`
-on `H := ℂ`. For that operator the real-part bound holds with
-equality
-(`(⟪x, op x⟫_ℂ).re = (1 - Δ) * ‖x‖^2 ≤ (1 - Δ) * ‖x‖^2`), exactly
-the witness pattern of `Towers/YM/NontrivialGap.lean`.
-
-Task #220: the continuum object is now `lattice_to_continuum a A`
-(Task #195 made this a non-trivial, input-dependent schema map whose
-`gauge_rank` / `spacetime_dim` fields read `(A, a)`), replacing the
-prior bare `({} : YM4_Continuum)` literal. Since `IsMassGap` ignores
-its theory argument, the witness/proof are unchanged; this only keeps
-the YM stand-in chain internally consistent by flowing the schema map
-through the mass-gap statement.
+**Drift from Task #220 (locked).** The brick previously asserted the gap
+`mass_gap_envelope_constant = varadhan_C / varadhan_t_top ^ 4`, but that
+only closed because the witnessing operator was *tuned to `Δ`* (the
+`((1 - Δ) : ℂ) • 1` cheat). With the operator now *fixed* at `continuumOp
+T`, the admissible gap window is `(0, continuumScale T]`, and the huge
+Varadhan-scale `mass_gap_envelope_constant` (an `exp(100)`-order
+constant) falls outside it. The honest re-statement therefore uses the
+theory-derived gap `continuumScale T`. `mass_gap_envelope_constant` and
+its positivity lemma remain in this file (now purely an honest positive
+real, no longer fed into `IsMassGap`).
 
 **Honest scope (locked).** This is NOT a proof that any real 4D
-pure-Yang-Mills theory has a mass gap. The witnessing operator is a
-scalar multiple of the identity (spectrum `{1 - Δ}`, totally
-degenerate); it is **not** built from any continuum-YM Hamiltonian
-and the schema `T = lattice_to_continuum a A` is ignored by the
-predicate. The gap size
-`mass_gap_envelope_constant = varadhan_C / varadhan_t_top ^ 4`
-carries no spectral content. YM tower stays `Status: Open`. -/
+pure-Yang-Mills theory has a mass gap. `continuumOp T` is a `T`-derived
+**stand-in** — a scalar multiple of the identity (spectrum
+`{1 - continuumScale T}`, totally degenerate); it is **not** an
+OS-reconstructed continuum-YM Hamiltonian, and `continuumScale T` carries
+no analytic spectral content. YM tower stays `Status: Open`. -/
 theorem IsMassGap_mass_gap_envelope_default (a : ℝ) (A : SU3Connection) :
-    IsMassGap (lattice_to_continuum a A) mass_gap_envelope_constant := by
-  refine ⟨ℂ, inferInstance, inferInstance,
-    ((1 - mass_gap_envelope_constant : ℝ) : ℂ) • (1 : ℂ →L[ℂ] ℂ),
-    mass_gap_envelope_constant_pos, ?_⟩
+    IsMassGap (lattice_to_continuum a A)
+      (continuumScale (lattice_to_continuum a A)) := by
+  refine ⟨continuumScale_pos _, ?_⟩
   intro x
   have hT :
-      (((1 - mass_gap_envelope_constant : ℝ) : ℂ) • (1 : ℂ →L[ℂ] ℂ)) x
-        = ((1 - mass_gap_envelope_constant : ℝ) : ℂ) • x := by
-    simp [ContinuousLinearMap.smul_apply, ContinuousLinearMap.one_apply]
+      (continuumOp (lattice_to_continuum a A)) x
+        = ((1 - continuumScale (lattice_to_continuum a A) : ℝ) : ℂ) • x := by
+    simp [continuumOp, ContinuousLinearMap.smul_apply, ContinuousLinearMap.one_apply]
   rw [hT, inner_smul_right, Complex.mul_re]
-  have hr : (((1 - mass_gap_envelope_constant : ℝ) : ℂ)).re
-      = 1 - mass_gap_envelope_constant := Complex.ofReal_re _
-  have hi : (((1 - mass_gap_envelope_constant : ℝ) : ℂ)).im = 0 :=
+  have hr : (((1 - continuumScale (lattice_to_continuum a A) : ℝ) : ℂ)).re
+      = 1 - continuumScale (lattice_to_continuum a A) := Complex.ofReal_re _
+  have hi : (((1 - continuumScale (lattice_to_continuum a A) : ℝ) : ℂ)).im = 0 :=
     Complex.ofReal_im _
   have hsq : (⟪x, x⟫_ℂ).re = ‖x‖ ^ 2 := inner_self_eq_norm_sq (𝕜 := ℂ) x
   have him : (⟪x, x⟫_ℂ).im = 0 := inner_self_im (𝕜 := ℂ) x
