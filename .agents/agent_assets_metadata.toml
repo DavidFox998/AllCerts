@@ -132,3 +132,9 @@ id = "_spxsGg0hXj2WBGXZdihD"
 uri = "file://docs/YangMills_Referee_Kit.zip"
 type = "unspecified"
 title = "Yang–Mills Referee Download Kit"
+
+[[outputs]]
+id = "EEINGJzE-tmwRNSISipEI"
+uri = "file://.local/downloads/WilsonPositivity.zip"
+type = "unspecified"
+title = "WilsonPositivity.lean (zipped)"
