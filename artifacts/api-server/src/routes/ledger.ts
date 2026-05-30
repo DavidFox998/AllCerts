@@ -117,6 +117,26 @@ interface LedgerIntegrityStatus {
    * restart of the API server.
    */
   lastOkSidecarStatusAcknowledgedBy: string | null;
+  /**
+   * Task #234: cumulative count of forged-ack dismissal-history
+   * archives that have aged out (been dropped past the rotation cap)
+   * since this process booted. Unlike the one-shot archive-full alert
+   * from #206 — which fires exactly once per boot then stays silent —
+   * this counter keeps incrementing on EVERY rotation drop, so a
+   * long-running server that rotates many times can still tell
+   * operators the cumulative volume of dismissal records lost. Resets
+   * to 0 on restart (it is in-memory, boot-scoped).
+   */
+  forgedAckHistoryDroppedArchivesTotal: number;
+  /**
+   * Task #234: cumulative count of individual dismissal entries
+   * contained in the archives counted by
+   * `forgedAckHistoryDroppedArchivesTotal`. Summed from each dropped
+   * archive's `entryCount` at the moment it was deleted. Lets the
+   * dashboard render "N dismissals aged out since boot" without
+   * re-spamming the one-shot alert. Boot-scoped (resets on restart).
+   */
+  forgedAckHistoryDroppedEntriesTotal: number;
 }
 
 const DEFAULT_STALE_THRESHOLD_SECONDS = 3600;
@@ -1789,6 +1809,15 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
   let forgedAckHistoryDropPending: ForgedAckHistoryDropInfo | null = null;
   let forgedAckHistoryDropSignalUsed = false;
 
+  // Task #234: cumulative (boot-scoped) tallies of how many dismissal
+  // archives — and how many individual dismissal entries within them —
+  // have aged out past the rotation cap since this process booted.
+  // These advance on EVERY rotation drop (not just the first), so the
+  // dashboard can report the running total even though the #206 alert
+  // above stays one-shot. In-memory only: they reset to 0 on restart.
+  let forgedAckHistoryDroppedArchivesTotal = 0;
+  let forgedAckHistoryDroppedEntriesTotal = 0;
+
   function computeStaleness(checkedAtIso: string): {
     lastOkAgeSeconds: number | null;
     stale: boolean;
@@ -1971,6 +2000,10 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
       sidecarSecretStrictMode: STRICT_MODE,
       lastOkSidecarStatusAcknowledgedAt: null,
       lastOkSidecarStatusAcknowledgedBy: null,
+      // Task #234: snapshot the cumulative boot-scoped aged-out tallies
+      // so the dashboard can render "N dismissals aged out since boot".
+      forgedAckHistoryDroppedArchivesTotal,
+      forgedAckHistoryDroppedEntriesTotal,
     };
 
 
@@ -2273,6 +2306,14 @@ export function createLedgerChecker(opts: LedgerRouterOptions): LedgerChecker {
       },
       defaultLogger,
     );
+    // Task #234: advance the cumulative boot-scoped tallies on EVERY
+    // rotation drop, before the one-shot latch below. This is what lets
+    // the dashboard report the running "N dismissals aged out since
+    // boot" total even after the #206 alert has fired its single shot.
+    if (droppedArchive != null) {
+      forgedAckHistoryDroppedArchivesTotal += 1;
+      forgedAckHistoryDroppedEntriesTotal += droppedArchive.entryCount;
+    }
     // Task #206: if this append rotated the oldest archive off disk,
     // arm the one-shot operator alert with its summary — but only the
     // first time this boot, so a sustained tamper campaign that keeps

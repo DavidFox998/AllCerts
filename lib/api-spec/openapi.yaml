@@ -2253,6 +2253,29 @@ components:
             Persisted next to the sidecar so the value survives a
             restart and is shown as a tooltip on the dashboard
             "acknowledged" badge.
+        forgedAckHistoryDroppedArchivesTotal:
+          type: integer
+          description: |
+            Task #234. Cumulative count of forged-ack dismissal-history
+            archives that have aged out (been dropped past the rotation
+            cap, `MORNINGSTAR_FORGED_ACK_HISTORY_MAX_ROTATIONS`) since
+            this process booted. Unlike the one-shot archive-full alert
+            from #206 — which fires exactly once per boot then stays
+            silent to keep alert noise low — this counter keeps
+            incrementing on EVERY rotation drop, so a long-running
+            server that rotates many times can still tell operators the
+            cumulative volume of dismissal records lost over time.
+            In-memory and boot-scoped: resets to 0 on restart.
+        forgedAckHistoryDroppedEntriesTotal:
+          type: integer
+          description: |
+            Task #234. Cumulative count of individual dismissal entries
+            contained in the archives counted by
+            `forgedAckHistoryDroppedArchivesTotal`. Summed from each
+            dropped archive's entry count at the moment it was deleted.
+            Lets the dashboard render "N dismissals aged out since boot"
+            without re-spamming the one-shot #206 alert. In-memory and
+            boot-scoped: resets to 0 on restart.
         monitor:
           type: object
           description: |

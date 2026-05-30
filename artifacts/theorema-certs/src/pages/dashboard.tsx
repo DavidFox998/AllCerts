@@ -2863,6 +2863,42 @@ export default function DashboardPage() {
                               : ""}
                           </span>
                         ) : null}
+                        {/* Task #234: cumulative volume of dismissals
+                            that have aged out (been dropped past the
+                            rotation cap) since the API server booted.
+                            Sourced from the integrity status, which
+                            tallies every rotation drop — unlike the
+                            one-shot archive-full alert, this keeps
+                            counting so operators can see the running
+                            total of lost dismissal records. Hidden when
+                            nothing has aged out yet. */}
+                        {(ledgerIntegrity?.forgedAckHistoryDroppedArchivesTotal ??
+                          0) > 0 ? (
+                          <span
+                            className="font-mono text-[10px] text-red-700/70 dark:text-red-300/70"
+                            data-testid="text-ledger-sidecar-forged-history-aged-out"
+                            data-dropped-archives={
+                              ledgerIntegrity?.forgedAckHistoryDroppedArchivesTotal ??
+                              0
+                            }
+                            data-dropped-entries={
+                              ledgerIntegrity?.forgedAckHistoryDroppedEntriesTotal ??
+                              0
+                            }
+                            title={`${
+                              ledgerIntegrity?.forgedAckHistoryDroppedEntriesTotal ??
+                              0
+                            } dismissal record(s) across ${
+                              ledgerIntegrity?.forgedAckHistoryDroppedArchivesTotal ??
+                              0
+                            } archive(s) have aged out (dropped past the rotation cap) since the server booted. This count resets on restart.`}
+                          >
+                            aged out:{" "}
+                            {ledgerIntegrity?.forgedAckHistoryDroppedEntriesTotal ??
+                              0}{" "}
+                            since boot
+                          </span>
+                        ) : null}
                         <label
                           htmlFor="ledger-sidecar-forged-history-referee-filter"
                           className="font-mono text-[10px] uppercase tracking-wider text-red-700/80 dark:text-red-300/80"

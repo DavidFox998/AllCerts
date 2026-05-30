@@ -727,6 +727,110 @@ describe("GET /api/ledger/integrity", () => {
     }
   });
 
+  it("surfaces forgedAckHistoryDropped{Archives,Entries}Total on integrity status when a rotation ages out an archive (task #234)", async () => {
+    // Task #234: when acknowledging a forged incident appends to the
+    // dismissal-history log and that append rotates the oldest archive
+    // off disk, the boot-scoped aged-out tallies advance and surface on
+    // the integrity status so the dashboard can report cumulative loss.
+    // A single checker only ever holds one forged incident (detected at
+    // boot), so we pre-seed an archive at the rotation cap and a live
+    // log already over the byte cap; one ack then triggers exactly one
+    // real drop.
+    const sealed = "line1\nline2\n";
+    const { size, sha } = writeHits(sealed);
+    writeCheckpoint(size, sha);
+
+    const lastOkPath = path.join(tmpDir, "hits.txt.agedout.lastok");
+    const secretPath = `${lastOkPath}.key`;
+    const historyPath = `${lastOkPath}.forged-ack.log.jsonl`;
+    const rot1 = `${historyPath}.1`;
+    const cleanupPaths = [
+      lastOkPath,
+      secretPath,
+      `${lastOkPath}.forged-ack`,
+      historyPath,
+      rot1,
+      `${historyPath}.2`,
+    ];
+    for (const p of cleanupPaths) {
+      try { unlinkSync(p); } catch { /* ignore */ }
+    }
+    const secretHex = "ab".repeat(32);
+    writeFileSync(secretPath, secretHex + "\n", { mode: 0o600 });
+
+    // Pre-seed the archive at the rotation cap (.1) with two entries —
+    // this is the file the next rotation will age out — and a live log
+    // already past the (tiny) byte cap so the ack's append rotates.
+    const seedEntry = (marker: string, ref: string) =>
+      JSON.stringify({
+        payloadSha: "00".repeat(32),
+        acknowledgedAt: new Date().toISOString(),
+        ackedBy: ref,
+        marker,
+      }) + "\n";
+    writeFileSync(rot1, seedEntry("arch-1", "alice") + seedEntry("arch-2", "bob"));
+    writeFileSync(historyPath, seedEntry("live-1", "carol"));
+
+    const ENV_BYTES_KEY = "MORNINGSTAR_FORGED_ACK_HISTORY_MAX_BYTES";
+    const ENV_ROTS_KEY = "MORNINGSTAR_FORGED_ACK_HISTORY_MAX_ROTATIONS";
+    const prevBytes = process.env[ENV_BYTES_KEY];
+    const prevRots = process.env[ENV_ROTS_KEY];
+    // Tiny byte cap so the ack's append tips the live log over and
+    // rotates; rotation cap 1 so the pre-seeded `.1` is dropped.
+    process.env[ENV_BYTES_KEY] = "50";
+    process.env[ENV_ROTS_KEY] = "1";
+
+    try {
+      const { createLedgerChecker } = await import("./ledger.js");
+      // Forged sidecar (no mac) so the checker detects a forged
+      // incident at construction and the ack actually appends.
+      writeFileSync(
+        lastOkPath,
+        JSON.stringify({
+          lastOkAt: new Date().toISOString(),
+          lastCheckedAt: new Date().toISOString(),
+          boundCheckpointSize: size,
+          boundCheckpointSha: sha,
+          marker: "forged",
+        }) + "\n",
+      );
+      const checker = createLedgerChecker({
+        hitsPath,
+        checkpointPath,
+        lastOkPath,
+        secretPath,
+      });
+
+      // Nothing has aged out before the ack.
+      const before = checker.buildStatus();
+      expect(before.forgedAckHistoryDroppedArchivesTotal).toBe(0);
+      expect(before.forgedAckHistoryDroppedEntriesTotal).toBe(0);
+
+      const r = checker.acknowledgeForgedSidecar("dave");
+      expect(r.ok).toBe(true);
+      if (r.ok) expect(r.alreadyAcknowledged).toBe(false);
+
+      // The pre-seeded `.1` archive (2 entries) was aged out, so the
+      // boot-scoped tallies advance and surface on the integrity status.
+      const after = checker.buildStatus();
+      expect(after.forgedAckHistoryDroppedArchivesTotal).toBe(1);
+      expect(after.forgedAckHistoryDroppedEntriesTotal).toBe(2);
+
+      // The #206 one-shot drop alert is still armed exactly once,
+      // confirming the new cumulative counter did not disturb it.
+      expect(checker.consumeForgedAckHistoryDropAlert()).not.toBeNull();
+      expect(checker.consumeForgedAckHistoryDropAlert()).toBeNull();
+    } finally {
+      if (prevBytes === undefined) delete process.env[ENV_BYTES_KEY];
+      else process.env[ENV_BYTES_KEY] = prevBytes;
+      if (prevRots === undefined) delete process.env[ENV_ROTS_KEY];
+      else process.env[ENV_ROTS_KEY] = prevRots;
+      for (const p of cleanupPaths) {
+        try { unlinkSync(p); } catch { /* ignore */ }
+      }
+    }
+  });
+
   it("rejects a forged sidecar with a fake future lastOkAt (HMAC mismatch ⇒ discarded as null)", async () => {
     // Healthy ledger so the integrity check itself succeeds. We're
     // testing that a hand-edited sidecar — written by an attacker who

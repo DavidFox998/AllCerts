@@ -1497,6 +1497,27 @@ export interface LedgerIntegrityStatus {
      * @nullable
      */
   lastOkSidecarStatusAcknowledgedBy?: string | null;
+  /** Task #234. Cumulative count of forged-ack dismissal-history
+  archives that have aged out (been dropped past the rotation
+  cap, `MORNINGSTAR_FORGED_ACK_HISTORY_MAX_ROTATIONS`) since
+  this process booted. Unlike the one-shot archive-full alert
+  from #206 — which fires exactly once per boot then stays
+  silent to keep alert noise low — this counter keeps
+  incrementing on EVERY rotation drop, so a long-running
+  server that rotates many times can still tell operators the
+  cumulative volume of dismissal records lost over time.
+  In-memory and boot-scoped: resets to 0 on restart.
+   */
+  forgedAckHistoryDroppedArchivesTotal?: number;
+  /** Task #234. Cumulative count of individual dismissal entries
+  contained in the archives counted by
+  `forgedAckHistoryDroppedArchivesTotal`. Summed from each
+  dropped archive's entry count at the moment it was deleted.
+  Lets the dashboard render "N dismissals aged out since boot"
+  without re-spamming the one-shot #206 alert. In-memory and
+  boot-scoped: resets to 0 on restart.
+   */
+  forgedAckHistoryDroppedEntriesTotal?: number;
   /** Task #97. Observability surface for the server-side
   ledger-integrity monitor (the background timer added in
   task #85). Lets the dashboard show operators that the
