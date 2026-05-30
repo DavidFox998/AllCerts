@@ -173,7 +173,32 @@ noncomputable def divFreeSubmodule (s : ℝ) : Submodule ℂ (Hsv s) where
     argument. Deferred, NOT a brick. -/
 theorem divFreeSubmodule_isClosed (s : ℝ) :
     IsClosed (divFreeSubmodule s : Set (Hsv s)) := by
-  sorry
+  apply IsSeqClosed.isClosed
+  intro F g hF hFg
+  -- `L²` convergence yields an a.e.-convergent subsequence (via convergence in
+  -- measure): pick `ns` with `⇑(F (ns i)) ξ → ⇑g ξ` for a.e. `ξ`.
+  obtain ⟨ns, _hmono, hae⟩ :=
+    (tendstoInMeasure_of_tendsto_Lp hFg).exists_seq_tendsto_ae
+  -- every term of the subsequence is divergence-free
+  have hdiv : ∀ i, IsDivFree (F (ns i)) := fun i => hF (ns i)
+  have hall : ∀ᵐ ξ ∂(mu s),
+      ∀ i, @inner ℂ Val _ (toVal ξ) ((F (ns i)) ξ) = 0 :=
+    ae_all_iff.mpr hdiv
+  -- pass the linear constraint to the limit pointwise, using continuity of the
+  -- inner product in its second argument and uniqueness of limits.
+  show IsDivFree g
+  filter_upwards [hae, hall] with ξ hξtend hξall
+  have hcont : Continuous (fun v : Val => @inner ℂ Val _ (toVal ξ) v) :=
+    continuous_const.inner continuous_id
+  have htend :
+      Tendsto (fun i => @inner ℂ Val _ (toVal ξ) ((F (ns i)) ξ)) atTop
+        (𝓝 (@inner ℂ Val _ (toVal ξ) (g ξ))) :=
+    (hcont.tendsto _).comp hξtend
+  have h0 :
+      Tendsto (fun i => @inner ℂ Val _ (toVal ξ) ((F (ns i)) ξ)) atTop (𝓝 0) := by
+    simp only [hξall]
+    exact tendsto_const_nhds
+  exact tendsto_nhds_unique htend h0
 
 /-- The divergence-free subspace is complete (from closedness). -/
 theorem divFreeSubmodule_isComplete (s : ℝ) :
