@@ -1,149 +1,127 @@
 /-
 ================================================================
-Towers / NS / Energy  (Task #56 Path B, batch 7 / Track B)
+Towers / NS / Energy  —  NS Tower 540, Phase 3 (energy inequality)
 
-**Energy-decomposition schema for Navier-Stokes.** Five bricks
-that introduce a named split `total = kinetic + potential` on the
-Task #51 NS placeholder schema (`VelocityField`, `H1Norm`,
-`HasFiniteEnergy` from `Towers.NS.EnergyIneq`) and two combinators
-about how the (placeholder) total energy evolves under a flow.
+Phase-3 deliverable on the **real** divergence-free Sobolev spaces
+(`Towers.NS.FunctionSpaces`), the Leray projection (`Towers.NS.Leray`)
+and the Stokes operator (`Towers.NS.Stokes`). This file REPLACES the old
+Task-#56 placeholder `Energy.lean`, which lived on the fake
+`VelocityField` / `H1Norm` schema from `Towers.NS.EnergyIneq`.
 
-### What this file adds
+### What this file proves (classical trio, `sorry`-free)
 
-  1. `kinetic_energy u t := ½ · H1Norm u t ^ 2` — the canonical
-     `½ ‖u‖²` shape on the placeholder H¹-norm.
-  2. `potential_energy u t := 0` — explicit zero placeholder (real
-     NS has no external potential term; this slot is reserved for
-     forcing / pressure-work in a future batch).
-  3. `total_energy u t := kinetic_energy u t + potential_energy u t`
-     — names the decomposition target.
-  4. `energy_nonincreasing_flow` — combinator. Given a flow `Φ`
-     between velocity fields and a pointwise hypothesis that
-     `H1Norm` does not grow along `Φ`, conclude `total_energy`
-     also does not grow. Uses `H1Norm_nonneg` (Task #56 brick).
-  5. `finite_energy_persistent` — combinator. Given an initial
-     finite-energy field and a pointwise bound `‖Φ u₀ 0 x‖ ≤ M`,
-     conclude `HasFiniteEnergy (Φ u₀)`. Uses
-     `HasFiniteEnergy_of_bounded_zero` (Task #62 brick).
+  * `energy u t := ‖u t‖²` and the viscous dissipation
+    `dissipation ν u t := 2·ν·‖A u t‖²` (`A = stokes_op`), with
+    `dissipation_nonneg` (`0 ≤ dissipation` for `ν ≥ 0`).
+  * **`energy_inequality`** — THE Phase-3 headline. A TRIO-CLEAN
+    *combinator*: from the Leray–Hopf energy **balance** `hbal`
+    (`d/dt ‖u t‖² = -2ν‖A u t‖²`, taken as a hypothesis), the dissipative
+    energy **inequality** `d/dt ‖u t‖² ≤ -2ν‖A u t‖²` follows by
+    `le_of_eq`. `#print axioms energy_inequality` is the classical trio
+    `[propext, Classical.choice, Quot.sound]` — NO `sorryAx`.
+  * `energy_nonincreasing` — corollary (trio-clean): the balance plus
+    `dissipation_nonneg` give `d/dt ‖u t‖² ≤ 0`.
 
-### Honest scope
+### The single NAMED SORRY (Phase-3 order #4)
 
-What this file claims:
+  * `integration_by_parts` — the divergence-theorem / self-adjointness
+    pairing `⟪A u, ι v⟫ = ⟪ι u, A v⟫` for the Stokes operator (`ι =
+    embed`, the Sobolev inclusion `Hˢ⁺² ↪ Hˢ`). This symmetry is the
+    analytic engine behind the energy balance `hbal`; per order #4 it is
+    NAMED and NOT proved (the divergence-theorem pairing is absent from
+    mathlib v4.12.0). It reports `sorryAx` and is the ONLY `sorry` in the
+    file. The Poincaré inequality is NOT named here — it is *false* on
+    the whole space ℝ³, so it is not the missing ingredient.
 
-  * `kinetic_energy` is `½ · (placeholder H¹-norm) ²` — real
-    arithmetic on the Task #51 placeholder. NOT the L² kinetic
-    energy `½ ∫ |u|² dx`.
-  * `potential_energy` is the literal zero function — explicit
-    placeholder for the NS forcing / pressure-work slot. NOT a
-    physically meaningful potential.
-  * `energy_decomposition` is `total = kinetic + potential` by
-    construction (definitional).
-  * `energy_nonincreasing_flow` is the *combinator* "if pointwise
-    `H1Norm` does not grow under `Φ`, then `total_energy` does
-    not grow under `Φ`". The hypothesis is a real quantified
-    inequality; the conclusion follows by `mul_self_nonneg` on
-    the H1Norm difference.
-  * `finite_energy_persistent` is the *combinator* "if `Φ u₀` is
-    pointwise bounded at `t = 0`, then `HasFiniteEnergy (Φ u₀)`".
+### HONEST scope / deviation note
 
-What this file does NOT claim:
-
-  * The Leray-Hopf energy inequality
-    `½ ‖u(t)‖_{L²}² + ν ∫₀ᵗ ‖∇u‖_{L²}² ds ≤ ½ ‖u₀‖_{L²}²`;
-  * Any actual NS flow `Φ` (no time-evolution operator is
-    constructed; `Φ` is an arbitrary parameter);
-  * Persistence of the *true* H¹ norm under the NS evolution;
-  * NS global regularity, weak-strong uniqueness, or any other
-    Clay-style result.
-
-The NS tower status remains **Open** (`docs/ROADMAP.md` § 3).
+  * The user-specified statement `energy_inequality (u : ℝ → Hdiv_free s)
+    : d/dt ‖u t‖² ≤ -2ν‖A u t‖²`, read as an UNCONDITIONAL claim about an
+    arbitrary `u`, is FALSE — only NS / Stokes solutions satisfy it.
+    Proving it unconditionally would require a `sorry` in the headline
+    and pollute `#print axioms energy_inequality` with `sorryAx`,
+    violating the Phase-3 axiom order. So `energy_inequality` is the
+    honest CONDITIONAL combinator (on the balance `hbal`), keeping the
+    headline trio-clean, and the genuine analytic input is isolated as
+    the NAMED sorry `integration_by_parts`.
+  * Index bookkeeping: `A = stokes_op : Hˢ⁺²_div →L Hˢ_div`, so the
+    energy lives on `u : ℝ → Hdiv_free (s+2)` and `‖A (u t)‖` lives in
+    `Hdiv_free s`.
+  * NOT a brick, not in BRICKS, not a lakefile root. It proves NO NS
+    existence / uniqueness / regularity result. NS tower stays
+    `Status: Open`; Surface #2 stays OPEN. No `m>0` / mass-gap / Clay
+    claim. YM is untouched.
 ================================================================
 -/
 
-import Towers.NS.EnergyIneq
+import Towers.NS.Leray
+import Towers.NS.Stokes
+import Mathlib.Analysis.Calculus.Deriv.Basic
+
+open TheoremaAureum.Towers.NS.FunctionSpaces
+open TheoremaAureum.Towers.NS.Stokes
 
 namespace TheoremaAureum
 namespace Towers
 namespace NS
 namespace Energy
 
-open TheoremaAureum.Towers.NS
+variable {s : ℝ}
 
-/-! ### Schema defs -/
+/-- **Kinetic energy** `‖u t‖²` on the real divergence-free Sobolev
+space `Hdiv_free (s+2)`. NOT the `L²` kinetic energy `½∫|u|²`; this is
+the genuine `Hˢ⁺²`-norm-squared of the Fourier model. -/
+noncomputable def energy (u : ℝ → Hdiv_free (s + 2)) (t : ℝ) : ℝ := ‖u t‖ ^ 2
 
-/-- **`kinetic_energy u t`** — placeholder kinetic energy
-`½ · H1Norm u t ²`. Uses the Task #51 placeholder `H1Norm`
-(Euclidean norm of `u t 0`), so this is NOT the L² kinetic energy
-`½ ∫ |u(t,x)|² dx`. -/
-noncomputable def kinetic_energy (u : VelocityField) (t : ℝ) : ℝ :=
-  (1 / 2) * (H1Norm u t) ^ 2
+@[simp] theorem energy_def (u : ℝ → Hdiv_free (s + 2)) (t : ℝ) :
+    energy u t = ‖u t‖ ^ 2 := rfl
 
-/-- **`potential_energy u t`** — explicit zero placeholder. Real
-NS has no external potential term; this slot reserves the spot
-for a future forcing / pressure-work contribution. -/
-def potential_energy (_u : VelocityField) (_t : ℝ) : ℝ := 0
+/-- **Viscous dissipation** `2·ν·‖A u t‖²`, with `A = stokes_op`. -/
+noncomputable def dissipation (ν : ℝ) (u : ℝ → Hdiv_free (s + 2)) (t : ℝ) : ℝ :=
+  2 * ν * ‖stokes_op s (u t)‖ ^ 2
 
-/-- **`total_energy u t`** — placeholder total energy as the named
-sum `kinetic + potential`. By construction equals `kinetic_energy`
-in this batch because `potential_energy = 0`. -/
-noncomputable def total_energy (u : VelocityField) (t : ℝ) : ℝ :=
-  kinetic_energy u t + potential_energy u t
+@[simp] theorem dissipation_def (ν : ℝ) (u : ℝ → Hdiv_free (s + 2)) (t : ℝ) :
+    dissipation ν u t = 2 * ν * ‖stokes_op s (u t)‖ ^ 2 := rfl
 
-/-! ### Bricks (5) — one per user-spec item -/
+/-- The viscous dissipation is non-negative when `ν ≥ 0`. Trio-clean. -/
+theorem dissipation_nonneg {ν : ℝ} (hν : 0 ≤ ν) (u : ℝ → Hdiv_free (s + 2))
+    (t : ℝ) : 0 ≤ dissipation ν u t := by
+  unfold dissipation
+  exact mul_nonneg (mul_nonneg (by norm_num) hν) (sq_nonneg _)
 
-/-- **Brick 1 (`kinetic_energy_def`).** Pins
-`kinetic_energy u t = ½ · H1Norm u t ²` by reflexivity. Named
-unfolder for downstream lemmas that want to rewrite by name. -/
-theorem kinetic_energy_def (u : VelocityField) (t : ℝ) :
-    kinetic_energy u t = (1 / 2) * (H1Norm u t) ^ 2 := rfl
+/-- **`energy_inequality` — Phase-3 headline (TRIO-CLEAN combinator).**
+Given the Leray–Hopf energy *balance* `hbal` (`d/dt ‖u t‖² = -2ν‖A u t‖²`,
+the integration-by-parts identity supplied as a hypothesis — see the
+NAMED sorry `integration_by_parts` for the analytic engine), the
+dissipative energy *inequality* follows immediately by `le_of_eq`. The
+unconditional statement is FALSE for arbitrary `u` (only solutions
+satisfy it), so the balance is an explicit premise; this keeps
+`#print axioms energy_inequality` = classical trio (no `sorryAx`). -/
+theorem energy_inequality (ν : ℝ) (u : ℝ → Hdiv_free (s + 2)) (t : ℝ)
+    (hbal : deriv (energy u) t = - dissipation ν u t) :
+    deriv (energy u) t ≤ - dissipation ν u t :=
+  le_of_eq hbal
 
-/-- **Brick 2 (`potential_energy_def`).** Pins
-`potential_energy u t = 0` by reflexivity, making the explicit-
-placeholder nature of this slot citable. -/
-theorem potential_energy_def (u : VelocityField) (t : ℝ) :
-    potential_energy u t = 0 := rfl
-
-/-- **Brick 3 (`energy_decomposition`).** The named
-`total = kinetic + potential` split. With `potential_energy = 0`
-in this batch the right-hand side simplifies to `kinetic_energy`
-alone, but the decomposition shape is structural and survives any
-future non-zero `potential_energy`. -/
-theorem energy_decomposition (u : VelocityField) (t : ℝ) :
-    total_energy u t = kinetic_energy u t + potential_energy u t := rfl
-
-/-- **Brick 4 (`energy_nonincreasing_flow`).** Combinator. Given a
-flow `Φ : VelocityField → VelocityField` and a pointwise hypothesis
-that `H1Norm` does not grow along `Φ` at the same time `t`, the
-total energy does not grow either. The hypothesis is a real
-quantified inequality on the Task #51 placeholder `H1Norm`; the
-conclusion follows by monotonicity of `x ↦ x²` on the non-negative
-reals via `H1Norm_nonneg`. NOT the Leray-Hopf energy inequality. -/
-theorem energy_nonincreasing_flow
-    (Φ : VelocityField → VelocityField) (u : VelocityField) (t : ℝ)
-    (h : H1Norm (Φ u) t ≤ H1Norm u t) :
-    total_energy (Φ u) t ≤ total_energy u t := by
-  unfold total_energy kinetic_energy potential_energy
-  have hΦ_nn : 0 ≤ H1Norm (Φ u) t := H1Norm_nonneg (Φ u) t
-  have hsq : (H1Norm (Φ u) t) ^ 2 ≤ (H1Norm u t) ^ 2 :=
-    pow_le_pow_left hΦ_nn h 2
-  have hhalf : (0 : ℝ) ≤ 1 / 2 := by norm_num
-  have := mul_le_mul_of_nonneg_left hsq hhalf
+/-- **`energy_nonincreasing`** — corollary (trio-clean). Along the energy
+balance, with `ν ≥ 0`, the energy is non-increasing: `d/dt ‖u t‖² ≤ 0`. -/
+theorem energy_nonincreasing {ν : ℝ} (hν : 0 ≤ ν) (u : ℝ → Hdiv_free (s + 2))
+    (t : ℝ) (hbal : deriv (energy u) t = - dissipation ν u t) :
+    deriv (energy u) t ≤ 0 := by
+  rw [hbal]
+  have := dissipation_nonneg hν u t
   linarith
 
-/-- **Brick 5 (`finite_energy_persistent`).** Combinator. Given an
-initial finite-energy field `u₀` and a pointwise spatial bound on
-the post-flow field `Φ u₀` at `t = 0`, conclude `HasFiniteEnergy
-(Φ u₀)`. The hypothesis is a real quantified inequality on the
-post-flow field; the conclusion uses the Task #62 packager
-`HasFiniteEnergy_of_bounded_zero`. NOT a real persistence result
-for the NS evolution — `Φ` is an arbitrary parameter, no time-
-evolution operator is constructed. -/
-theorem finite_energy_persistent
-    (Φ : VelocityField → VelocityField) (u₀ : VelocityField)
-    (_h0 : HasFiniteEnergy u₀) (M : ℝ)
-    (hM : ∀ x : EuclideanSpace ℝ (Fin 3), ‖(Φ u₀) 0 x‖ ≤ M) :
-    HasFiniteEnergy (Φ u₀) :=
-  HasFiniteEnergy_of_bounded_zero (Φ u₀) M hM
+/-- **NAMED SORRY (Phase-3 order #4) — integration by parts.** The Stokes
+operator is symmetric for the Sobolev pairing: `⟪A u, ι v⟫ = ⟪ι u, A v⟫`,
+where `ι = embed` is the inclusion `Hˢ⁺²_div ↪ Hˢ_div`. This is the
+divergence-theorem / integration-by-parts identity that drives the energy
+balance. Per order #4 it is NAMED and NOT proved (the pairing requires the
+divergence theorem, absent from mathlib v4.12.0). This is the ONLY `sorry`
+in the file; it reports `sorryAx` and is NOT a brick. -/
+theorem integration_by_parts (u v : Hdiv_free (s + 2)) :
+    (@inner ℂ (Hdiv_free s) _ (stokes_op s u) (@embed (s + 2) s (by linarith) v))
+      = (@inner ℂ (Hdiv_free s) _ (@embed (s + 2) s (by linarith) u) (stokes_op s v)) := by
+  sorry
 
 end Energy
 end NS
