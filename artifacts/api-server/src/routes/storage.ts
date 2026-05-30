@@ -11,6 +11,28 @@ const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
 /**
+ * Defense-in-depth blocklist (Task #290): the "In Honor of Yang and Mills"
+ * transition write-up PDF and its companion referee "download kit" ZIP have
+ * been withdrawn from every published/served location. Even if a copy still
+ * exists (or is later re-uploaded) in an object-storage bucket, a direct
+ * request whose path resolves to either file must 404 — it must not be
+ * retrievable by a guessed or previously-known path.
+ *
+ * Matches the canonical names and the timestamped attached_assets variant
+ * (e.g. `YangMills_Honor_Transition_1780129839700.pdf`), case-insensitively,
+ * regardless of any leading directory components.
+ */
+const WITHHELD_OBJECT_PATTERNS: ReadonlyArray<RegExp> = [
+  /^yangmills_honor_transition.*\.pdf$/i,
+  /^yangmills_referee_kit.*\.zip$/i,
+];
+
+function isWithheldObjectPath(filePath: string): boolean {
+  const basename = filePath.split("/").pop() ?? filePath;
+  return WITHHELD_OBJECT_PATTERNS.some((pattern) => pattern.test(basename));
+}
+
+/**
  * POST /storage/uploads/request-url
  *
  * Request a presigned URL for file upload.
@@ -54,6 +76,15 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
   try {
     const raw = req.params.filePath;
     const filePath = Array.isArray(raw) ? raw.join("/") : raw;
+
+    // Task #290: withheld documents are never served, even if present in a
+    // bucket. Return 404 (identical to a genuinely missing file) so a known
+    // or guessed path cannot retrieve them.
+    if (isWithheldObjectPath(filePath)) {
+      res.status(404).json({ error: "File not found" });
+      return;
+    }
+
     const file = await objectStorageService.searchPublicObject(filePath);
     if (!file) {
       res.status(404).json({ error: "File not found" });
