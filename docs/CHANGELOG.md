@@ -6,6 +6,77 @@ this file is the version history.
 
 ---
 
+## Single-polymer activity decay — honest DCT reduction (2026-05-30)
+
+**What landed (NO wall change; nothing registered in `scripts/check-towers.sh`
+BRICKS or as a `lakefile.lean` root). Factors the integral route into its
+*proven* and its *open* halves:**
+
+- **`Towers/YM/Transfer.lean`**, appended after the (UNTOUCHED) disclaimed-OPEN
+  `kotecky_preiss_criterion`:
+  - `continuous_polymerEnergy_toGauge` (NEW, trio-clean) — the per-config map
+    `w ↦ polymerEnergy (toGauge L w) γ` is continuous. Factored out of the
+    existing `integrable_polymerWeight`, which now calls it (no behaviour change,
+    still trio-clean).
+  - `polymerActivity_tendsto_zero_of_null` (NEW, **`sorry`-free, classical
+    trio**) — the genuine, fully-proved content of the integral route. *IF*
+    `haarN {w | polymerEnergy (toGauge L w) γ = 0} = 0` *THEN*
+    `polymerActivity L β γ → 0` as `β → ∞`. Proof: dominated convergence
+    (`tendsto_integral_filter_of_dominated_convergence`) — the heat weight
+    `exp(-β·polymerEnergy) → 𝟙[polymerEnergy = 0]` pointwise (on the null set
+    `mul_zero`/`Real.exp_zero` ⇒ `tendsto_const_nhds`; off it
+    `Real.tendsto_exp_atBot ∘ Filter.Tendsto.const_mul_atTop_of_neg`), dominated
+    by the constant `1` (integrable on the probability measure `haarN`), so the
+    limit integral is `(∫ 𝟙_s) = (haarN s).toReal = 0` via
+    `integral_indicator`/`setIntegral_const` + the null hypothesis.
+  - `trivial_polymer_set_null` (NEW, **disclaimed OPEN `sorry`**, reports
+    `sorryAx`, NOT a brick) — for `γ ≠ ∅`,
+    `haarN {w | polymerEnergy (toGauge L w) γ = 0} = 0`. TRUE but a genuine
+    measure-theoretic theorem, not a short trio proof; the docstring records the
+    full obstruction: needs (i) `NoAtoms haarSU3` (mathlib only via
+    `IsHaarMeasure.noAtoms`, requiring the identity non-isolated
+    `(𝓝[≠] (1:SU3)).NeBot`, unproved here) and (ii) a `Measure.pi`
+    single-coordinate marginal argument, because `NoAtoms` kills only *countable*
+    sets while the trivial set is an *uncountable* positive-codim subvariety. The
+    naive "codim `8·|γ|`" count is **lattice-size dependent**: on `L = 1` a
+    plaquette degenerates to a commutator `[g,h]`, so the triviality set is the
+    *commuting variety* (centralizer codimension) and the four plaquette links
+    are NOT four freely-varying coordinates — the marginal argument then needs
+    the harder regular-element analysis. Left OPEN.
+  - `polymerActivity_tendsto_zero` (NEW, OPEN, inherits `sorryAx`, NOT a brick) —
+    `γ ≠ ∅ ⟹ polymerActivity L β γ → 0` as `β → ∞`, defined as exactly the
+    trio-clean reduction applied to the OPEN null-set input.
+
+- **Axiom audit (verified live, guarded `lake env lean Towers/YM/Transfer.lean`
+  + `#print axioms`, 2026-05-30):** `continuous_polymerEnergy_toGauge` and
+  `polymerActivity_tendsto_zero_of_null` = `[propext, Classical.choice,
+  Quot.sound]` (classical trio, NO `sorryAx`), alongside the pre-existing
+  trio-clean `T_L`, `transfer_operator_norm_le`, `polymerActivity_nonneg`,
+  `polymerActivity_empty`, `polymerActivity_antitone_in_beta`.
+  `kotecky_preiss_criterion`, `trivial_polymer_set_null`, and
+  `polymerActivity_tendsto_zero` additionally report `sorryAx`, as intended.
+
+**Why this is NOT progress on the mass gap (the finite-`β₀` point, #4 of the
+request, documented in the file's section note):** even the full
+`polymerActivity_tendsto_zero` concerns a **single** polymer's activity as
+`β → ∞`. Kotecký–Preiss convergence is strictly stronger and different in kind:
+a *uniform* convergent SUM `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞` at a **finite**
+`β₀ < ∞`, over *connected / truncated* weights — driven by "few small-energy
+polymers at large-but-finite `β`", NOT by any single activity's `β → ∞` limit,
+and NOT by `inf_{U≠1} wilsonAction U > 0` (that infimum is `0`, the action being
+continuous and vanishing at the vacuum, so no `exp(-β·S_min)` decay). So
+`kotecky_preiss_criterion` stays a disclaimed OPEN `sorry` (UNTOUCHED), Surface
+#1 stays OPEN, YM stays `Status: Open`, and no `m > 0` / mass-gap / μ>0 claim is
+made or implied.
+
+**Env note:** mathlib `.git` was again wiped by merge churn (tag `v4.12.0`
+missing, oleans intact); recovered via `restore-lake-git.sh` ×2 + tag recreate
+before verification. Verification used a tag-guarded `lean-verify` workflow
+(`git -C .lake/packages/mathlib rev-parse v4.12.0 && lake env lean …`) so a
+missing tag short-circuits the otherwise-destructive `lake env`.
+
+---
+
 ## Polymer-activity scaffolding toward the integral / cluster route (2026-05-30)
 
 **What landed (NO wall change; nothing registered in `scripts/check-towers.sh`

@@ -93,6 +93,45 @@ history. Roadmap → `docs/ROADMAP.md`.
   Haar-null subvariety). KP convergence needs a uniform SUM over *connected /
   truncated* weights — the OPEN content of `Transfer.kotecky_preiss_criterion`,
   which stays a disclaimed `sorry` (UNTOUCHED). Surface #1 stays OPEN.
+- **Single-polymer activity decay — honest DCT reduction (1 brick-grade
+  trio-clean lemma + 2 disclaimed OPEN `sorry`s, NONE in BRICKS):**
+  `Towers/YM/Transfer.lean` now factors the integral route into its *proven*
+  and its *open* halves.
+  - `continuous_polymerEnergy_toGauge` (NEW, trio-clean): the per-config map
+    `w ↦ polymerEnergy (toGauge L w) γ` is continuous (factored out of
+    `integrable_polymerWeight`, which now calls it).
+  - `polymerActivity_tendsto_zero_of_null` (NEW, **`sorry`-free, classical
+    trio**, verified live): the genuine, fully-proved content of the integral
+    route — *IF* `haarN {w | polymerEnergy (toGauge L w) γ = 0} = 0` *THEN*
+    `polymerActivity L β γ → 0` as `β → ∞`. Proof = dominated convergence
+    (`tendsto_integral_filter_of_dominated_convergence`): the heat weight
+    `exp(-β·polymerEnergy) → 𝟙[polymerEnergy = 0]` pointwise (`exp_zero` on the
+    null set; `Real.tendsto_exp_atBot ∘ const_mul_atTop_of_neg` off it),
+    dominated by the constant `1` (integrable on the probability measure
+    `haarN`), so the limit integral is `(haarN {…=0}).toReal = 0`.
+  - `trivial_polymer_set_null` (NEW, **disclaimed OPEN `sorry`**, reports
+    `sorryAx`, NOT a brick): for `γ ≠ ∅`, `haarN {…polymerEnergy = 0} = 0`.
+    TRUE but a genuine measure-theoretic theorem, not a short trio proof:
+    needs `NoAtoms haarSU3` (only via `IsHaarMeasure.noAtoms`, requiring the
+    identity non-isolated, unproved here) PLUS a `Measure.pi` single-coordinate
+    marginal argument (`NoAtoms` alone kills only *countable* sets; the trivial
+    set is an *uncountable* positive-codim subvariety). The naive
+    "codimension `8·|γ|`" count is **lattice-size dependent**: on `L = 1` a
+    plaquette degenerates to a commutator `[g,h]`, so the triviality set is the
+    *commuting variety* and the four plaquette links are NOT four freely-varying
+    coordinates — needs the harder regular-element analysis. Left OPEN.
+  - `polymerActivity_tendsto_zero` (NEW, OPEN, inherits `sorryAx` from
+    `trivial_polymer_set_null`, NOT a brick): `γ ≠ ∅ ⟹ polymerActivity L β γ →
+    0`. Just the trio-clean DCT reduction fed the OPEN null-set input.
+  - **Why this is NOT the mass gap (the finite-`β₀` point):** even the full
+    `polymerActivity_tendsto_zero` is a **single** polymer's `β → ∞` limit.
+    Kotecký–Preiss is strictly stronger and different in kind — a *uniform*
+    convergent SUM `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞` at a **finite** `β₀ < ∞` over
+    *connected / truncated* weights — driven by "few small-energy polymers at
+    large-but-finite `β`", NOT by any single activity's `β → ∞` limit, and NOT
+    by `inf_{U≠1} wilsonAction U > 0` (that infimum is `0`). So
+    `kotecky_preiss_criterion` stays a disclaimed OPEN `sorry` (UNTOUCHED), no
+    Surface #1 closure, YM stays `Status: Open`, no `m > 0` / mass-gap claim.
 
 ## Locked invariants (every batch must hold these)
 

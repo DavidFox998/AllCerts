@@ -447,6 +447,32 @@ theorem polymerActivity_empty (L : ℕ) [NeZero L] (β : ℝ) :
     intro _w; simp [polymerEnergy]
   simp only [h0, integral_const, measure_univ, ENNReal.one_toReal, smul_eq_mul, mul_one]
 
+/-- **Continuity of the polymer energy in the configuration.** The map
+`w ↦ polymerEnergy (toGauge w) γ` is continuous — a finite sum of per-plaquette
+energies, each a polynomial-with-conjugate in the continuous SU(3) matrix
+entries, post-composed with affine/`re`/`trace` continuous maps. Factored out so
+both `integrable_polymerWeight` and the dominated-convergence limit
+`polymerActivity_tendsto_zero_of_null` can reuse it (the latter needs it to see
+`{w | polymerEnergy = 0}` is closed, hence measurable). Classical-trio. -/
+theorem continuous_polymerEnergy_toGauge (L : ℕ) [NeZero L]
+    (γ : Finset (Lattice 4 L × Fin 4 × Fin 4)) :
+    Continuous (fun w : Fin (4 * L ^ 4) → SU3Instances.SU3 =>
+      polymerEnergy (toGauge L w) γ) := by
+  unfold polymerEnergy
+  refine continuous_finset_sum _ (fun p _ => ?_)
+  unfold plaquetteEnergy
+  apply Continuous.div_const
+  refine Continuous.sub continuous_const ?_
+  refine Complex.continuous_re.comp ?_
+  refine Continuous.matrix_trace ?_
+  unfold wilsonPlaquette
+  simp only [Matrix.star_eq_conjTranspose, toGauge]
+  exact
+    ((((continuous_subtype_val.comp (continuous_apply _)).matrix_mul
+        (continuous_subtype_val.comp (continuous_apply _))).matrix_mul
+        (continuous_subtype_val.comp (continuous_apply _)).matrix_conjTranspose).matrix_mul
+      (continuous_subtype_val.comp (continuous_apply _)).matrix_conjTranspose)
+
 /-- The polymer heat weight `w ↦ exp(-β·polymerEnergy (toGauge w) γ)` is
 integrable against `haarN`: it is continuous (a finite sum of continuous
 per-plaquette energies — each a polynomial-with-conjugate in the continuous
@@ -465,22 +491,7 @@ theorem integrable_polymerWeight (L : ℕ) [NeZero L] (β : ℝ)
       (SU3Instances.SU3 : Set (Matrix (Fin 3) (Fin 3) ℂ))
   haveI : SecondCountableTopology (Fin (4 * L ^ 4) → ↥SU3Instances.SU3) := inferInstance
   haveI : BorelSpace (Fin (4 * L ^ 4) → ↥SU3Instances.SU3) := inferInstance
-  have hcontE : Continuous (fun w : Fin (4 * L ^ 4) → SU3Instances.SU3 =>
-      polymerEnergy (toGauge L w) γ) := by
-    unfold polymerEnergy
-    refine continuous_finset_sum _ (fun p _ => ?_)
-    unfold plaquetteEnergy
-    apply Continuous.div_const
-    refine Continuous.sub continuous_const ?_
-    refine Complex.continuous_re.comp ?_
-    refine Continuous.matrix_trace ?_
-    unfold wilsonPlaquette
-    simp only [Matrix.star_eq_conjTranspose, toGauge]
-    exact
-      ((((continuous_subtype_val.comp (continuous_apply _)).matrix_mul
-          (continuous_subtype_val.comp (continuous_apply _))).matrix_mul
-          (continuous_subtype_val.comp (continuous_apply _)).matrix_conjTranspose).matrix_mul
-        (continuous_subtype_val.comp (continuous_apply _)).matrix_conjTranspose)
+  have hcontE := continuous_polymerEnergy_toGauge L γ
   have hcont : Continuous (fun w : Fin (4 * L ^ 4) → SU3Instances.SU3 =>
       Real.exp (-β * polymerEnergy (toGauge L w) γ)) :=
     Real.continuous_exp.comp (continuous_const.mul hcontE)
@@ -506,15 +517,154 @@ theorem polymerActivity_antitone_in_beta (L : ℕ) [NeZero L]
   refine Real.exp_le_exp.mpr ?_
   nlinarith [mul_nonneg (sub_nonneg.mpr h) (polymerEnergy_nonneg (toGauge L w) γ)]
 
--- Axiom audit (informational): `T_L`, `transfer_operator_norm_le`, and the new
--- polymer-activity scaffolding are classical-trio only; the OPEN
--- `kotecky_preiss_criterion` additionally reports `sorryAx`, as intended.
+/-! ### The `β → ∞` limit of the single-polymer activity (honest DCT reduction)
+
+Pointwise `exp(-β·polymerEnergy) → 𝟙[polymerEnergy = 0]` as `β → ∞`, dominated by
+the constant `1 ∈ L¹(haarN)`. Dominated convergence then gives
+
+  `polymerActivity L β γ  ⟶  haarN {w | polymerEnergy (toGauge w) γ = 0}`.
+
+So the *only* missing input for "single-polymer activity decays to `0`" is the
+**measure-theoretic** fact that the trivial-plaquette set is `haarN`-null for a
+non-empty polymer. We split that cleanly:
+
+  * `polymerActivity_tendsto_zero_of_null` — the DCT reduction, taking the
+    null-set fact as an explicit hypothesis. `sorry`-free, classical-trio. This
+    is the genuine, fully-proved content of this step.
+  * `trivial_polymer_set_null` — the null-set fact itself. TRUE but a real
+    measure-theoretic theorem (NOT a short trio proof); left as a disclaimed OPEN
+    `sorry` (reports `sorryAx`), NOT a brick.
+  * `polymerActivity_tendsto_zero` — the unconditional decay, obtained by feeding
+    the OPEN input to the reduction; inherits `sorryAx`, NOT a brick.
+
+**Why this is NOT the mass gap (honest scope, locked invariants).** Even the full
+`polymerActivity_tendsto_zero` is about a **single** polymer's activity as
+`β → ∞`. Kotecký–Preiss convergence is strictly stronger and different in kind: a
+*uniform* convergent SUM `∑_{γ ∋ 0} |z(γ)| e^{|γ|} < ∞` at a **finite** `β₀ < ∞`,
+over *connected / truncated* weights — driven by "few small-energy polymers at
+large-but-finite `β`", NOT by any single activity's `β → ∞` limit, and NOT by
+`inf_{U≠1} wilsonAction U > 0` (that infimum is `0`, since the action is
+continuous and vanishes at the vacuum, so no `exp(-β·S_min)` decay holds). None of
+the lemmas below touch `kotecky_preiss_criterion` (OPEN) or close Surface #1; YM
+stays `Status: Open`. NOT bricks, NOT in `BRICKS`. -/
+
+/-- **Honest DCT reduction (trio-clean, `sorry`-free).** *If* the trivial-plaquette
+set `{w | polymerEnergy (toGauge w) γ = 0}` is `haarN`-null, *then* the
+single-polymer activity decays to `0` as `β → ∞`. Proof: dominated convergence —
+`exp(-β·polymerEnergy) → 𝟙[polymerEnergy = 0]` pointwise, dominated by the
+constant `1` (integrable on the probability measure `haarN`); the limit integral
+is `(haarN {polymerEnergy = 0}).toReal`, which the hypothesis sends to `0`. This
+is the genuine, fully-proved content of the integral route. It makes **no**
+mass-gap / `m > 0` / Surface-#1 claim and does **not** touch
+`kotecky_preiss_criterion`. -/
+theorem polymerActivity_tendsto_zero_of_null (L : ℕ) [NeZero L]
+    (γ : Finset (Lattice 4 L × Fin 4 × Fin 4))
+    (hnull : haarN (4 * L ^ 4) {w | polymerEnergy (toGauge L w) γ = 0} = 0) :
+    Filter.Tendsto (fun β => polymerActivity L β γ) Filter.atTop (nhds (0 : ℝ)) := by
+  unfold polymerActivity
+  haveI : SecondCountableTopology (Matrix (Fin 3) (Fin 3) ℂ) := by
+    unfold Matrix; infer_instance
+  haveI : SecondCountableTopology (↥SU3Instances.SU3) :=
+    TopologicalSpace.Subtype.secondCountableTopology
+      (SU3Instances.SU3 : Set (Matrix (Fin 3) (Fin 3) ℂ))
+  haveI : SecondCountableTopology (Fin (4 * L ^ 4) → ↥SU3Instances.SU3) := inferInstance
+  haveI : BorelSpace (Fin (4 * L ^ 4) → ↥SU3Instances.SU3) := inferInstance
+  set s : Set (Fin (4 * L ^ 4) → SU3Instances.SU3) :=
+    {w | polymerEnergy (toGauge L w) γ = 0}
+  have hsmeas : MeasurableSet s :=
+    (isClosed_eq (continuous_polymerEnergy_toGauge L γ) continuous_const).measurableSet
+  have hzero : (∫ w, s.indicator (fun _ => (1 : ℝ)) w ∂(haarN (4 * L ^ 4))) = 0 := by
+    rw [integral_indicator hsmeas, setIntegral_const, hnull]
+    simp
+  have key : Filter.Tendsto
+      (fun β => ∫ w, Real.exp (-β * polymerEnergy (toGauge L w) γ) ∂(haarN (4 * L ^ 4)))
+      Filter.atTop
+      (nhds (∫ w, s.indicator (fun _ => (1 : ℝ)) w ∂(haarN (4 * L ^ 4)))) := by
+    refine tendsto_integral_filter_of_dominated_convergence (fun _ => (1 : ℝ))
+      (Filter.Eventually.of_forall
+        (fun β => (integrable_polymerWeight L β γ).aestronglyMeasurable))
+      ?_ (integrable_const 1) ?_
+    · filter_upwards [Filter.eventually_ge_atTop (0 : ℝ)] with β hβ
+      refine Filter.Eventually.of_forall (fun w => ?_)
+      rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+      have hEnn := polymerEnergy_nonneg (toGauge L w) γ
+      calc Real.exp (-β * polymerEnergy (toGauge L w) γ)
+            ≤ Real.exp 0 := Real.exp_le_exp.mpr (by nlinarith [mul_nonneg hβ hEnn])
+        _ = 1 := Real.exp_zero
+    · refine Filter.Eventually.of_forall (fun w => ?_)
+      by_cases hw : polymerEnergy (toGauge L w) γ = 0
+      · have hmem : w ∈ s := hw
+        simp only [Set.indicator_of_mem hmem, hw, mul_zero, Real.exp_zero]
+        exact tendsto_const_nhds
+      · have hmem : w ∉ s := hw
+        rw [Set.indicator_of_not_mem hmem]
+        have hEpos : 0 < polymerEnergy (toGauge L w) γ :=
+          lt_of_le_of_ne (polymerEnergy_nonneg (toGauge L w) γ) (Ne.symm hw)
+        have hβ : Filter.Tendsto
+            (fun β : ℝ => -β * polymerEnergy (toGauge L w) γ)
+            Filter.atTop Filter.atBot := by
+          have hrw : (fun β : ℝ => -β * polymerEnergy (toGauge L w) γ)
+              = (fun β : ℝ => (-(polymerEnergy (toGauge L w) γ)) * β) := by
+            funext β; ring
+          rw [hrw]
+          exact Filter.Tendsto.const_mul_atTop_of_neg (by linarith) Filter.tendsto_id
+        exact Real.tendsto_exp_atBot.comp hβ
+  rw [hzero] at key
+  exact key
+
+/-- **OPEN (`sorry`) — the measure-theoretic crux of the integral route. NOT a
+brick, NOT in `BRICKS`, NOT a lakefile root.** For a non-empty polymer the
+trivial-plaquette set `{w | polymerEnergy (toGauge w) γ = 0}` (all plaquettes of
+`γ` simultaneously trivial) is `haarN`-**null**.
+
+This is TRUE but is a genuine measure-theoretic theorem, **not** a short
+classical-trio proof, so it is left as a disclaimed OPEN `sorry` (axiom report:
+`sorryAx`). It requires, at minimum: (i) `NoAtoms haarSU3` — available in mathlib
+only via `IsHaarMeasure.noAtoms`, which needs the identity to be non-isolated
+(`(𝓝[≠] (1 : SU3)).NeBot`), itself unproved here; and (ii) since `NoAtoms` only
+kills *countable* sets while the trivial set is an *uncountable* positive-codim
+subvariety, a `Measure.pi` single-coordinate marginal argument
+(`measurePreserving_piFinSuccAbove` + `measure_prod_null`) showing that fixing the
+other links forces the remaining one to a single point, hence a null fibre.
+Crucially the naive "codimension `8·|γ|`" count is **lattice-size dependent**: on
+`L = 1` a plaquette degenerates to a commutator `[g,h]`, whose triviality set is
+the *commuting variety* (a centralizer-codimension argument), so the four
+plaquette links are NOT four distinct freely-varying coordinates and the marginal
+argument needs the harder regular-element analysis. Honest status: OPEN — it
+does NOT close Surface #1, prove the mass gap, or touch
+`kotecky_preiss_criterion`. -/
+theorem trivial_polymer_set_null (L : ℕ) [NeZero L]
+    (γ : Finset (Lattice 4 L × Fin 4 × Fin 4)) (hγ : γ ≠ ∅) :
+    haarN (4 * L ^ 4) {w | polymerEnergy (toGauge L w) γ = 0} = 0 := by
+  sorry
+
+/-- **OPEN (depends on `trivial_polymer_set_null`).** The single-polymer activity
+of a non-empty polymer decays to `0` as `β → ∞`. This is exactly the honest DCT
+reduction `polymerActivity_tendsto_zero_of_null` fed the (OPEN) null-set input
+`trivial_polymer_set_null`, so it inherits its `sorryAx` and is **NOT** a brick,
+NOT in `BRICKS`. It says **nothing** about Kotecký–Preiss convergence, the mass
+gap, `m > 0`, or Surface #1 — KP needs a uniform SUM at finite `β₀`, not a single
+activity's `β → ∞` limit (see the section note). -/
+theorem polymerActivity_tendsto_zero (L : ℕ) [NeZero L]
+    (γ : Finset (Lattice 4 L × Fin 4 × Fin 4)) (hγ : γ ≠ ∅) :
+    Filter.Tendsto (fun β => polymerActivity L β γ) Filter.atTop (nhds (0 : ℝ)) :=
+  polymerActivity_tendsto_zero_of_null L γ (trivial_polymer_set_null L γ hγ)
+
+-- Axiom audit (informational): `T_L`, `transfer_operator_norm_le`, the new
+-- polymer-activity scaffolding, and the trio-clean DCT reduction
+-- `polymerActivity_tendsto_zero_of_null` are classical-trio only; the OPEN
+-- `kotecky_preiss_criterion`, `trivial_polymer_set_null`, and
+-- `polymerActivity_tendsto_zero` additionally report `sorryAx`, as intended.
 #print axioms T_L
 #print axioms transfer_operator_norm_le
 #print axioms polymerActivity_nonneg
 #print axioms polymerActivity_empty
 #print axioms polymerActivity_antitone_in_beta
+#print axioms continuous_polymerEnergy_toGauge
+#print axioms polymerActivity_tendsto_zero_of_null
 #print axioms kotecky_preiss_criterion
+#print axioms trivial_polymer_set_null
+#print axioms polymerActivity_tendsto_zero
 
 end Transfer
 end YM
