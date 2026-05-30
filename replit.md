@@ -143,6 +143,23 @@ history. Roadmap → `docs/ROADMAP.md`.
     NOT proved, NOT attempted (per direction: do not attempt without the
     counting estimate). Surface #1 stays OPEN.
 
+- **NS Tower 540, Phase 1: Function Spaces (NOT a brick, not in BRICKS, not a
+  lakefile root):** `Towers/NS/FunctionSpaces.lean` models Hˢ honestly on the
+  Fourier side as the weighted `L²(ℝ³, ⟨ξ⟩^{2s}·vol; ℂ³)` space
+  `Hsv s := Lp (EuclideanSpace ℂ (Fin 3)) 2 (mu s)` (`mu s =
+  volume.withDensity ⟨ξ⟩^{2s}`), with the divergence-free condition
+  `IsDivFree f := ∀ᵐ ξ, ⟪toVal ξ, f ξ⟫_ℂ = 0` (the Hermitian inner product
+  equals the bilinear `ξ·û` because `toVal ξ` has real, conjugation-fixed
+  components). `divFreeSubmodule s : Submodule ℂ (Hsv s)` has **PROVED**
+  `0/+/•` closure (via `Lp.coeFn_*` + `inner_{zero,add,smul}_right`), and
+  `Hdiv_free s` carries the real `NormedAddCommGroup` / `InnerProductSpace ℂ` /
+  `CompleteSpace` instances mathlib gives. Compiles clean under `lake env lean`
+  (only the 2 intended `sorry` warnings). Ships `sorryAx` BY DESIGN: exactly
+  **two documented Clay-adjacent `sorry`s** — `divFreeSubmodule_isClosed` (the
+  div-free set is `L²`-closed) and `embed` (the `Hˢ ↪ Hˢ'` Sobolev embedding
+  for `s' ≤ s`). Makes **no** NS existence/uniqueness/regularity claim; NS
+  tower stays `Status: Open`, Surface #2 stays OPEN.
+
 ## Locked invariants (every batch must hold these)
 
 - Axiom footprint = classical trio `{propext, Classical.choice, Quot.sound}`;
