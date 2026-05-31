@@ -130,9 +130,9 @@ export default function MiegakurePage() {
         <div className="space-y-3 font-mono text-xs leading-relaxed text-muted-foreground">
           <p>
             The 120 vertices rendered above are formally verified in Lean&nbsp;4 / Mathlib
-            (<code className="text-foreground">Towers/YM/Wall264_H4Vertices.lean</code>), with exact
-            golden-ratio arithmetic (<span className="text-foreground">φ² = φ + 1</span>, no floating point).
-            Proven:
+            (<code className="text-foreground">Towers/YM/Wall264_H4Vertices.lean</code> @ commit{" "}
+            <code className="text-foreground">d67da61</code>), with exact golden-ratio arithmetic
+            (<span className="text-foreground">φ² = φ + 1</span>, no floating point). Proven:
           </p>
           <ul className="space-y-1.5 pl-1">
             <li className="flex gap-2">
