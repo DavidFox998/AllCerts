@@ -83,6 +83,21 @@ history. Roadmap → `docs/ROADMAP.md`.
     `#{size-n connected polymers} ≤ 7ⁿ` via NAMED OPEN `h_entropy`.
   - **RiemannianGeometry** — SU(3) chordal distance is a genuine metric (the
     CHORDAL metric, NOT the Killing-form geodesic distance).
+- **Wall256_Scaffold** (`Towers/YM/Wall256_Scaffold.lean`, NOT a brick, NOT in
+  BRICKS, not a lakefile root) — HONEST CONDITIONAL strong-coupling LATTICE
+  reduction for SU(3): `strong_coupling_decay_of_open_inputs` threads THREE
+  explicit OPEN hypotheses — (1) single-site SU(3) Haar weight `w1 < 1/7`
+  (STRICT; equality gives `I = log 7` and a divergent entropy series, so the
+  β=0.85 boundary is excluded), (2) the Osterwalder–Seiler Ursell/cluster step
+  `w1 < 1/7 → TruncatedActivityBound`, and (3) Brydges–Federbush KP-summability
+  ⟹ geometric clustering — through the real, already-landed
+  `Wall256Note.su2_gap_of_truncatedActivity` (reused as an abstract combinator;
+  the `su2_` name is NOT a group claim) to an abstract two-point decay shape.
+  Proves NO mass gap / spectral gap / YM result; makes NO m>0 / Surface-#1
+  claim. Verified live (`lake env lean` after restore-lake-git ×2 + retag):
+  elaborates EXIT=0, `#print axioms` = classical trio, no `sorry`/`sorryAx`. The
+  three open hypotheses are the remaining (open) work; none is scheduled, all are
+  Clay-adjacent.
 - **Axiom debt:** `[]` on `TheoremaAureum.main_theorem` (also `[]` on
   `H2_WeilTransfer`, `M9_WeilTransfer_All`). Every landed brick is
   classical-trio-only.

@@ -79,6 +79,10 @@ theorem strong_coupling_decay_of_open_inputs
     (h_bridge : Summable (fun n : ℕ => N n * a n) →
         0 < ρ ∧ ρ < 1 ∧ ∀ x y, |corr x y| ≤ C * ρ ^ (sep x y)) :
     ∃ Δ : ℝ, 0 < Δ ∧ ∀ x y, |corr x y| ≤ C * Real.exp (-Δ * sep x y) :=
+  -- `su2_gap_of_truncatedActivity` is reused here purely as an ABSTRACT reduction
+  -- combinator: it quantifies over an arbitrary `corr sep : E → E → ℝ`, so its
+  -- legacy `su2_`-prefixed name is NOT a group-specific assertion. This file is
+  -- SU(3) lattice scope and proves NO gap of any kind.
   su2_gap_of_truncatedActivity corr sep C ρ hN0 hN (hOS hw1) h_bridge
 
 end TheoremaAureum.Towers.YM.Wall256Scaffold
