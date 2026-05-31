@@ -198,3 +198,49 @@ history. Roadmap → `docs/ROADMAP.md`.
 Web artifact (`artifacts/theorema-certs`) — the certificate-ledger dashboard.
 Has e2e Playwright specs under `tests/e2e/`. Run a spec with:
 `PLAYWRIGHT_MANAGED_WEB_SERVER=1 pnpm --filter @workspace/theorema-certs exec playwright test <name>`.
+
+## Wall256 Status: SU(3) Conditional Reduction
+
+- **COMMIT:** `8eeab54`
+- **FILE:** `Towers/YM/Wall256_Scaffold.lean` — tracked on main (committed, not
+  deleted) [PERMANENT]
+- **AXIOMS:** `[propext, Classical.choice, Quot.sound]` (classical trio)
+- **NEW_AXIOMS:** 0
+- **SORRY:** 0
+- **YM_STATUS:** OPEN
+- **SCOPE:** Conditional reduction only. The machine-checked content is the
+  threading `(1) ⟹ TruncatedActivityBound ⟹ KP-summable ⟹ (3) ⟹ decay` through
+  the genuine `Wall256Note.kp_summable_of_truncatedActivity` comparison test and
+  the `ρ^d = exp(-Δ·d)` algebra. The conclusion (abstract two-point decay) is
+  VALID ONLY IF the three hypotheses below hold. Proves NO mass gap, NO `μ > 0`,
+  NO Surface-#1; LATTICE scope, NOT Clay. `corr`/`sep` are abstract.
+
+### Open hypotheses (none discharged)
+
+These are the three explicit hypotheses of
+`strong_coupling_decay_of_open_inputs`; descriptions match the actual file (the
+labels are issue names, not new claims):
+
+1. **`w1_SU3_bound`** (`hw1 : w1 < 1/7`) — OPEN. The strict single-site SU(3)
+   Haar weight bound. STRICT matters: `= 1/7` gives `I = log 7` and a divergent
+   `∑ 7ⁿ(1/7)ⁿ` entropy series. Requires SU(3) character theory or verified
+   cubature — neither in mathlib v4.12.0.
+2. **`OS_cluster_bound`** (`hOS : w1 < 1/7 → TruncatedActivityBound a`) — OPEN.
+   The Osterwalder–Seiler strong-coupling Ursell/cluster step: single-site Haar
+   smallness ⟹ truncated connected-polymer activity rate `I > log 7`. (NOT
+   Osterwalder–Schrader reflection positivity.)
+3. **`KP_implies_decay`** (`h_bridge`) — OPEN. The Brydges–Federbush step:
+   KP-summability of the entropy-weighted polymer series `∑ₙ N n · a n < ∞` ⟹
+   geometric two-point clustering with spectral radius `ρ < 1`. Standard
+   cluster-expansion theory (Friedli–Velenik 2018, Ch. 5), absent from mathlib
+   v4.12.0. (NOT Källén–Lehmann → Wilson area law.)
+
+> **Note (hypothesis 1).** In the scaffold `w1 : ℝ` is currently an ABSTRACT
+> real, so `hw1` is formally trivial and proves nothing physical. A real
+> definition requires `w1 := ∫_{SU(3)} exp(-β·S) d haarSU3` (the genuine
+> single-site Haar weight; `haarSU3` and the action exist, integrability follows
+> from `continuous_wilsonAction_toGauge`). The strict bound `w1 < 1/7` is
+> unprovable without new mathlib infrastructure (SU(3) Peter–Weyl / character
+> orthogonality, or verified numerical integration over the 8-dim manifold).
+
+Tower phase complete. Scaffold landed. Research phase begins.
