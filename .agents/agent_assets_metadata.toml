@@ -240,3 +240,9 @@ id = "rtuseLW1escxkVHcTXJ3V"
 uri = "file://docs/YM_audit_export.json"
 type = "unspecified"
 title = "Towers/YM audit export (machine-readable)"
+
+[[outputs]]
+id = "lkMFxfecPHnLt4ePgrqu-"
+uri = "file://docs/Wall256_Conditional_Report.pdf"
+type = "pdf"
+title = "Wall256 — SU(3) Strong-Coupling Conditional Reduction (honest report)"
