@@ -7,27 +7,31 @@ history. Roadmap → `docs/ROADMAP.md`.
 
 ## Current status — 2026-06-01
 
-- **H1 HONEST PACKAGING — `Towers/YM/Hw1_Surface.lean` (2026-06-01).** User asked
-  to "prove H1" (`w1 β₀ < 1/7`) from the exact normalization; I REFUSED the
-  drafted spec (infeasible + self-contradictory) and the user chose **Option 2**.
-  WHY REFUSED: mathlib v4.12.0 has NO Bessel functions (no `Real.besselI`; the
-  `import Mathlib.Analysis.SpecialFunctions.Bessel` + `toeplitz` do not compile),
-  `norm_num` cannot decimalise `Real.exp`/Bessel (so the `< 1/7` step can't close
-  even in principle), the repo `actL` is the FULL LATTICE action (not a single-site
-  integral, so the drafted `w1` doesn't typecheck), and the two `sorry`s would emit
-  `sorryAx` (violating the spec's own `#print axioms = {trio}` + the ship-clean
-  lock). LANDED instead: H1 CARRIED, not proved, as the single disclosed OPEN
-  `axiom hw1 : w1 β₀ < 1/7` over `opaque w1` at `β₀ := 2.079416880124` (CERT_Arb
-  upper endpoint). `w1_beta0_lt_seventh := hw1` (footprint `{trio, hw1}`, exposes
-  the open dep). `WeylClosedForm (w)(I)` = the exact winding-sum closed form
-  `e^{-β}·∑_{k∈ℤ} det[I_{(i-j)+k}(β/3)]` mirrored as a NAMED OPEN Prop over an
-  abstract `I` (stand-in for the absent `I_n`, NOT fabricated), asserted by NO
-  theorem. `w1_lt_seventh_of_closed_form` = the option-2 CONDITIONAL (restates H1,
-  discharges nothing; trio). Genuinely checkable (trio): `cert_value_lt_seventh`
-  (`0.142856757048 < 1/7`) and `beta0_in_cert` (`β₀ ∈ [beta0_lo, beta0_hi]`).
-  Direct-lean EXIT=0 (LEAN_PATH bypass, no `lake env`); SORRY: 0; NOT a brick, NOT
-  a lakefile root. Evidence is OUT-OF-TOWER only (CERT_Arb + the
-  `w1_repo_normalization.py` closed form). Surface #1 / YM stay OPEN; NO
+- **H1 CONDITIONAL PACKAGING — `Towers/YM/Hw1_Surface.lean` (2026-06-01).** User
+  asked to "prove H1" (`w1 β₀ < 1/7`); the direct proof is infeasible in mathlib
+  v4.12.0 (NO Bessel functions / no `Real.besselI`; NO SU(3) Weyl / Gross–Witten
+  formula; `norm_num` can't decimalise `Real.exp`/Bessel so the `< 1/7` step can't
+  close even in principle; any `sorry` ⟹ `sorryAx`). Per the user's follow-up,
+  H1 is REDUCED to two named OPEN lemmas — the bare `axiom hw1` of the first pass
+  was REMOVED, so the file now has NO `axiom` and is classical trio throughout
+  (over `opaque w1`, `β₀ := 2.079416880124` = CERT_Arb upper endpoint):
+  `w1_eq_weyl I` `[NEEDS_LEMMA]` (Weyl formula `w1 β₀ = weylValue I β₀`),
+  `w1_weyl_beta0_lt I` `[NEEDS_LEMMA]` (K=3 winding sum `weylValue I β₀ < 1/7`),
+  both over the ABSTRACT Bessel stand-in `I` (NOT fabricated) and CERT_Arb-validated
+  only. `w1_beta0_lt_seventh I h_eq h_lt : w1 β₀ < 1/7` = H1 CONDITIONAL on those
+  two (no axiom; trio). `WeylClosedForm`/`weylValue` = the general closed-form
+  shape; `w1_eq_weyl_of_closedForm` bridges it to `w1_eq_weyl` (trio). Genuinely
+  checkable (trio): `cert_value_lt_seventh` (`0.142856757048 < 1/7`) and
+  `beta0_in_cert` (`β₀ ∈ [beta0_lo, beta0_hi]`). The requested `closes_surface_1`
+  was REFUSED as an overstatement → delivered as `lattice_decay_of_weyl_lemmas`,
+  a CONDITIONAL lattice reduction that makes ALL FOUR open inputs explicit (the 2
+  Weyl lemmas + `hOS` + `h_bridge`) and threads them through
+  `Wall256Scaffold.strong_coupling_decay_of_open_inputs`; `w1 < 1/7` is only ONE
+  of THREE open lattice inputs and the conclusion is lattice two-point decay
+  (necessary-not-sufficient for the continuum gap), so it does NOT close Surface
+  #1. Direct-lean EXIT=0 (LEAN_PATH bypass, no `lake env`); all 5 theorems trio;
+  SORRY: 0; NO `axiom`; NOT a brick, NOT a lakefile root. Evidence is OUT-OF-TOWER
+  only (CERT_Arb + `w1_repo_normalization.py`). Surface #1 / YM stay OPEN; NO
   mass-gap / μ>0 / Clay claim. Detail → `docs/CHANGELOG.md`.
 - **COMPUTABLE BOST-VIOLATION CHECK — `Towers/BostViolations/Compute.lean`
   (2026-06-01).** Direction (C) REFUSED, direction (A) DELIVERED. The user's

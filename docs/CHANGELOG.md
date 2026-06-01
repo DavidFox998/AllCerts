@@ -6,46 +6,57 @@ this file is the version history.
 
 ---
 
-## H1 honest packaging — `Towers/YM/Hw1_Surface.lean` (2026-06-01)
+## H1 conditional packaging — `Towers/YM/Hw1_Surface.lean` (2026-06-01)
 
-Option-2 deliverable (user-chosen) after REFUSING to "prove H1" as drafted. The
-drafted spec (`w1_eq_weyl := by sorry`, `w1_le_K3 := by sorry`,
-`norm_num [toeplitz]` evaluating `Real.besselI` at `β₀/3`) is INFEASIBLE in
-mathlib v4.12.0 and self-contradictory: (1) mathlib has NO Bessel functions
+H1 (`w1 β₀ < 1/7`) is carried as a CONDITIONAL reduction to two named OPEN
+lemmas — NO `axiom`, NO `sorry`, classical trio throughout. (Supersedes the
+first pass that carried H1 as a bare disclosed `axiom hw1`; the user asked to
+reduce it to `w1_eq_weyl + w1_weyl_beta0_lt`, so the axiom was REMOVED.)
+
+Why H1 cannot be proved directly (mathlib v4.12.0): (1) NO Bessel functions
 (`find` for `*bessel*` returns nothing; no `Real.besselI`, so `import
-Mathlib.Analysis.SpecialFunctions.Bessel` and the `toeplitz` def do not compile);
-(2) `norm_num` has NO extension to decimalise `Real.exp` or any Bessel value, so
-the final `< 1/7` step cannot close even in principle; (3) the repo `actL` is the
-FULL LATTICE action `(L:ℕ) → (Fin (4·L⁴)→SU3) → ℝ` over `haarN (4·L⁴)`, not a
-single-site integral, so the drafted single-site `w1 := ∫ U, exp(-β·actL U) ∂haar`
-does not even typecheck; (4) the two `sorry`s emit `sorryAx`, which would make
-`#print axioms ≠ {trio}`, violating the spec's own constraint 4 and the
-ship-clean lock.
+Mathlib.Analysis.SpecialFunctions.Bessel` + the `toeplitz` def do not compile);
+(2) NO SU(3) Weyl integration formula / Gross–Witten Toeplitz identity; (3)
+`norm_num` cannot decimalise `Real.exp` or any Bessel value, so the `< 1/7` step
+cannot close even in principle. Any `sorry` filler would emit `sorryAx`,
+violating the ship-clean lock. So H1 is NOT asserted — it is reduced to two
+explicit OPEN lemmas mathlib cannot discharge.
 
-What landed instead (honest): H1 is CARRIED, not proved, as the single disclosed
-OPEN `axiom hw1 : w1 β₀ < 1/7` over `opaque w1` at `β₀ := 2.079416880124` (the
-CERT_Arb upper endpoint). Contents:
+Contents (`opaque w1`, `β₀ := 2.079416880124` = CERT_Arb upper endpoint):
 
-- `w1_beta0_lt_seventh : w1 β₀ < 1/7 := hw1` — the requested theorem, discharged
-  by the axiom (NOT a proof); `#print axioms = {propext, Classical.choice,
-  Quot.sound, hw1}` exposing the open dependency.
-- `WeylClosedForm (w) (I) : Prop` — the exact winding-sum closed form
-  `w β = e^{-β}·∑_{k∈ℤ} det[I_{(i-j)+k}(β/3)]_{3×3}` mirrored into Lean as a NAMED
-  OPEN Prop, stated abstractly over an arbitrary `I : ℤ→ℝ→ℝ` (stand-in for the
-  absent `I_n` — NOT fabricated). Asserted by NO theorem.
-- `w1_lt_seventh_of_closed_form` — the option-2 CONDITIONAL: `WeylClosedForm w1 I`
-  + (closed-form value at `β₀` `< 1/7`) ⟹ `w1 β₀ < 1/7`. RESTATES H1 (the value
-  hypothesis is the same un-evaluatable Bessel numeral); discharges nothing.
-  Trio-only.
-- `cert_value_lt_seventh : (0.142856757048:ℝ) < 1/7` (`by norm_num`) and
-  `beta0_in_cert : Beta0Certified β₀` (`β₀` inside `[beta0_lo, beta0_hi]`) — the
-  only GENUINELY Lean-checkable facts; trio-only; neither proves `w1 β₀ < 1/7`.
+- `weylValue I β := e^{-β}·∑_{k∈ℤ} det[I_{(i-j)+k}(β/3)]_{3×3}` — the closed-form
+  value over an ABSTRACT Bessel stand-in `I : ℤ→ℝ→ℝ` (NOT the real `I_n`, NOT
+  fabricated); `noncomputable`.
+- `WeylClosedForm w1 I` — the general (`∀ β>0`) closed-form SHAPE as a NAMED OPEN
+  Prop; asserted by no theorem.
+- `w1_eq_weyl I` `[NEEDS_LEMMA]` — the Weyl/Gross–Witten formula at β₀:
+  `w1 β₀ = weylValue I β₀`. OPEN; CERT_Arb-validated only.
+- `w1_weyl_beta0_lt I` `[NEEDS_LEMMA]` — the truncated (K=3) winding sum at β₀:
+  `weylValue I β₀ < 1/7`. OPEN; CERT_Arb-validated only (`≈ 0.142856757048`).
+- `w1_eq_weyl_of_closedForm` — `WeylClosedForm w1 I ⟹ w1_eq_weyl I` at β₀>0
+  (convenience bridge; discharges nothing; trio).
+- `w1_beta0_lt_seventh I h_eq h_lt : w1 β₀ < 1/7` — **H1, CONDITIONAL on the two
+  lemmas.** NO axiom; `#print axioms` = classical trio. Restates H1 modulo the
+  two open lemmas; adds NO evidence.
+- `cert_value_lt_seventh : (0.142856757048:ℝ) < 1/7` and `beta0_in_cert :
+  Beta0Certified β₀` — the only GENUINELY Lean-checkable facts (trio); neither
+  proves `w1 β₀ < 1/7`.
+- `lattice_decay_of_weyl_lemmas` — the HONEST version of the requested
+  `closes_surface_1`. The literal name was REFUSED as an overstatement:
+  discharging the two Weyl lemmas does NOT close Surface #1, because (a) per
+  `Wall256Scaffold.strong_coupling_decay_of_open_inputs`, `w1 < 1/7` is only ONE
+  of THREE open lattice inputs — `hOS` (Osterwalder–Seiler Ursell/cluster) and
+  `h_bridge` (Brydges–Federbush KP ⟹ clustering) remain OPEN — and (b) even with
+  all three the conclusion is an abstract LATTICE two-point decay shape,
+  necessary-not-sufficient for the continuum mass gap. So this theorem makes ALL
+  four open inputs explicit and threads them through the Wall256 reduction; it is
+  a conditional lattice reduction, NOT a closure. Classical trio.
 
-Evidence for H1 is OUT-OF-TOWER only: `exports/CERT_Arb_beta0_2026-06-01.yaml`
+Evidence is OUT-OF-TOWER only: `exports/CERT_Arb_beta0_2026-06-01.yaml`
 (mpmath.iv N=36, `w1(β₀) ≈ 0.142856757048 < 1/7`) cross-checked by the exact
 closed form in `exports/w1_repo_normalization.py`. Direct-lean verify EXIT=0
-(pin v4.12.0 unresolved → LEAN_PATH bypass, no `lake env`). SORRY: 0; no new
-research axiom beyond the disclosed `hw1`. NOT a brick, NOT a lakefile root.
+(pin v4.12.0 unresolved → LEAN_PATH bypass, no `lake env`); all five theorems
+classical trio; SORRY: 0; NO `axiom`. NOT a brick, NOT a lakefile root.
 Surface #1 / YM stay OPEN; NO mass-gap / μ>0 / Clay claim.
 
 ---
