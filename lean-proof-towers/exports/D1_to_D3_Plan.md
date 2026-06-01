@@ -170,6 +170,7 @@ surface_1_status: OPEN
 ym_tower_status: OPEN
 rh_grh_c05_separate: true
 no_rh_claims_in_ym_certs: true   # the M7/GRH/C05 tower stays SEPARATE
+split_statement: "No RH claims in YM certs."
 note: >
   A dependency map enumerates requirements only. hOS and h_bridge stay OPEN named
   hypotheses; every leaf (D1..D6, E1..E6) is open research or absent from mathlib

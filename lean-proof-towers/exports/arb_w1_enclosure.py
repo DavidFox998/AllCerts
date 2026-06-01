@@ -286,6 +286,7 @@ def build_pdf():
         "   produces_lean_object: false ; trio_clean: false ; closes_D4: false ;",
         "   closes_mass_gap: false ; surface_1_status: OPEN ; ym_tower_status: OPEN ;",
         "   no_rh_claims_in_ym_certs: true (M7/GRH/C05 tower stays SEPARATE).",
+        "   SPLIT: No RH claims in YM certs.",
         "   Interval-certified numerics are NOT a formal proof and discharge nothing;",
         "   even for beta>beta0 this would supply only the Wall256 hw1 hypothesis.",
     ]
@@ -365,6 +366,7 @@ honesty_locks:
   ym_tower_status: OPEN
   rh_grh_c05_separate: true
   no_rh_claims_in_ym_certs: true
+  split_statement: "No RH claims in YM certs."
   note: >
     Interval-certified numerics are NOT a formal proof and discharge NO surface.
     Even re-established for beta>beta0 this supplies only the Wall256 hw1 hypothesis;

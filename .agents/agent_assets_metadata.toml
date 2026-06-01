@@ -270,3 +270,9 @@ id = "HA58TscFW7_5E2aL9lwo1"
 uri = "file://lean-proof-towers/exports/D4_w1_NEGATIVE_Certificate_2026-06-01.pdf"
 type = "pdf"
 title = "D4 w1 NEGATIVE Certificate (2026-06-01)"
+
+[[outputs]]
+id = "kGA6CGQAc9hbW0DBKkkHP"
+uri = "file://lean-proof-towers/exports/CERT_Arb_beta0.pdf"
+type = "pdf"
+title = "CERT_Arb — Rigorous interval enclosure of w1 threshold β₀"

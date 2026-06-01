@@ -48,7 +48,7 @@ monotonicity:
   rigorous: true
 deliverable:
   pdf: "CERT_Arb_beta0.pdf"
-  pdf_sha256: "ae824c09dac924cc2a8d74fa1e3ff710e4c389c06f0d69344e67ebc3c270ddc4"
+  pdf_sha256: "8879175c0bb11d20f71a0b31f221047c58fce489d5465bfda703dfa9a4bab8ae"
 honesty_locks:
   produces_lean_object: false
   trio_clean: false
@@ -60,6 +60,7 @@ honesty_locks:
   ym_tower_status: OPEN
   rh_grh_c05_separate: true
   no_rh_claims_in_ym_certs: true
+  split_statement: "No RH claims in YM certs."
   note: >
     Interval-certified numerics are NOT a formal proof and discharge NO surface.
     Even re-established for beta>beta0 this supplies only the Wall256 hw1 hypothesis;
