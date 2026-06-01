@@ -216,3 +216,9 @@ id = "WM1yzpuRYiMsRRfhbqz9r"
 uri = "file://docs/desert_map_summary.pdf"
 type = "pdf"
 title = "Desert Map — data summary (PDF)"
+
+[[outputs]]
+id = "Bd1VqCRR1l-R5jplzTFml"
+uri = "file://docs/P5_Bridge_Certificate.pdf"
+type = "pdf"
+title = "Theorema Aureum 143 — P5 Bridge Certificate"
