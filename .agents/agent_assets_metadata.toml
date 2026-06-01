@@ -210,3 +210,9 @@ id = "lnQjfI3StslpGqKeEVNjW"
 uri = "file://data/desert_map.csv"
 type = "table"
 title = "Desert Map — exact integers & cumulative energy (CSV)"
+
+[[outputs]]
+id = "WM1yzpuRYiMsRRfhbqz9r"
+uri = "file://docs/desert_map_summary.pdf"
+type = "pdf"
+title = "Desert Map — data summary (PDF)"
