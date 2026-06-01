@@ -2,14 +2,16 @@
 \contentsline {paragraph}{Notation.}{3}{section*.2}%
 \contentsline {section}{\numberline {2}The Exceptional Set for $\pi /10$}{3}{section.2}%
 \contentsline {section}{\numberline {3}Bost--Connes Energy and the GRH Criterion}{4}{section.3}%
-\contentsline {section}{\numberline {4}The Main Sieve Lemma}{4}{section.4}%
+\contentsline {section}{\numberline {4}The Main Sieve Lemma}{5}{section.4}%
 \contentsline {section}{\numberline {5}Level 143 and the Descent to $\zeta (s)$}{5}{section.5}%
 \contentsline {section}{\numberline {6}Large Exceptional Primes}{5}{section.6}%
-\contentsline {section}{\numberline {7}Module 08A: The Exceptional Boost $E$}{6}{section.7}%
-\contentsline {paragraph}{Module chain summary.}{7}{section*.4}%
-\contentsline {section}{\numberline {8}Machine Verification Protocol}{7}{section.8}%
-\contentsline {section}{\numberline {9}Lean 4 Formal Certification}{7}{section.9}%
-\contentsline {paragraph}{Note on \texttt {\#print axioms}.}{10}{section*.11}%
-\contentsline {paragraph}{Master SHA (M7 LOCKED).}{10}{section*.12}%
-\contentsline {paragraph}{Certification context.}{10}{section*.13}%
-\contentsline {section}{\numberline {10}Open Items}{10}{section.10}%
+\contentsline {section}{\numberline {7}The Desert Structure of $S(\pi /10)$}{6}{section.7}%
+\contentsline {section}{\numberline {8}Methods: Exact Enumeration of the Exceptional Set}{8}{section.8}%
+\contentsline {section}{\numberline {9}Module 08A: The Exceptional Boost $E$}{8}{section.9}%
+\contentsline {paragraph}{Module chain summary.}{10}{section*.4}%
+\contentsline {section}{\numberline {10}Machine Verification Protocol}{10}{section.10}%
+\contentsline {section}{\numberline {11}Lean 4 Formal Certification}{10}{section.11}%
+\contentsline {paragraph}{Note on \texttt {\#print axioms}.}{13}{section*.11}%
+\contentsline {paragraph}{Master SHA (M7 LOCKED).}{13}{section*.12}%
+\contentsline {paragraph}{Certification context.}{13}{section*.13}%
+\contentsline {section}{\numberline {12}Open Items}{13}{section.12}%

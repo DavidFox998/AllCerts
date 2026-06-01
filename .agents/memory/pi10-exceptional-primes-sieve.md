@@ -37,3 +37,20 @@ exceptional; the rest were composite truncations, and it omitted 2, 19, 191.
 **Honesty caveat to always state:** BPSW has no known counterexample but is NOT
 a formal primality proof for the 3000+ digit entries (ECPP/Primo certs would be
 needed for that, impractical here).
+
+**Where the fabricated "14" list still lives:** the same bogus 14-prime tail is
+hardcoded as `S_14` in Lean `Towers/Hodge/Defs.lean` (entries #8–#14 are
+composite AND non-exceptional — verified at 220–400 dp). The CANONICAL
+machine-verified set is the 20 primes in `data/pi10_exceptional_primes.txt`; its
+first 7 match Defs.lean, the tail diverges. Trust the data file, not Defs.lean's
+S_14. (Defs.lean is NOT a brick, so this is a documentation/data-honesty defect,
+not an axiom-lock breach.)
+
+**Desert structure (the headline geometry):** first 4 primes (2,3,19,191) are
+immediate; then a boundary phase shift to p5≈3.99e12 (first desert width =
+3,993,746,143,442 integers, ~1.4e11 ordinary primes crossed). Consecutive gap
+ratios grow super-exponentially (p5/p4≈2.1e10 … p19/p18≈4.8e1039); primes
+crossed per desert reach ~1.6e3543 before p20. Structural cause: exceptional ⟺
+CF convergent/semiconvergent denominator ⟹ log q_n grows ≥ linearly ⟹ deserts
+diverge. Written up as the "Desert Structure" + "Methods" sections of
+`paper/theorema-aureum-143.tex`.

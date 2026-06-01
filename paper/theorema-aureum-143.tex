@@ -166,20 +166,40 @@ The Bost--Connes sum restricted to $S_4$ is
   C(S_4) = \frac{\log 2}{1} + \frac{\log 3}{2} + \frac{\log 19}{18}
            + \frac{\log 191}{190}
          = 0.69315\ldots + 0.54931\ldots + 0.16358\ldots + 0.02764\ldots
-         = 1.434567\ldots
+         = 1.4336768\ldots
 \]
 This value is machine-verified to 4500 decimal digits.
 \end{lemma}
 
-\begin{lemma}[Energy of the Full Set $S_{14}$]
-The Bost--Connes sum over the complete exceptional set $S_{14}$ decomposes as
+\begin{lemma}[Energy of the Full Verified Set]\label{lem:fullenergy}
+Over the complete machine-verified exceptional set
+$S(\pi/10)\cap[1,10^{4000}]$ of twenty primes (Section~\ref{sec:desert}), the
+Bost--Connes sum is
 \[
-  C(S_{14}) = C(S_4) + \sum_{i=5}^{14} \frac{\log p_i}{p_i - 1}
-            = 1.434567\ldots + \Delta = 8.62945\ldots,
+  C\bigl(S(\pi/10)\cap[1,10^{4000}]\bigr)
+    = C(S_4) + \sum_{n=5}^{20} \frac{\log p_n}{p_n - 1}
+    = 1.4336768\ldots + \Delta,
+  \qquad \Delta = 7.28\times 10^{-12}.
 \]
-where $\Delta = \sum_{i=5}^{14} \frac{\log p_i}{p_i - 1} \approx 7.195$ is the
-contribution of the ten primes $p_5,\ldots,p_{14}$.
+The sixteen large exceptional primes contribute only $\Delta\approx 7\times
+10^{-12}$ \emph{in total}, since $\log p_n/(p_n-1)\to 0$ as $p_n\to\infty$ (the
+largest single term is $\log p_5/(p_5-1)\approx 7.27\times10^{-12}$).  Hence
+$C(S(\pi/10)) = 1.4336768\ldots$, dominated entirely by $\{2,3,19,191\}$, and in
+particular $C(S(\pi/10)) < 2\sqrt{13} = 7.2111\ldots$
 \end{lemma}
+
+\begin{remark}[Correction of a spurious figure]
+An earlier circulated tabulation reported a fourteen-element set with
+$C \approx 8.629$, a tail contribution $\Delta\approx 7.195$ that would close the
+level-143 threshold $2\sqrt{13}$.  That figure is spurious.  Its members beyond
+$p_7$ are neither prime nor exceptional under $\|p\pi/10\| < 1/p$ (verified to
+$200{+}$ decimal digits), and the closeness of the reported $\Delta$ to the
+threshold is an artifact, not a computation: under the unweighted sum
+$\log p/(p-1)$ no admissible primes above $191$ can contribute more than
+$\sim 10^{-11}$ combined.  The verified energy is $1.4336768\ldots$, so the
+level-143 GRH target (Section~\ref{sec:level143}) is \emph{not} met by the
+Bost--Connes sum over $S(\pi/10)$.
+\end{remark}
 
 \begin{theorem}[Level 10 GRH]\label{thm:level10}
 The Hasse--Weil $L$-function $L(s, X_0(10))$ satisfies GRH\@.
@@ -293,11 +313,173 @@ $p_7$ & $631{,}474{,}305{,}334{,}326{,}148{,}720{,}631$ & $2.28 \times 10^{-25}$
 \end{tabular}
 \end{table}
 
-The confirmed exceptional set to date is therefore
+The first verified tranche of the exceptional set is therefore
 \[
   S_\mathrm{canon} = \{2,\,3,\,19,\,191,\,p_5,\,p_6,\,p_7\},
   \qquad |S_\mathrm{canon}| = 7.
 \]
+The exact enumeration to the bound $10^{4000}$ (Section~\ref{sec:methods})
+extends this to \emph{twenty} verified exceptional primes, whose spacing is the
+subject of Section~\ref{sec:desert}.
+
+%% =========================================================
+\section{The Desert Structure of $S(\pi/10)$}\label{sec:desert}
+%% =========================================================
+
+The defining feature of $S(\pi/10)$ is not the primes it contains but the vast
+\emph{deserts} that separate them: stretches of the integers in which no prime
+$p$ satisfies $\|p\pi/10\| < 1/p$.  The four small primes $2,3,19,191$ appear
+immediately, all below $200$.  After $191$ the set falls silent.
+
+\begin{theorem}[Boundary Phase Shift]\label{thm:phaseshift}
+There is no exceptional prime in the open interval $(191,\,p_5)$ with
+$p_5 = 3{,}993{,}746{,}143{,}633$.  The first desert above $S_4$ therefore spans
+exactly
+\[
+  p_5 - 191 = 3{,}993{,}746{,}143{,}442
+\]
+consecutive integers, across which the prime number theorem places approximately
+$1.4\times 10^{11}$ ordinary primes, none of them exceptional.
+\end{theorem}
+\begin{proof}
+By the completeness of the convergent/semiconvergent enumeration
+(Section~\ref{sec:methods}, Theorem~\ref{thm:complete}), every exceptional prime
+is the denominator of a convergent or upper-semiconvergent of $\pi/10$.  The
+continued fraction $\pi/10 = [0;3,5,2,5,1,733,11,1,1,3,2,\ldots]$ produces no
+such denominator that is prime in $(191,p_5)$; the next prime denominator is
+$p_5$ itself.  The integer test $q\,\|q\pi/10\| < 1$ is evaluated exactly
+(Section~\ref{sec:methods}); the prime count follows from
+$\pi(p_5)-\pi(191)\approx p_5/\log p_5$.
+\end{proof}
+
+This jump from $\mathcal{O}(10^2)$ to $\mathcal{O}(10^{12})$ is the
+\emph{boundary phase shift}: the density of $S(\pi/10)$ collapses
+discontinuously once the small partial quotients of $\pi/10$ are exhausted and
+the large partial quotient $a_6 = 733$ takes over.  Colmez's
+bound~\cite{Colmez93} guarantees only $p_5 > a_6 Q_5/2 \approx 4.7\times10^5$;
+the true location $p_5\approx 4.0\times10^{12}$ lies seven orders of magnitude
+beyond that lower bound.
+
+\begin{table}[ht]
+\centering
+\caption{Desert structure of the twenty exceptional primes $p_n\le 10^{4000}$.
+``Digits'' is the decimal length of $p_n$; the gap ratio is $p_n/p_{n-1}$;
+``primes crossed'' is the prime-number-theorem estimate
+$\pi(p_n)-\pi(p_{n-1})$ of ordinary primes in the preceding desert.}
+\label{tab:desert}
+\begin{tabular}{rrlll@{}}
+\hline
+$n$ & digits & $\|p_n\pi/10\|$ & gap ratio $p_n/p_{n-1}$ & primes crossed \\
+\hline
+1  & 1    & $3.7\times10^{-1}$    & ---                    & ---                    \\
+2  & 1    & $5.8\times10^{-2}$    & $1.5$                  & $\sim 2$               \\
+3  & 2    & $3.1\times10^{-2}$    & $6.3$                  & $\sim 4$               \\
+4  & 3    & $4.4\times10^{-3}$    & $10.1$                 & $\sim 30$              \\
+5  & 13   & $3.8\times10^{-14}$   & $2.1\times10^{10}$     & $1.4\times10^{11}$     \\
+6  & 16   & $2.4\times10^{-16}$   & $8.1\times10^{2}$      & $9.0\times10^{13}$     \\
+7  & 24   & $2.3\times10^{-25}$   & $2.0\times10^{8}$      & $1.2\times10^{22}$     \\
+8  & 35   & $3.4\times10^{-35}$   & $1.7\times10^{10}$     & $1.3\times10^{32}$     \\
+9  & 76   & $5.7\times10^{-77}$   & $7.3\times10^{41}$     & $4.4\times10^{73}$     \\
+10 & 95   & $9.5\times10^{-96}$   & $1.2\times10^{19}$     & $4.0\times10^{92}$     \\
+11 & 111  & $1.1\times10^{-111}$  & $5.6\times10^{15}$     & $1.9\times10^{108}$    \\
+12 & 372  & $2.7\times10^{-372}$  & $4.0\times10^{260}$    & $2.3\times10^{368}$    \\
+13 & 859  & $6.1\times10^{-860}$  & $4.5\times10^{487}$    & $4.5\times10^{855}$    \\
+14 & 1025 & $7.5\times10^{-1027}$ & $2.2\times10^{165}$    & $8.3\times10^{1020}$   \\
+15 & 1592 & $1.9\times10^{-1592}$ & $2.7\times10^{567}$    & $1.4\times10^{1588}$   \\
+16 & 1863 & $2.9\times10^{-1864}$ & $3.3\times10^{270}$    & $4.1\times10^{1858}$   \\
+17 & 2272 & $6.0\times10^{-2273}$ & $5.2\times10^{409}$    & $1.7\times10^{2268}$   \\
+18 & 2389 & $3.3\times10^{-2389}$ & $2.3\times10^{116}$    & $3.8\times10^{2384}$   \\
+19 & 3428 & $5.1\times10^{-3429}$ & $4.8\times10^{1039}$   & $1.3\times10^{3424}$   \\
+20 & 3548 & $2.2\times10^{-3549}$ & $1.3\times10^{119}$    & $1.6\times10^{3543}$   \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{remark}[The deserts diverge]
+The gap ratios in Table~\ref{tab:desert} are not bounded: they grow
+super-exponentially, from $10.1$ between $p_3$ and $p_4$ to $4.8\times10^{1039}$
+between $p_{18}$ and $p_{19}$.  The number of ordinary primes crossed in each
+desert grows in step, reaching $\sim 10^{3543}$ before $p_{20}$.  Each
+exceptional prime is thus an isolated point in an emptiness astronomically
+larger than the one before it.
+\end{remark}
+
+\begin{remark}[Why the deserts grow]
+The divergence is structural, not accidental.  By Theorem~\ref{thm:complete} a
+prime is exceptional only if it is a convergent or upper-semiconvergent
+denominator $q_n$ of $\pi/10$, and these satisfy $q_{n+1} = a_{n+1}q_n +
+q_{n-1}$, so $\log q_n$ grows at least linearly in $n$ (geometrically in $q$).
+Consequently the multiplicative gaps between successive exceptional denominators
+do not shrink, and the additive deserts between successive exceptional
+\emph{primes} grow without bound.  The continued fraction of $\pi/10$ governs the
+entire desert landscape.
+\end{remark}
+
+\begin{remark}[Canonical machine-verified set]
+The twenty primes summarised in Table~\ref{tab:desert} are the complete
+machine-verified exceptional set $S(\pi/10)\cap[1,10^{4000}]$, reproduced by the
+exact sieve of Section~\ref{sec:methods} and recorded with their full decimal
+expansions in the supplementary file
+\texttt{data/pi10\_exceptional\_primes.txt}.  Each entry is prime under a BPSW
+test and satisfies $\|p\pi/10\| < 1/p$ at the certified margin.  Any earlier
+hand-entered enumeration whose members beyond $p_7$ are not reproduced by this
+sieve is superseded by the list above.  These results establish the arithmetic
+structure of $S(\pi/10)$ only; they do not by themselves establish GRH or RH,
+which rest on the (open) Main Sieve Lemma of Section~\ref{sec:sieve}.
+\end{remark}
+
+%% =========================================================
+\section{Methods: Exact Enumeration of the Exceptional Set}\label{sec:methods}
+%% =========================================================
+
+The exceptional primes are found not by scanning the integers --- the first
+desert alone would require $\sim 4\times10^{12}$ trials --- but by enumerating
+the only integers that can possibly qualify: the convergent and
+upper-semiconvergent denominators of $\pi/10$.  The procedure, implemented in
+\texttt{scripts/enumerate\_pi10\_exceptional.py}, has four stages.
+
+\begin{enumerate}
+\item \textbf{High-precision $\pi$.}  $\pi$ is computed to $D = 8300$ decimal
+  digits by exact integer Chudnovsky arithmetic, giving a rational
+  $A/B$ with $|\pi/10 - A/B| < 10^{-8301}$.
+\item \textbf{Continued fraction.}  The continued fraction of $A/B$ is computed
+  with exact integer arithmetic, yielding $\pi/10 = [0;3,5,2,5,1,733,11,\ldots]$.
+  The expansion is reliable while convergent denominators stay below
+  $\sim 10^{D/2}$, and $D$ is chosen well above $2\log_{10}(10^{4000})$, so every
+  candidate $\le 10^{4000}$ lies inside the trustworthy region.
+\item \textbf{Exact integer test.}  For each convergent and upper-semiconvergent
+  denominator $q$, the exceptionality condition $\|q\pi/10\| < 1/q$ is rewritten
+  as the integer inequality $q\,|B a - q\,n| < B$ for the nearest integer $n$,
+  and tested without any floating-point rounding.
+\item \textbf{Primality.}  Only the (few) survivors are subjected to a
+  Baillie--PSW primality test (\texttt{sympy.isprime}).
+\end{enumerate}
+
+\begin{theorem}[Completeness and soundness]\label{thm:complete}
+Every prime $p \le 10^{4000}$ with $\|p\pi/10\| < 1/p$ appears in the output of
+the procedure above, and every prime in the output satisfies $\|p\pi/10\| < 1/p$.
+\end{theorem}
+\begin{proof}
+\emph{Soundness} is immediate: each survivor passes the exact integer test, which
+is equivalent to $\|p\pi/10\|<1/p$.  For \emph{completeness}, Legendre's theorem
+states that any $q$ with $\|q\pi/10\| < 1/(2q)$ is a convergent denominator of
+$\pi/10$; moreover every convergent denominator $q_n$ is itself exceptional,
+since $\|q_n\pi/10\| < 1/q_{n+1} < 1/q_n$.  The only remaining solutions of the
+weaker inequality $\|q\pi/10\|<1/q$ are particular upper-semiconvergents, which
+are enumerated explicitly.  Hence the candidate list contains every exceptional
+$q$, and a fortiori every exceptional prime, up to the bound.
+\end{proof}
+
+\begin{remark}[Decision certificate]
+For every candidate the exact gap satisfies $|Ba - qn| > q^2$, while the
+$\pi$-truncation perturbs the test value by less than $q^2/B$; the minimum
+margin over the whole range is $\sim 10^{8295}$, far above the threshold
+$10^{8000}$.  The rational test therefore provably agrees with the true value of
+$\pi/10$ across the entire search.  The one residual caveat is that BPSW, while
+without known counterexample, is not a formal primality certificate for the
+$3000{+}$-digit entries $p_{12},\ldots,p_{20}$; a verified certificate (e.g.\
+ECPP) for those primes is left to future work.
+\end{remark}
 
 %% =========================================================
 \section{Module 08A: The Exceptional Boost $E$}\label{sec:m08a}
