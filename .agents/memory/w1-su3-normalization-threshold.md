@@ -60,3 +60,16 @@ constant is `C = 64·6561 + 64·128·120·(4/3)⁵ = 419904 + 1006632960/243 ≈
 `C/β₀⁴ ≈ 2.44e5`, i.e. `C/β₀⁴ < 1/7` is FALSE by ~1.7e6×; `norm_num` cannot prove it.
 `hw1` stays DERIVED from the two disclosed OPEN `[NEEDS_LEMMA]` axioms (`w1_eq_weyl`,
 `w1_weyl_beta0_lt`); it is NOT trio-only provable in mathlib v4.12.0 (no Bessel/Weyl).
+
+**The wall for an in-Lean `w1_weyl β₀ < 1/7` (axiom #2).** The margin is
+`1/7 − w1_weyl(β₀) ≈ 3.86e-7`, so every enclosure (`Real.exp(-β₀)`, each
+Bessel/Toeplitz value, the `∑'_{k∈ℤ}` tail) must be tight to `< 1e-7`. `norm_num`
+cannot decimalise `Real.exp` nor bound a `tsum` remainder, and tight rational
+enclosures over the 12-digit base `β₀/6` blow up to hundreds of digits — so a
+trio-only proof is a large standalone interval-arithmetic formalization (re-doing
+CERT_Arb in Lean), NOT a `by norm_num` job. Loose enclosures (e.g. exp width 2e-4)
+are ~500× too wide and can never close it. **Why it's not worth chasing casually:**
+even if axiom #2 landed, `w1_eq_weyl` (axiom #1, the genuine-Haar↔Weyl identity)
+stays OPEN, so `hw1` remains non-trio regardless. A genuine modified-Bessel series
++ its `Summable` proof exist as trio-clean standalone infra (a real building block,
+discharges nothing, does not touch the opaque `besselI`/`w1`).
