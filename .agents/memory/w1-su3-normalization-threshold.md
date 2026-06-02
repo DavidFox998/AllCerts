@@ -46,3 +46,17 @@ the parent KP surface, Surface #1, and the YM tower all stay OPEN; no mass-gap c
 **How to apply:** if anyone revisits the Wall256 `hw1 : w1 < 1/7` hypothesis, target
 `beta > ~2.08` under the repo's `(3 - Re tr)/3` action (not 0.85), and require a verified
 interval enclosure before any strict-bound wording.
+
+**Do NOT try to derive `hw1` (`w1 β₀ < 1/7`) from H4 / `heat_trace_poly_bound`.** This
+is a recurring FALSE-PREMISE ask; it fails on three independent counts. (1) WRONG OBJECT:
+`w1` is the opaque NORMALIZED single-site Haar weight (~0.1428 at β₀), NOT
+`Weyl_sum_explicit_SU3_real` / `Heat_kernel_envelope_real`, which are heat-traces at the
+identity and are `≥ 1` for all β>0 (`Heat_kernel_envelope_real_ge_one_of_pos`,
+`Weyl…_at_zero = 1`). Any upper-bound chain through them bounds `w1` by something `≥1` —
+cannot reach `<1/7`; identifying `w1 = Weyl_sum_explicit` makes the goal FALSE (`≥1>1/7`).
+(2) WRONG DOMAIN: `heat_trace_poly_bound` holds only on `Ioc 0 1`; β₀≈2.08 > 1, so it
+can't be instantiated at β₀ at all. (3) HOPELESSLY LOOSE even if it applied: the explicit
+constant is `C = 64·6561 + 64·128·120·(4/3)⁵ = 419904 + 1006632960/243 ≈ 4.56e6`, so
+`C/β₀⁴ ≈ 2.44e5`, i.e. `C/β₀⁴ < 1/7` is FALSE by ~1.7e6×; `norm_num` cannot prove it.
+`hw1` stays DERIVED from the two disclosed OPEN `[NEEDS_LEMMA]` axioms (`w1_eq_weyl`,
+`w1_weyl_beta0_lt`); it is NOT trio-only provable in mathlib v4.12.0 (no Bessel/Weyl).
