@@ -42,3 +42,20 @@ install is whole.
 unresolved name elaborates to `sorry`, which then cascades "cannot evaluate
 expression that depends on the `sorry` axiom" into every dependent `#eval`, even
 though the real bug is the one missing identifier.)
+
+## 4. Compiling a TWO-FILE mathlib-free split (importable core + leaf)
+To factor an engine into a shared core and have a leaf `import Towers.YM.<Core>`
+WITHOUT lake (the v4.12.0 pin is unsafe to touch), compile direct with a
+mirrored build tree + `LEAN_PATH`:
+- From the package root (`lean-proof-towers/`), `lean` derives the olean module
+  name from the *given relative path* (`Towers/YM/H4Core.lean` -> module
+  `Towers.YM.H4Core`). So build into a dir mirroring that path:
+  `mkdir -p /tmp/h4build/Towers/YM`
+  `lean Towers/YM/H4Core.lean -o /tmp/h4build/Towers/YM/H4Core.olean`
+- Then compile the leaf with that root on the path; the import resolves against
+  `/tmp/h4build/Towers/YM/H4Core.olean`:
+  `LEAN_PATH=/tmp/h4build lean Towers/YM/H4_Strata_Ztau.lean`
+- Cross-module `by rfl` / `by decide` on imported defs (e.g. `vflat.length=960`,
+  `zmul ... = ...`) still work — the olean carries the (reducible) definitions.
+- Timings in this env: core ~7s, leaf-with-#evals ~12s (well under the 120s bash
+  cap, so no console-workflow needed for THIS size).

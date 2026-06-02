@@ -27,6 +27,15 @@ history. Roadmap → `docs/ROADMAP.md`.
   Surface-#1 claim, NOT keyed to any prime or L-function. Compiled via the
   v4.12.0 toolchain (the registered milestone is prose+SHA only — main-agent git
   is write-blocked; Replit checkpoints capture the merged state).
+  **REFACTOR (2026-06-02):** the reusable engine (ℤ[τ]/Quat arithmetic, `vflat`/
+  `chunk`/`V`, the `W(H₄)` action, `Sym`, `ilog3`, `decodeQuat`/`symOf`) is now
+  factored into the shared mathlib-free core `Towers/YM/H4Core.lean`; Module A
+  `import`s it and its `#eval` outputs are BYTE-IDENTICAL (`[120,20,2,2,1]`,
+  `Sym origin=14400`, `Sym vertex=120`, Lagrange all `true`), with
+  `tau_sq`/`vflat_card` still axiom-free (`#print axioms` = none). Core+leaf
+  both EXIT 0 via direct `lean` over a hand-built `LEAN_PATH` (no lake). The
+  per-module `data.json` + SHA-256 / certified-prime-source output convention is
+  DEFERRED at the user's request ("come back to .json") — NOT yet built.
 - **H1 AXIOM-DERIVED PACKAGING — `Towers/YM/Hw1_Surface.lean` (2026-06-01).** H1
   (`w1 β₀ < 1/7`) is DERIVED from two disclosed OPEN `[NEEDS_LEMMA]` axioms (NOT
   proved). Direct proof infeasible in mathlib v4.12.0 (NO Bessel/`Real.besselI`,
