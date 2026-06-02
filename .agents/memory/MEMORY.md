@@ -29,3 +29,4 @@
 - [omega + nonlinear ℕ goals](omega-nonlinear-atoms.md) — omega abstracts m²/m*n as nonneg atoms; feed it the one nonlinear bound (e.g. 1≤m²) and it closes the linear rest.
 - [Toeplitz det norm_num cost](toeplitz-det-normnum-cost.md) — assembled w1_weyl finite enclosure IS norm_num-feasible (~6s/det, 51 shifts ≈325s, trio); MUST unfold β₀_rat; only discharges w1_weyl_beta0_lt (→4 axioms), never trio (w1_eq_weyl remains).
 - [decide stalls on Rat in kernel](decide-rat-kernel-stall.md) — whole-Bool `decide`/`rfl` gets stuck on `Rat.instDecidableLe`; discharge any `Rat ≤` clause from a hypothesis (or norm_num), not a kernel decide.
+- [mathlib-free #eval leaf](lean-corefree-eval-leaf.md) — flat `List Int`+structural chunk beats 120 nested `⟨⟩` literals (elab blowup); finish elan install via a workflow (120s bash cap kills it); `List.flatMap`→`List.bind` in v4.12.0.

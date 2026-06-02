@@ -5,8 +5,28 @@ notes, proof sketches, drift footnotes, env vars, stack, where-things-live,
 gotchas). `replit.md` is the live-ops doc; the CHANGELOG is the version
 history. Roadmap → `docs/ROADMAP.md`.
 
-## Current status — 2026-06-01
+## Current status — 2026-06-02
 
+- **MODULE A LANDED — `Towers/YM/H4_Strata_Ztau.lean` (2026-06-02).** Real
+  W(H₄) point-stabilizer computation over exact `ℤ[τ]` (`τ²=τ+1`), mathlib-FREE
+  (Lean core only), `sorry`/`admit`/`sorryAx`/`native_decide`-free, NOT a brick,
+  NOT imported, NOT in `scripts/check-towers.sh` BRICKS. `V` = 120 doubled
+  icosians stored as a flat `List Int` (`vflat`, 960 ints) reshaped by a
+  structural `chunk` (avoids the super-linear elaboration blow-up of 120 nested
+  anonymous-constructor literals). `W(H₄)` (order 14400) acts via the EXACT
+  integer maps `p·x·q̄=4x` (proper) / `p·x̄·q̄=4x` (improper) with the `±(p,q)`
+  identification; `Sym x` enumerates `V×V`. **Verified `#eval` outputs:**
+  `Sym(origin)=14400`, `Sym(vertex)=120`; Module-A witness primes
+  `[2,3,19,191,1000000001119] → [120,20,2,2,1]` (nine: `[120,20,2,2,1,1,1,1,1]`);
+  Lagrange divisibility all `true`. **HONEST FINDING:** the natAbs Euclidean
+  decode yields `[120,20,2,2,1]`, NOT David's conjectured `[120,20,20,2,1]` —
+  the `20` at `p=19` came from a different (signed) decode; per the geometry-wins
+  rule the table is corrected. Kernel-checked axiom-clean facts: `tau_sq`
+  (`τ²=τ+1`), `vflat_card` (`vflat.length=960`) — both `#print axioms` = none.
+  PURE FINITE GEOMETRY: proves NO YM/NS/RH/Bost/BSD, makes NO mass-gap/μ>0/
+  Surface-#1 claim, NOT keyed to any prime or L-function. Compiled via the
+  v4.12.0 toolchain (the registered milestone is prose+SHA only — main-agent git
+  is write-blocked; Replit checkpoints capture the merged state).
 - **H1 AXIOM-DERIVED PACKAGING — `Towers/YM/Hw1_Surface.lean` (2026-06-01).** H1
   (`w1 β₀ < 1/7`) is DERIVED from two disclosed OPEN `[NEEDS_LEMMA]` axioms (NOT
   proved). Direct proof infeasible in mathlib v4.12.0 (NO Bessel/`Real.besselI`,
