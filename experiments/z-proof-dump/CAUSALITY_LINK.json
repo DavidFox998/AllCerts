@@ -1,0 +1,113 @@
+{
+  "schema": "z-protocol/causality-link/v1",
+  "created": "2026-06-03",
+  "author": "D. Fox",
+  "honesty_note": "This file LINKS the paper's claims to the actual datasets in this repo. No dataset numbers were altered to build it. Each claim carries a support status: SUPPORTED (backed by recorded data), PARTIAL (limited/2-point), or UNSUPPORTED (no data in this repo). Claims marked UNSUPPORTED must NOT be cited as measured results.",
+  "paper": {
+    "title": "Z Protocol: A Discovered Singularity Class in LLM Generation Where Temperature=0 Fails and Tool Use is Necessary",
+    "abstract_verbatim": "We document a class of inputs Sym=1 for which Large Language Models at temperature=0 produce deterministic errors of 1-4 orders of magnitude when the answer is not memorized. API logs show claude-haiku-4-5 returning 281,571,662.8 for BesselI(10,20.0) versus the true 3,540,200.209, a 7853% error. Identical prompts with tool use return 0% error. Historical data shows a similar 50% error rate on digit counting pre-patch. We demonstrate that Sym=1 inputs require T=1 with external computation. The error follows E ~= (1-T). We conclude T=0 is metastable for unmemorized Sym=1 problems, necessitating tool use for correctness."
+  },
+  "convention": {
+    "T=1": "deterministic tool/rule path (mpmath, int(bits,2), rule_echo). Reference truth.",
+    "T=0": "LLM-direct generation, no tools (temperature=0, deterministic decode).",
+    "Sym=1": "input with a single/minimal point-stabilizer symmetry class; here used as the label for the hard, unmemorizable inputs."
+  },
+  "test_sets": [
+    {"file": "../bessel-z/BesselI_TEST_SET.json", "domain": "modified Bessel I_n(x)", "sym_field": "sym", "truth_source": "mpmath.besseli", "note": "all entries sym=1; true_value precomputed at high precision"},
+    {"file": "../z-metastability/Z_INPUT_SET.json", "domain": "digit-count / structural", "truth_source": "rule_echo (T=1)"},
+    {"file": "../z-unified/COMM_TEST_SET.json", "domain": "BSC Shannon capacity", "truth_source": "closed form (T=1)"},
+    {"file": "../z-unified/POLYMER_TEST_SET.json", "domain": "binary->int", "truth_source": "int(bits,2) (T=1)"},
+    {"file": "../z-unified/BOSTCONNES_TEST_SET.json", "domain": "zeta(s)", "truth_source": "mpmath.zeta (T=1)"}
+  ],
+  "claims": [
+    {
+      "id": "C1_bessel_t0_value",
+      "claim": "claude-haiku-4-5 at T=0 returns 281,571,662.8 for BesselI(10,20.0).",
+      "status": "SUPPORTED",
+      "evidence": {
+        "dataset": "BESSEL_COLD_T0_raw.json",
+        "model": "claude-haiku-4-5",
+        "trials": 20,
+        "distinct_outputs": {"281571662.8": 20},
+        "temperature": 0,
+        "deterministic": true
+      }
+    },
+    {
+      "id": "C2_bessel_true_value",
+      "claim": "The true value of BesselI(10,20.0) is 3,540,200.209.",
+      "status": "SUPPORTED",
+      "evidence": {
+        "truth_source": "mpmath.besseli(10, 20.0), dps=50",
+        "value": 3540200.2090195213
+      },
+      "caveat": "DATASET MISMATCH (preserved on purpose): BESSEL_COLD_T0_raw.json records true_value=256457.353, the originally DISCLOSED reference, which is INCORRECT. Per the study directive 'do not change or correct any number in any dataset,' that file is left untouched. The authoritative reference is the mpmath value here; the disclosed 256457.353 is retained only as a recorded (wrong) input under study."
+    },
+    {
+      "id": "C3_bessel_t0_error",
+      "claim": "The T=0 error for BesselI(10,20.0) is ~7853%.",
+      "status": "SUPPORTED",
+      "evidence": {
+        "t0_value": 281571662.8,
+        "true_value_authoritative": 3540200.2090195213,
+        "relative_error": 78.5355,
+        "relative_error_pct": "7853.55%"
+      },
+      "caveat": "Error computed against the authoritative mpmath value (C2), NOT against the dataset's recorded-but-incorrect 256457.353 (which would give 109692.78%). Both figures are kept distinct on purpose."
+    },
+    {
+      "id": "C4_tool_zero_error",
+      "claim": "Identical prompts with tool use (T=1) return 0% error.",
+      "status": "SUPPORTED",
+      "evidence": {
+        "truth_source": "mpmath.besseli",
+        "relative_error_pct": "0.000%",
+        "note": "0% holds by construction: the T=1 path IS the reference computation."
+      }
+    },
+    {
+      "id": "C5_digit_counting_50pct",
+      "claim": "Historical data shows a similar 50% error rate on digit counting pre-patch.",
+      "status": "UNSUPPORTED",
+      "evidence": {
+        "dataset": "Z_DIGITS_T0.csv",
+        "t0_rows": "all NOT_RUN_NO_API (0 T=0 trials executed)",
+        "t1_rows": "rule_echo, error_rate=0.0000 across all",
+        "found_50pct_anywhere": false
+      },
+      "caveat": "No T=0 digit-counting trials exist in this repo, so a 50% error rate is NOT measured here. Do NOT cite this as a result. To substantiate it, run cold T=0 digit-count trials (the harness exists; the NO-API run left T=0 unfilled)."
+    },
+    {
+      "id": "C6_error_law_E_eq_1_minus_T",
+      "claim": "The error follows E ~= (1-T).",
+      "status": "PARTIAL",
+      "evidence": {
+        "T_points_measured": [0, 1],
+        "E_at_T0_fractional": 78.5355,
+        "E_at_T1_fractional": 0.0
+      },
+      "caveat": "SCHEMATIC ONLY. Rests on exactly two T values (0 and 1). It captures the qualitative fact 'error vanishes at T=1, present at T=0' but is NOT a numerically fitted law: at T=0 the measured fractional error is ~78.5, not ~1, so E=(1-T) does not hold quantitatively. No intermediate-T sweep was run."
+    },
+    {
+      "id": "C7_singularity_class_metastable",
+      "claim": "T=0 is metastable for unmemorized Sym=1 problems, defining a 'singularity class' that necessitates tool use.",
+      "status": "PARTIAL",
+      "evidence": {
+        "supported_instances": ["BesselI(10,20.0) cold T=0 (C1-C4)"],
+        "generalization_to_class": "not established"
+      },
+      "caveat": "Interpretive conclusion. Demonstrated cleanly for ONE Sym=1 instance (Bessel). 'A class' / 'singularity' / 'metastable' are framing for a hypothesis, not a proven population-level result; supporting breadth (more Sym=1 instances at cold T=0) is not yet in the datasets."
+    }
+  ],
+  "causal_chain": [
+    "input is Sym=1 and answer not memorized",
+    "-> T=0 LLM decode lands on a confident wrong magnitude (deterministic across trials)",
+    "-> relative error of 1-4 orders of magnitude (Bessel instance: ~7853%)",
+    "-> substituting the T=1 tool path yields 0% error",
+    "=> for Sym=1 unmemorized inputs, correctness requires external computation (tool use), not lower-temperature sampling"
+  ],
+  "reproduce": {
+    "t0_bessel": "Z_MODEL=claude-haiku-4-5 python3 bessel_cold_t0.py   (real proxy API call, billed)",
+    "t1_truth": "python3 -c \"import mpmath; mpmath.mp.dps=50; print(mpmath.besseli(10,20.0))\""
+  }
+}
