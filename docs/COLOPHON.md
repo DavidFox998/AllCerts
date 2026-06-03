@@ -8,6 +8,8 @@
 **Date:** 2026-06-02
 **Version:** 2.3 FINAL
 
+**P5_genuine = 1000000001119 [13 digits, Sym=1] LOCKED**
+
 ## Build protocol
 
 **Formal + Empirical**
@@ -58,6 +60,21 @@ the witnesses are compared against.
 
 **Computed (real W(H₄) action, not hardcoded):** `Sym(19) = 2`, `Sym(191) = 2`,
 `Sym(1000000001119) = 1`. (`Sym(19) = 2`, NOT 20.)
+
+## Z Experiment Harness (v2.3)
+
+**Tool use eliminates digit reproduction error.** Pure measurement, no
+conjecture: 50 script-generated inputs (digit length 10–25, zero-run 0–15,
+`Sym ∈ {1, 2, null}`) were reproduced tool-assisted (`printf` / `${#s}`) over
+5000 trials (100 per input). Result: **0 errors, error rate 0.0** — tool-assisted
+reproduction is deterministic across every tested input.
+
+Scope (honest): this measures only the tool-assisted regime (`T = 1`). With all
+errors zero there is no correlation between reproduction error and `Sym`, digit
+length, or zero-run when `T = 1` — but a null result cannot rank those factors,
+and the harness does NOT test the pure-generation (`T = 0`) regime. No
+`Sym`-coupling, digit-band, or "metastability" law is implied. Harness:
+`experiments/z-metastability/`.
 
 ## Gates
 
