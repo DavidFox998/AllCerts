@@ -25,17 +25,22 @@ On-disk filenames use underscores; the published module names are listed first.
    hash, NOT a file hash). Real file SHA-256 `aa8c1180…a6ce`, recorded in
    `H4Core.data.json`.
 2. **H4Boundary** (`Towers/YM/H4_Boundary.lean`) — Task #325 — `C13 := 13`.
-   **P5 distinction (LOCKED):**
-   - `P5_genuine = 1000000001119` — **13 digits** (`digit_len = 13`, `Sym = 1`).
-     The real 13-digit boundary prime. **ACCEPTED.**
-   - `P5_proposed = 10000000001119` — **14 digits** (`digit_len = 14`). Its
-     `digit_len P5 = C13` (i.e. `= 13`) claim is **FALSE**, so this proposed P5 is
-     **REJECTED** as the 13-digit boundary — corrected per geometry-wins.
+   **Certified 13-character P5 table** (digit counts tool-certified via
+   `${#literal}`, never eye-counted):
 
-   The two differ by a single leading-block zero (13 vs 14 digits); do not
-   conflate them. The witness table in `H4_Boundary.data.json` carries the
-   rejected `P5_proposed = 10000000001119` with `digit_len 14` as the honest
-   counter-record.
+   | Name | Value | Digits | Sym | Status |
+   |---|---|---|---|---|
+   | `P5_genuine` | `1000000001119` | 13 | 1 | **CERTIFIED · LOCKED** |
+   | `P5_proposed_14` | `10000000001119` | 14 | — | REJECTED |
+   | `P5_proposed_15` | `100000000001119` | 15 | — | REJECTED |
+
+   `P5_genuine = 1000000001119` is the ONLY live P5 in v2.3 — the real 13-digit
+   boundary prime (`digit_len = 13`, `Sym = 1`). The two over-zero variants each
+   carry one extra zero, so their `digit_len P5 = C13` (= 13) claim is **FALSE**;
+   they are kept solely as labeled **REJECTED** counter-records, not used as P5
+   anywhere. `H4_Boundary.data.json` records the 14-digit `10000000001119` as the
+   honest counter-record. No spike, transition, or `Sym`/critical-line meaning is
+   attached to digit length (see `docs/BOUNDARY_ARTIFACT.md`).
 3. **H4TimeBound** (`Towers/YM/H4_TimeBound.lean`) — Task #326 — `N40 := 40`;
    `TimeHorizon := 3^40` carries no causal/temporal meaning; `10^12 << 3^40`
    (by ~7 orders of magnitude).
