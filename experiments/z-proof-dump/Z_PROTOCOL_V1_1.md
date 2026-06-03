@@ -270,6 +270,45 @@ All are $T_t{=}0$ cold-LLM measurements with an mpmath ground truth.
 > with the new target list; none requires anything beyond the existing cold-LLM + mpmath
 > harness, and none touches physics beyond the Bessel $I_{10}$ already used.
 
+## 9. Magnitude attractor — proposed "Z Magnitude Law" tested, **NOT validated**
+
+A follow-up brief proposes a magnitude law $y_{\text{pred}} = C\cdot f_{\text{asym}}(x)$
+with $f_{\text{asym}}(x)=e^{x}/\sqrt{2\pi x}$ and $C\approx1.0$, citing a modal output
+$\sim4.0\times10^7$ ($\sim$12× true). Tested against the existing 120-trial Bessel data:
+
+**9.1 Correction to the premise.** The modal cold output is $\mathbf{3.5\times10^8}$
+(**103/120** trials, exactly equal; $\mathbf{98.86\times}$ the true $I_{10}(20)=3.5402\times10^6$),
+**not** $4.0\times10^7$. The figure $4.0\times10^7\,/\,12\times$ is $f_{\text{asym}}(20)=
+4.328\times10^7$ *itself* — the asymptotic formula's overshoot ($12.23\times$ true, §3.2),
+which the brief has mistaken for the model's output.
+
+**9.2 $C$ computed from the data.**
+$$C=\frac{y_{\text{pred}}}{f_{\text{asym}}(20)}=\frac{3.5\times10^8}{4.328\times10^7}=\mathbf{8.087}.$$
+So $C\approx8.09$, **not** $1.0$. The model overshoots the *asymptotic* by $\sim8\times$ and
+the *true* value by $\sim99\times$. **The $C\approx1.0$ hypothesis is refuted by the data.**
+
+**9.3 Why there is no honest "Law 3" and no meaningful $R^2$.** All 120 trials share a
+single $(\nu,x)=(10,20)$. $C$ is therefore **one ratio measured at one point**, not a fitted
+curve — there is no variation in $\nu$ or $x$ to regress against, so an $R^2$ for a magnitude
+*law* is **undefined / degenerate** (the same degeneracy flagged for $T_t$/Sym in §4.5a). A
+single point cannot determine how $C$ depends on $\nu$ or $x$. Worse, $3.5\times10^8$ is a
+**round-number attractor** (§3.3) — the model emits a round magnitude, not literally
+$C\cdot f_{\text{asym}}$ — so even the functional form is unsupported. I therefore decline to
+state this as a validated law.
+
+**9.4 Prediction for $I_{15}(30)$ — flagged as unsupported one-point extrapolation.** True
+$I_{15}(30)=1.867\times10^{10}$, $f_{\text{asym}}(30)=7.784\times10^{11}$. With one data point
+I cannot identify $C(\nu,x)$, so **no supported prediction exists.** The two mechanical
+extrapolations, both **NOT validated**:
+- constant $C{=}8.087$: $\;8.087\times7.784\times10^{11}=\mathbf{6.29\times10^{12}}$;
+- brief's $C{=}1.0$ (already refuted at $x{=}20$): $7.784\times10^{11}$.
+
+If forced to a single number I report the constant-$C$ value $\mathbf{6.3\times10^{12}}$ as
+the law's mechanical output, **explicitly labeled as an unvalidated extrapolation from one
+$(\nu,x)$ point** — not a measurement and not a prediction I endorse. The only data-grounded
+statement is qualitative: a cold $\mathrm{Sym}{=}1,M{=}0$ Bessel query lands on a round-number
+attractor $\sim$two orders of magnitude above truth, removed only by $T_t{=}1$.
+
 ### Reproduce
 ```bash
 python3 z_protocol_full.py    # resumable; re-runs finalize from preserved raw (no new API if 240/240 present)
