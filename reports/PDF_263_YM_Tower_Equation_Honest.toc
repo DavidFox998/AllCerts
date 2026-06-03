@@ -1,0 +1,19 @@
+\contentsline {section}{\numberline {1}Equation statement --- the Yang--Mills mass-gap surface}{2}{section.1}%
+\contentsline {paragraph}{(E1) Exponential clustering (two-point decay).}{2}{section*.2}%
+\contentsline {paragraph}{(E2) Transfer-operator gap.}{2}{section*.3}%
+\contentsline {paragraph}{(E3) Mass gap from the gap bound.}{2}{section*.4}%
+\contentsline {paragraph}{The honest gap.}{2}{section*.5}%
+\contentsline {section}{\numberline {2}Step-by-step audit --- every YM/OS witness-collapse brick}{3}{section.2}%
+\contentsline {paragraph}{Reading the columns.}{3}{section*.6}%
+\contentsline {section}{\numberline {3}Representative Lean excerpts (verbatim) with English gloss}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Mass-gap inhabitedness (\texttt {MassGapStandin.lean})}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Reflexive tail bound (\texttt {IntegratedTailReal.lean})}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Gap $\Rightarrow $ decay (\texttt {GapToDecay.lean})}{4}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Requested sections with no artifact on disk (documented, not fabricated)}{5}{section.4}%
+\contentsline {section}{\numberline {5}Compliance certificate --- honest}{6}{section.5}%
+\contentsline {paragraph}{Honest caveats on this certificate.}{6}{section*.7}%
+\contentsline {paragraph}{Status of the other towers (no per-brick claim made here).}{6}{section*.8}%
+\contentsline {section}{\numberline {6}Appendix --- provenance and verification method}{7}{section.6}%
+\contentsline {paragraph}{Verification method (verbatim from the build manifest).}{7}{section*.9}%
+\contentsline {paragraph}{Per-file SHA-256 (full).}{7}{section*.10}%
+\contentsline {paragraph}{Source documents.}{7}{section*.11}%

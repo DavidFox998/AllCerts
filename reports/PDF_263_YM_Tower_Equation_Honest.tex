@@ -1,39 +1,4 @@
-#!/usr/bin/env python3
-"""Generate the HONEST PDF_263 YM Tower Equation Report from verified sources.
-
-Sources (all on disk, read-only):
-  - BUILD_MANIFEST_v2.7.json   (per-brick file / open_prop / sha256 / collapse / axioms)
-  - CLAY_STATUS.md, reports/CLAY_REPAIR_2026-06-03.md
-No fabrication: every figure here is copied from those files or from a command
-whose result is recorded in the report itself.
-"""
-
-import json, pathlib, datetime
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-manifest = json.loads((ROOT / "BUILD_MANIFEST_v2.7.json").read_text())
-
-
-def esc(s: str) -> str:
-    repl = {
-        "\\": r"\textbackslash{}",
-        "&": r"\&",
-        "%": r"\%",
-        "$": r"\$",
-        "#": r"\#",
-        "_": r"\_",
-        "{": r"\{",
-        "}": r"\}",
-        "~": r"\textasciitilde{}",
-        "^": r"\textasciicircum{}",
-    }
-    out = []
-    for ch in s:
-        out.append(repl.get(ch, ch))
-    return "".join(out)
-
-
-PREAMBLE = r"""\documentclass[11pt]{article}
+\documentclass[11pt]{article}
 \usepackage[a4paper,margin=2.4cm]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -71,9 +36,7 @@ documented as \textbf{absent} in \S\ref{sec:absent} rather than fabricated.
 
 \tableofcontents
 \clearpage
-"""
-
-SEC1 = r"""\section{Equation statement --- the Yang--Mills mass-gap surface}
+\section{Equation statement --- the Yang--Mills mass-gap surface}
 \label{sec:eq}
 
 The Clay ``Yang--Mills existence and mass gap'' problem asks, for a compact
@@ -140,13 +103,11 @@ module below was discharged only at a \emph{degenerate witness} (a
 \emph{witness collapse}): the correlator taken $\equiv 0$, the operator
 $T:=0$ on $H:=\mathbb{C}$, or a reflexive definitional re-wrap. The recorded
 $T_{\mathrm{real}}$ lower bound for all 13 modules is therefore \textbf{none}.
-"""
-
-SEC_DERIV_HEAD = r"""\clearpage
+\clearpage
 \section{Step-by-step audit --- every YM/OS witness-collapse brick}
 \label{sec:deriv}
 
-The table below lists all %d modules audited on the
+The table below lists all 13 modules audited on the
 \textbf{2026-06-03} repair pass. Each was previously registered as a ``brick''
 (a landed result in \texttt{scripts/check-towers.sh}); each has now been
 converted \emph{in place} from a proved \texttt{theorem}/\texttt{lemma} into a
@@ -160,9 +121,22 @@ and de-registered from the \texttt{BRICKS} array. Status for all: \OPEN{}
 \# & File & Named open \texttt{Prop} & Witness collapse \\
 \midrule
 \endhead
-"""
+1 & \texttt{YM/ClusteringCore.lean} & \texttt{clusters\_zero\_OPEN} & clustering predicate instantiated at constant-zero pair (vacuous) \\
+2 & \texttt{YM/MassGapStandin.lean} & \texttt{massGap\_standin\_example\_OPEN} & mass-gap witness is the zero CLM on H := C (vacuous) \\
+3 & \texttt{YM/SpectralGapCore.lean} & \texttt{hasMassGap\_zero\_OPEN} & HasMassGap at T := 0 collapses to 0 >= (1-m)*norm\textasciicircum{}2 (vacuous); def HasMassGap preserved \\
+4 & \texttt{YM/TransferOperatorBound.lean} & \texttt{transfer\_gap\_zero\_OPEN} & transferGapBound at degenerate operators (vacuous); def transferGapBound preserved \\
+5 & \texttt{YM/TwoPointDecay.lean} & \texttt{clustering\_zero\_from\_transfer\_OPEN} & clustering of constant-zero function, hypothesis unused (vacuous); def hasExponentialClustering preserved \\
+6 & \texttt{YM/MassGapFromDecay.lean} & \texttt{mass\_gap\_from\_clustering\_zero\_OPEN} & mass gap from constant-zero clustering, zero witness operator (vacuous) \\
+7 & \texttt{YM/IntegratedTailReal.lean} & \texttt{integrated\_tail\_le\_exp\_OPEN} & integrated\_tail L m := rexp(-m*L) so bound is reflexive rexp(-m*L) <= rexp(-m*L) (vacuous); def integrated\_tail preserved \\
+8 & \texttt{YM/TransferGapReal.lean} & \texttt{transfer\_gap\_real\_OPEN} & real-named transfer gap still discharged at degenerate witness (vacuous) \\
+9 & \texttt{YM/MassGapReal.lean} & \texttt{mass\_gap\_from\_transfer\_OPEN} & mass gap from transfer at zero witness on H := C (vacuous) \\
+10 & \texttt{YM/ClusteringImpliesGap.lean} & \texttt{clustering\_implies\_gap\_OPEN} & constant-zero antecedent, zero CLM consequent (vacuous) \\
+11 & \texttt{YM/TransferImpliesClustering.lean} & \texttt{transfer\_implies\_clustering\_OPEN} & consequent witness is constant-zero function, hypothesis unused (vacuous) \\
+12 & \texttt{YM/TailImpliesTransfer.lean} & \texttt{tail\_implies\_transfer\_OPEN} & integrated\_tail and transferGapBound unfold to same inequality; pure definitional re-wrap (vacuous) \\
+13 & \texttt{YM/GapToDecay.lean} & \texttt{gap\_to\_decay\_OPEN} & consequent discharged by f t := exp(-m*t), gap hypothesis unused (vacuous) \\
+\bottomrule
+\end{longtable}}
 
-SEC_DERIV_NOTES = r"""
 \paragraph{Reading the columns.}
 \textbf{WHAT} --- the file path and the named proposition (namespace
 \texttt{TheoremaAureum.Towers.YM.OS}). \textbf{WHY} --- the proposition's role:
@@ -171,10 +145,7 @@ chain of \S\ref{sec:eq}. \textbf{WHERE} --- the $T_{\mathrm{real}}>0$ status:
 \textbf{none} for all, because the proof discharges only at a degenerate
 witness. \textbf{WHEN} --- the 2026-06-03 repair audit. The full per-file
 SHA-256 hashes are in Appendix~\ref{sec:appendix}.
-"""
-
-# representative exact excerpts pulled from disk (verbatim, real source)
-EXCERPTS = r"""\clearpage
+\clearpage
 \section{Representative Lean excerpts (verbatim) with English gloss}
 \label{sec:excerpts}
 
@@ -222,20 +193,7 @@ $f(t)=e^{-mt}$ (which trivially satisfies $|f(t)|\le 1\cdot e^{-mt}$) with the
 spectral-gap hypothesis \emph{unused}. So the implication holds as written
 without using its antecedent --- a witness collapse. It does not show a real
 correlator decays from a real spectral gap.
-"""
-
-
-def build_table_rows() -> str:
-    rows = []
-    for i, m in enumerate(manifest["modules"], 1):
-        f = esc(m["file"].split("Towers/")[-1])
-        op = esc(m["open_prop"].split("OS.")[-1])
-        coll = esc(m["collapse"])
-        rows.append(f"{i} & \\texttt{{{f}}} & \\texttt{{{op}}} & {coll} \\\\")
-    return "\n".join(rows) + "\n\\bottomrule\n\\end{longtable}}\n"
-
-
-SEC_ABSENT = r"""\clearpage
+\clearpage
 \section{Requested sections with no artifact on disk (documented, not fabricated)}
 \label{sec:absent}
 
@@ -261,13 +219,7 @@ observation, attributed quotation, or ``Besel~I'' test log in the repository.
 Because none of these artifacts exists, these sections are \textbf{omitted}.
 Stating their absence here is the honest treatment: the report leaves out no
 \emph{true} implication, and fabricates none.
-"""
-
-
-def build_compliance() -> str:
-    cls = ", ".join(esc(a) for a in manifest["classical_trio"])
-    return (
-        r"""\clearpage
+\clearpage
 \section{Compliance certificate --- honest}
 \label{sec:compliance}
 
@@ -275,22 +227,12 @@ def build_compliance() -> str:
 \toprule
 Property & Verified value \\
 \midrule
-Modules audited & """
-        + str(len(manifest["modules"]))
-        + r""" (all YM/OS) \\
+Modules audited & 13 (all YM/OS) \\
 Non-vacuous $T_{\mathrm{real}}>0$ proofs achieved & \textbf{0} \\
-Converted to named open \texttt{Prop} & """
-        + str(manifest["converted_to_open_prop"])
-        + r""" \\
-De-registered from \texttt{BRICKS} & """
-        + str(manifest["deregistered"])
-        + r""" \\
-Axiom footprint (each module) & classical trio: \texttt{"""
-        + cls
-        + r"""} \\
-\texttt{sorry} / \texttt{sorryAx} / \texttt{admit} \emph{proof-terms} & """
-        + f"{manifest['sorry']} / {manifest['sorryAx']} / {manifest['admit']}"
-        + r""" \\
+Converted to named open \texttt{Prop} & 13 \\
+De-registered from \texttt{BRICKS} & 13 \\
+Axiom footprint (each module) & classical trio: \texttt{propext, Classical.choice, Quot.sound} \\
+\texttt{sorry} / \texttt{sorryAx} / \texttt{admit} \emph{proof-terms} & 0 / 0 / 0 \\
 Compile (direct-lean) & all EXIT 0 \\
 Surface \#1 (global YM mass gap) & \OPEN{} \\
 \bottomrule
@@ -329,38 +271,16 @@ project's locked invariants: the YM and Navier--Stokes towers remain
 \#1/\#2 open, NS frozen); the RH fragment in \texttt{Towers/RH/} is a
 \emph{conditional reduction} over two undischarged open hypotheses, not a proof
 of the Riemann Hypothesis. No tower in this repository closes a Clay problem.
-"""
-    )
-
-
-def build_appendix() -> str:
-    rows = []
-    for i, m in enumerate(manifest["modules"], 1):
-        f = esc(m["file"].split("Towers/")[-1])
-        sha = m["sha256"]
-        rows.append(f"{i} & \\texttt{{{f}}} & \\texttt{{{sha}}} \\\\")
-    body = "\n".join(rows)
-    return (
-        r"""\clearpage
+\clearpage
 \section{Appendix --- provenance and verification method}
 \label{sec:appendix}
 
 \paragraph{Verification method (verbatim from the build manifest).}
 \begin{itemize}
-  \item Method: \texttt{"""
-        + esc(manifest["verification"]["method"])
-        + r"""}.
-  \item Reason: """
-        + esc(manifest["verification"]["reason"])
-        + r""".
-  \item Axiom check: """
-        + esc(manifest["verification"]["axiom_check"])
-        + r""".
-  \item All EXIT 0: """
-        + str(manifest["verification"]["all_exit_0"])
-        + r"""; all trio-only: """
-        + str(manifest["verification"]["all_trio_only"])
-        + r""".
+  \item Method: \texttt{direct-lean (LEAN\_PATH over existing oleans; NOT lake)}.
+  \item Reason: vendored mathlib v4.12.0 tag unresolved; lake env would re-fetch and wipe oleans.
+  \item Axiom check: \#print axioms appended to /tmp copy, compiled with lean <file>.
+  \item All EXIT 0: True; all trio-only: True.
 \end{itemize}
 
 \paragraph{Per-file SHA-256 (full).}
@@ -370,9 +290,19 @@ def build_appendix() -> str:
 \# & File (under \texttt{Towers/}) & SHA-256 \\
 \midrule
 \endhead
-"""
-        + body
-        + r"""
+1 & \texttt{YM/ClusteringCore.lean} & \texttt{f3ceecd3892edd81a760aa8205e947aef57ee273c84ef5be33c3300f8aa9a1fb} \\
+2 & \texttt{YM/MassGapStandin.lean} & \texttt{ffa6f5820e6d6fdc6b0af4051582be2508a35e211117d87e24f26eb799e8ee5d} \\
+3 & \texttt{YM/SpectralGapCore.lean} & \texttt{fca1de2b085e768a61ef320db8d7d23f546a0f3ddce0b76ccbc3f956eee69e89} \\
+4 & \texttt{YM/TransferOperatorBound.lean} & \texttt{ff0bb4887885a10e11ef0e41a46dd801acb0ff5cb58b75d3d613a3d27e10295c} \\
+5 & \texttt{YM/TwoPointDecay.lean} & \texttt{516b8fb721a762181a0200f11e8fd01f16ee01c19ae8228fca944ab907234575} \\
+6 & \texttt{YM/MassGapFromDecay.lean} & \texttt{b5acbbc0770f6211765989440ec82a88d6d2744ae7a5d45d383eaa1360adaa3b} \\
+7 & \texttt{YM/IntegratedTailReal.lean} & \texttt{223a0dacab5f7bc4b871b9a1dbe620d7944af091d7bbd65d6f6f693d68ef8ca2} \\
+8 & \texttt{YM/TransferGapReal.lean} & \texttt{bd30cd0f17d3a74ae8870c1fcaf2808a9584d6e77185274760367abda5484ebe} \\
+9 & \texttt{YM/MassGapReal.lean} & \texttt{30f0b1b37c510cee3265a1f5e3e2bcccbf04647a500273f28a09902ffcf51fb0} \\
+10 & \texttt{YM/ClusteringImpliesGap.lean} & \texttt{acc573093f6dc6b68e7496ebfd99932ba91a63937a5430c5f4e5eadea3ba1626} \\
+11 & \texttt{YM/TransferImpliesClustering.lean} & \texttt{3e502bacd4110ed8e52b5ad1841e98c0e45164e974756b013957b092bff7a301} \\
+12 & \texttt{YM/TailImpliesTransfer.lean} & \texttt{e0d3ba5d3cbcad9f17cea42a73cc155af00af2dbb91fc0254f70c8016643bd50} \\
+13 & \texttt{YM/GapToDecay.lean} & \texttt{ff4b8f5dd357a353982afe08e66afd8036d4eabc526af4d0c8c364828f235dbe} \\
 \bottomrule
 \end{longtable}}
 
@@ -384,32 +314,7 @@ above is copied from them or from a command whose result is stated in the body.
 
 \vfill
 \begin{center}\small
-Generated """
-        + datetime.date.today().isoformat()
-        + r""" --- honesty-locked.
+Generated 2026-06-03 --- honesty-locked.
 No mass-gap / $\mu>0$ / Surface-\#1-closed claim is made.
 \end{center}
 \end{document}
-"""
-    )
-
-
-def main():
-    tex = (
-        PREAMBLE
-        + SEC1
-        + (SEC_DERIV_HEAD % len(manifest["modules"]))
-        + build_table_rows()
-        + SEC_DERIV_NOTES
-        + EXCERPTS
-        + SEC_ABSENT
-        + build_compliance()
-        + build_appendix()
-    )
-    out = ROOT / "reports" / "PDF_263_YM_Tower_Equation_Honest.tex"
-    out.write_text(tex)
-    print("wrote", out, len(tex), "bytes")
-
-
-if __name__ == "__main__":
-    main()

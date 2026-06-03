@@ -408,3 +408,9 @@ id = "2FioKCqVVZuFhCYq0kbpZ"
 uri = "file://export/EXPORT_INDEX.txt"
 type = "text"
 title = "Export index (categories + metadata)"
+
+[[outputs]]
+id = "LmkxdyfSBAFSQ62w3Xzs-"
+uri = "file://reports/PDF_263_YM_Tower_Equation_Honest.pdf"
+type = "pdf"
+title = "PDF_263 — Yang–Mills Tower Equation Report (Honest, Complete Audit)"
