@@ -9,7 +9,11 @@
   "status_doc": "CLAY_STATUS.md",
   "diff": "provenance/clay_repair.diff",
   "axioms": [],
-  "classical_trio": ["propext", "Classical.choice", "Quot.sound"],
+  "classical_trio": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
   "axioms_note": "\"axioms\": [] means ZERO research-grade axioms beyond the locked classical trio. Each _OPEN Prop references mathlib (Measure / inner / Real.exp), so its literal #print axioms footprint is exactly the classical trio listed in classical_trio. No axiom beyond the trio appears.",
   "sorry": 0,
   "sorryAx": 0,
@@ -40,7 +44,11 @@
       "universe_param": "u",
       "sha256": "f3ceecd3892edd81a760aa8205e947aef57ee273c84ef5be33c3300f8aa9a1fb",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "clustering predicate instantiated at constant-zero pair (vacuous)",
       "status": "OPEN"
@@ -52,7 +60,11 @@
       "universe_param": null,
       "sha256": "ffa6f5820e6d6fdc6b0af4051582be2508a35e211117d87e24f26eb799e8ee5d",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "mass-gap witness is the zero CLM on H := C (vacuous)",
       "status": "OPEN"
@@ -64,7 +76,11 @@
       "universe_param": null,
       "sha256": "fca1de2b085e768a61ef320db8d7d23f546a0f3ddce0b76ccbc3f956eee69e89",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "HasMassGap at T := 0 collapses to 0 >= (1-m)*norm^2 (vacuous); def HasMassGap preserved",
       "status": "OPEN"
@@ -76,7 +92,11 @@
       "universe_param": null,
       "sha256": "ff0bb4887885a10e11ef0e41a46dd801acb0ff5cb58b75d3d613a3d27e10295c",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "transferGapBound at degenerate operators (vacuous); def transferGapBound preserved",
       "status": "OPEN"
@@ -88,7 +108,11 @@
       "universe_param": null,
       "sha256": "516b8fb721a762181a0200f11e8fd01f16ee01c19ae8228fca944ab907234575",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "clustering of constant-zero function, hypothesis unused (vacuous); def hasExponentialClustering preserved",
       "status": "OPEN"
@@ -100,7 +124,11 @@
       "universe_param": null,
       "sha256": "b5acbbc0770f6211765989440ec82a88d6d2744ae7a5d45d383eaa1360adaa3b",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "mass gap from constant-zero clustering, zero witness operator (vacuous)",
       "status": "OPEN"
@@ -112,7 +140,11 @@
       "universe_param": null,
       "sha256": "223a0dacab5f7bc4b871b9a1dbe620d7944af091d7bbd65d6f6f693d68ef8ca2",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "integrated_tail L m := rexp(-m*L) so bound is reflexive rexp(-m*L) <= rexp(-m*L) (vacuous); def integrated_tail preserved",
       "status": "OPEN"
@@ -124,7 +156,11 @@
       "universe_param": null,
       "sha256": "bd30cd0f17d3a74ae8870c1fcaf2808a9584d6e77185274760367abda5484ebe",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "real-named transfer gap still discharged at degenerate witness (vacuous)",
       "status": "OPEN"
@@ -136,7 +172,11 @@
       "universe_param": null,
       "sha256": "30f0b1b37c510cee3265a1f5e3e2bcccbf04647a500273f28a09902ffcf51fb0",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "mass gap from transfer at zero witness on H := C (vacuous)",
       "status": "OPEN"
@@ -148,7 +188,11 @@
       "universe_param": null,
       "sha256": "acc573093f6dc6b68e7496ebfd99932ba91a63937a5430c5f4e5eadea3ba1626",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "constant-zero antecedent, zero CLM consequent (vacuous)",
       "status": "OPEN"
@@ -160,7 +204,11 @@
       "universe_param": null,
       "sha256": "3e502bacd4110ed8e52b5ad1841e98c0e45164e974756b013957b092bff7a301",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "consequent witness is constant-zero function, hypothesis unused (vacuous)",
       "status": "OPEN"
@@ -172,7 +220,11 @@
       "universe_param": null,
       "sha256": "e0d3ba5d3cbcad9f17cea42a73cc155af00af2dbb91fc0254f70c8016643bd50",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "integrated_tail and transferGapBound unfold to same inequality; pure definitional re-wrap (vacuous)",
       "status": "OPEN"
@@ -184,10 +236,79 @@
       "universe_param": "u",
       "sha256": "ff4b8f5dd357a353982afe08e66afd8036d4eabc526af4d0c8c364828f235dbe",
       "exit": 0,
-      "axioms": ["propext", "Classical.choice", "Quot.sound"],
+      "axioms": [
+        "propext",
+        "Classical.choice",
+        "Quot.sound"
+      ],
       "t_real_bound": "none",
       "collapse": "consequent discharged by f t := exp(-m*t), gap hypothesis unused (vacuous)",
       "status": "OPEN"
     }
-  ]
+  ],
+  "kp_gap_sync_2026_06_13": {
+    "date": "2026-06-13",
+    "author": "D. Fox",
+    "commit_yang_mills": "d8df1510",
+    "description": "Sync YM tower files from Yang-Mills-MassGap; prove log_two_gt_two_thirds and gap_kp_star>2 unconditionally",
+    "axioms": [],
+    "classical_trio": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "sorry": 0,
+    "new_theorems": [
+      {
+        "name": "log_two_gt_two_thirds",
+        "file": "KP_Closure.lean",
+        "status": "PROVED"
+      },
+      {
+        "name": "gap_kp_star_gt_two",
+        "file": "KP_Closure.lean",
+        "status": "PROVED"
+      }
+    ],
+    "open_surfaces": [
+      {
+        "name": "W1_KP_Surface",
+        "file": "KP_Closure.lean",
+        "status": "OPEN",
+        "cert": "docs/KP_Gap_Cert_2026-06-13.md"
+      }
+    ],
+    "files_synced": [
+      "KP_Closure.lean",
+      "BesselBounds.lean",
+      "WeylToeplitzBound.lean",
+      "W1Toeplitz.lean",
+      "W1NumericProof.lean",
+      "Wall256_Bridge.lean",
+      "Wall256_MassGap.lean",
+      "Wall256_OS.lean",
+      "AxiomCheck.lean",
+      "BrydgesFederbush_D1D3.lean",
+      "SpecialFunctions/Bessel.lean",
+      "Hw1_Surface.lean",
+      "Transfer.lean",
+      "Wall256_Surface1.lean"
+    ],
+    "blob_shas": {
+      "KP_Closure.lean": "60d1dae0",
+      "BesselBounds.lean": "e4d3ca88",
+      "WeylToeplitzBound.lean": "eeed95c1",
+      "W1Toeplitz.lean": "86794cc0",
+      "W1NumericProof.lean": "09ea9f6b",
+      "Wall256_Bridge.lean": "717edd56",
+      "Wall256_MassGap.lean": "9a2170ef",
+      "Wall256_OS.lean": "5c2957e9",
+      "AxiomCheck.lean": "c45c4667",
+      "BrydgesFederbush_D1D3.lean": "b651950b",
+      "SpecialFunctions/Bessel.lean": "cffc001e",
+      "Hw1_Surface.lean": "3d53ac3f",
+      "Transfer.lean": "61de4aed",
+      "Wall256_Surface1.lean": "c4d4815b"
+    }
+  }
 }
