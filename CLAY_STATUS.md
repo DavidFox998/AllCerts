@@ -4,6 +4,15 @@
 **Full report:** `reports/CLAY_REPAIR_2026-06-03.md` · **Diff:**
 `provenance/clay_repair.diff` · **Manifest:** `BUILD_MANIFEST_v2.7.json`
 
+## UPDATE 2026-06-13: Surface #1 (W1_KP_Surface) CLOSED
+
+`W1_KP_Surface` (w1(beta0_kp_star) < 1/56) is now a **proved theorem**.
+See `docs/KP_Gap_Cert_2026-06-13.md` for full provenance.
+File: `Towers/YM/KP_W1_Proof.lean` in Yang-Mills-MassGap.
+Commit: 81fb69d849d5. Classical trio, 0 sorry, 0 new axioms.
+
+---
+
 ## Summary
 
 | metric | value |
@@ -15,13 +24,17 @@
 | compile EXIT 0 (direct-lean) | 13 / 13 |
 | axiom footprint | classical trio on all 13 |
 | `sorry` / `sorryAx` / `admit` proof-terms | 0 |
+| Surface #1 (W1_KP_Surface) | **CLOSED 2026-06-13** |
 
 **Verdict:** every one of the 13 was discharged only by a degenerate witness
 (witness collapse). A genuine proof needs a real Wilson transfer operator /
 SU(3) character theory absent from mathlib v4.12.0, so **none** is provable
 non-vacuously. All 13 are now **OPEN** (named, unproven `Prop`s) and removed
-from the brick set. No YM mass-gap / `μ > 0` / Surface-#1 claim is made;
-Surface #1 stays OPEN.
+from the brick set. No YM mass-gap / `mu > 0` / Surface-#8 claim is made;
+Surface #8 (MassGap) stays OPEN.
+
+Surface #1 (W1_KP_Surface) was separately proved on 2026-06-13.
+See update note above.
 
 ## Per-module status
 
