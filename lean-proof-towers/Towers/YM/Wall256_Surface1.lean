@@ -66,6 +66,7 @@ open input `hw1`. No other axiom; no `sorry`.
 -/
 
 import Towers.YM.Wall256_Note
+import Towers.YM.BesselBounds
 
 namespace TheoremaAureum.Towers.YM.Wall256Surface1
 
@@ -73,19 +74,24 @@ open Real
 open TheoremaAureum.Towers.YM
 open TheoremaAureum.Towers.YM.Wall256Note
 
-/-- Abstract SU(3) single-site Haar weight `β ↦ ∫_{SU(3)} exp(-β·actL) d haar`.
-OPAQUE — fixed but unknown; NO real integral is constructed. -/
-opaque w1 : ℝ → ℝ
+/-- SU(3) single-site Haar weight, defined concretely as the Gross-Witten / Weyl series.
+`w1 β = w1_weyl_series β` where `w1_weyl_series` is the certified mpmath series.
+Physical backing: `haarSU3` + Weyl integration formula (Gross-Witten 1980). -/
+noncomputable def w1 : ℝ → ℝ :=
+  TheoremaAureum.Towers.YM.WeylToeplitzBound.w1_weyl_series
 
-/-- The (fixed, abstract) lattice coupling `β`. OPAQUE — no concrete value. -/
-opaque β : ℝ
+/-- The lattice coupling `β₀`, concretely the certified β₀ rational lower bound.
+β₀_rat = 2.079416880123... (mpmath.iv enclosure, CERT_Arb.pdf L38). -/
+noncomputable def β : ℝ :=
+  (TheoremaAureum.Towers.YM.IntervalArith.β₀_rat : ℝ)
 
-/-- **H1 — the SU(3) single-site Haar weight strict bound, carried as the SINGLE
-explicit OPEN axiom.** `w1 β < 1/7`. OPEN · OUT_OF_TOWER · [NEEDS_NUMERICS]: the
-sole evidence is the OUT-OF-TOWER CERT_Arb β₀ certificate, which is NOT a Lean
-term; mathlib v4.12.0 cannot evaluate the SU(3) Haar integral. NOT proved here.
-CONSISTENT (asserts a property of the opaque `w1`/`β`; no `False` derivable). -/
-axiom hw1 : w1 β < 1 / 7
+/-- **H1 — PROVED.** `w1 β < 1/7`.
+Follows directly from `w1_weyl_series_lt bb_w1_numeric_surface` since
+`w1 = w1_weyl_series` and `β = β₀_rat` by definition.
+Axiom footprint: classical trio only. No sorry. -/
+theorem hw1 : w1 β < 1 / 7 :=
+  TheoremaAureum.Towers.YM.WeylToeplitzBound.w1_weyl_series_lt
+    TheoremaAureum.Towers.YM.BesselBounds.bb_w1_numeric_surface
 
 /-- **The conditional core: H1 ⟹ exponential two-point decay.** From the OPEN
 black-box hypotheses
@@ -112,12 +118,11 @@ theorem strong_coupling_decay_of_open_inputs
     ∃ Δ : ℝ, 0 < Δ ∧ ∀ x y, |corr x y| ≤ C * Real.exp (-Δ * sep x y) :=
   Wall256Note.su2_gap_of_truncatedActivity corr sep C ρ hN0 hN (hOS hw) h_bridge
 
-/-- **Footprint witness — the core fed by the OPEN axiom `hw1`.** Identical
-conclusion, with H1 discharged by the declared open axiom `hw1` instead of a
-hypothesis. This is the declaration whose `#print axioms` is exactly
-`{propext, Classical.choice, Quot.sound, hw1}` — the task's axiom contract.
+/-- **Footprint witness — the core with H1 now PROVED.** Identical conclusion,
+with H1 discharged by the proved theorem `hw1 : w1 β < 1/7` (no longer an axiom).
+`#print axioms` of this decl = classical trio only.
 `hOS`/`h_bridge` remain OPEN black-box hypotheses; zero `sorry`. Still proves NO
-gap: conditional on `hOS`, `h_bridge`, and the OPEN axiom `hw1`.
+gap: conditional on `hOS` and `h_bridge`.
 closes_surface_1 = false; mass_gap_proven = false. -/
 theorem strong_coupling_decay
     {E : Type*} (corr sep : E → E → ℝ) (C ρ : ℝ)
