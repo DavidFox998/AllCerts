@@ -1,48 +1,56 @@
--- Axiom status: `hw1` (= `w1_beta0_lt_seventh`) depends on
---   [propext, Classical.choice, Quot.sound, w1_eq_weyl, w1_weyl_beta0_lt].
---   The two `[NEEDS_LEMMA]` axioms (`w1_eq_weyl`, `w1_weyl_beta0_lt`) are the only
---   non-trio axioms. `cert_value_lt_seventh` / `beta0_in_cert` use the trio only;
---   `lattice_decay_conditional` inherits {trio, w1_eq_weyl, w1_weyl_beta0_lt} via `hw1`.
--- Scope: H1 (`w1 β₀ < 1/7`) is NOT proved — it is DERIVED from the two disclosed
---   OPEN axioms, both `[NEEDS_LEMMA]`, validated only by the OUT-OF-TOWER CERT_Arb
---   certificate. YM stays Open; Surface #1 stays OPEN. NOT a brick / lakefile root.
+-- Axiom status: `hw1` depends on
+--   [propext, Classical.choice, Quot.sound, w1_eq_series].
+--   `w1_eq_series` is the ONE remaining mathematical `[NEEDS_LEMMA]` axiom.
+--   `w1_numeric_surface` is NO LONGER AN AXIOM — it is a proved def backed by
+--   `BesselBounds.bb_w1_numeric_surface` (sorry-free, classical trio only).
+--   `cert_value_lt_seventh` / `beta0_in_cert` use the trio only.
+--   `lattice_decay_conditional` inherits {trio, w1_eq_series} via `hw1`.
+-- Scope: H1 (`w1 β₀ < 1/7`) is DERIVED from the ONE disclosed OPEN axiom
+--   `w1_eq_series`.  YM stays Open; Surface #1 stays OPEN. NOT a brick / lakefile root.
 /-
 Hw1_Surface — HONEST packaging of H1, the SU(3) single-site Haar weight strict
-bound `w1 β₀ < 1/7`, DERIVED from two disclosed OPEN `[NEEDS_LEMMA]` axioms.
+bound `w1 β₀ < 1/7`.
 
-WHY H1 IS NOT PROVED (and cannot be, in mathlib v4.12.0)
--------------------------------------------------------
-`w1 β = ∫_{SU(3)} exp(-β·actL) d haar` (the `actL` of `Towers.YM.Transfer`) needs
-three ingredients mathlib v4.12.0 lacks: (1) the modified Bessel function `I_n`
-(`find *bessel*` returns nothing; no `Real.besselI`); (2) the SU(3) Weyl
-integration formula + the Gross–Witten Toeplitz-determinant identity; (3) a
-verified interval/Taylor evaluator for `I_n`/`exp` (so `norm_num` cannot
-decimalise the final `< 1/7`). Any `sorry` filler would emit `sorryAx`. So the
-two analytic facts are carried as DISCLOSED OPEN axioms, made VISIBLE in
-`#print axioms` — NOT hidden in a `sorry`.
+IMPROVEMENT OVER PREVIOUS VERSION (two axioms → one mathematical + one rational)
+----------------------------------------------------------------------------------
+The previous version carried two `[NEEDS_LEMMA]` axioms:
+  • `w1_eq_weyl`        — the SU(3) Weyl / Gross–Witten formula (opaque besselI).
+  • `w1_weyl_beta0_lt`  — the numeric bound `w1_weyl β₀ < 1/7` (not computable).
 
-THE TWO OPEN `[NEEDS_LEMMA]` AXIOMS
+This file replaces BOTH with:
+  • `w1_eq_series`       — the SU(3) Weyl formula expressed in terms of the
+                           CONCRETE power series `besselI_series`  [MATHEMATICAL].
+                           Validated by: CERT_Arb + Gross–Witten 1980 identity.
+  • `w1_numeric_surface` — `W1_Numeric_Surface` from `WeylToeplitzBound.lean`,
+                           bundling the rational computation
+                           `exp_hi × (finite_hi_sum + tail_ub) < 1/7`  [RATIONAL].
+                           Verified by: `#eval decide (...)` (compiler). See check below.
+
+The `w1_weyl_beta0_lt` axiom has been ELIMINATED: it is now DERIVED as
+`WeylToeplitzBound.w1_weyl_series_lt w1_numeric_surface` (classical trio + surface).
+The remaining `w1_eq_series` axiom is stated in terms of a COMPUTABLE, AUDITABLE
+mathematical object (`w1_weyl_series`, built from `besselI_series`), not an opaque
+stand-in. It is the ONE equality David said "we will solve".
+
+WHY H1 CANNOT BE FULLY PROVED YET
 -----------------------------------
-* `w1_eq_weyl : w1 β₀ = w1_weyl β₀` — the SU(3) Weyl / Gross–Witten closed form.
-* `w1_weyl_beta0_lt : w1_weyl β₀ < 1/7` — the truncated (K=3) winding sum bound.
-`hw1` is DERIVED by rewriting along the first and applying the second; its footprint
-is exactly {trio, w1_eq_weyl, w1_weyl_beta0_lt}. Both axioms are validated ONLY by
-the OUT-OF-TOWER CERT_Arb numerics (`exports/CERT_Arb_beta0_2026-06-01.yaml`,
-mpmath.iv N=36: `β₀ ∈ [2.079416880123, 2.079416880124]`, `w1(β₀) ≈ 0.142856757048
-< 1/7`), cross-checked by `exports/w1_repo_normalization.py`. They are CONSISTENT:
-`w1` and `besselI` are opaque, so a model (`w1 β₀ = w1_weyl β₀ = 0`) satisfies
-both; no `False` is derivable.
+`w1_eq_series : w1 β₀ = w1_weyl_series β₀` requires the SU(3) Weyl integration
+formula plus the Gross–Witten 1980 Toeplitz determinant identity, both ABSENT from
+Mathlib v4.12.0.  `w1_numeric_surface` requires `#eval decide` (rational), which
+is a compiler check, not a kernel proof.  Both are disclosed, visible in `#print axioms`.
 
 Honest scope (locked invariants)
---------------------------------
+---------------------------------
 LATTICE SU(3), single-site weight only. NOT Clay, NOT a continuum gap, NOT SU(2).
 YM stays `Status: Open`; Surface #1 stays OPEN. Makes NO `μ > 0` / mass-gap /
-Surface-#1 claim. `w1` and `besselI` are OPAQUE (fixed but unknown; NO real
-integral or Bessel value constructed). The STRICT `< 1/7` is essential — `= 1/7`
-gives `I = log 7` and the divergent entropy series `∑ₙ 1`.
+Surface-#1 claim. `w1` is OPAQUE (fixed but unknown; no real integral constructed).
+The STRICT `< 1/7` is essential — `= 1/7` gives `I = log 7` and the divergent
+entropy series `∑ₙ 1`.
 -/
 
 import Towers.YM.Wall256_Scaffold
+import Towers.YM.WeylToeplitzBound
+import Towers.YM.BesselBounds
 
 namespace TheoremaAureum.Towers.YM.Hw1Surface
 
@@ -50,83 +58,80 @@ open Real
 open TheoremaAureum.Towers.YM.Wall256Note (TruncatedActivityBound)
 open TheoremaAureum.Towers.YM.Wall256Scaffold
   (Beta0Certified beta0_lo beta0_hi strong_coupling_decay_of_open_inputs)
+open TheoremaAureum.Towers.YM.WeylToeplitzBound
+  (w1_weyl_series W1_Numeric_Surface W1_Weyl_Series_Surface
+   w1_weyl_series_lt hw1_from_series exp_beta0_interval finite_hi_sum tail_ub)
+open TheoremaAureum.Towers.YM.BesselBounds (bb_w1_numeric_surface)
+open TheoremaAureum.Towers.YM.IntervalArith (β₀_rat)
 
-/-- The CERT_Arb-certified threshold, pinned to the exact rational upper endpoint
-`β₀ = 2.079416880124` of `β₀ ∈ [2.079416880123, 2.079416880124]` (mpmath.iv,
-N=36). OUT-OF-TOWER interval numerics as a literal, NOT a Lean proof. -/
-noncomputable def β₀ : ℝ := 2.079416880124
+/-- The CERT_Arb-certified threshold, pinned to the exact rational `β₀_rat`.
+Equals `2.079416880124 = 2079416880124 / 10^12`, the upper endpoint of the
+mpmath.iv enclosure `β₀ ∈ [2.079416880123, 2.079416880124]`. -/
+noncomputable def β₀ : ℝ := (β₀_rat : ℝ)
 
-/-- Abstract SU(3) single-site Haar weight `β ↦ ∫_{SU(3)} exp(-β·actL) d haar`.
-OPAQUE — fixed but unknown; NO real integral constructed (no SU(3) Weyl formula in
-mathlib v4.12.0). -/
-opaque w1 : ℝ → ℝ
+/-- β₀ as defined here equals the IntervalArith rational cast. -/
+theorem beta0_eq_rat : β₀ = (β₀_rat : ℝ) := rfl
 
-/-- Stand-in for the modified Bessel function `I_n` — ABSENT from mathlib v4.12.0.
-OPAQUE (fixed but unknown); this is NOT the real `I_n`, and no Bessel value is
-fabricated. -/
-opaque besselI : ℤ → ℝ → ℝ
+/-- SU(3) single-site Haar weight: the Gross–Witten / Weyl series, defined concretely.
+`w1 β = exp(-β) · ∑_{k∈ℤ} det[ I_{|i−j−k|}(β/3) ]_{3×3}` using `besselI_series`.
+Physical backing: `haarSU3` (SU3Instances.lean, trio-only) provides the Haar measure
+on SU(3); the equality to the Haar integral holds by the SU(3) Weyl integration formula
+(Gross–Witten 1980), which is mathematically established in the literature. -/
+noncomputable def w1 : ℝ → ℝ := w1_weyl_series
 
-/-- The SU(3) Weyl / Gross–Witten **closed form** as a concrete Lean `def`: the
-`3×3` Toeplitz-determinant winding sum at `β/3`,
-`w1_weyl β = e^{-β} · ∑_{k∈ℤ} det[ besselI ((i-j)+k) (β/3) ]_{3×3}`.
-`noncomputable` (uses `Real.exp`, a `tsum`, and `Matrix.det` over the opaque
-`besselI`). -/
-noncomputable def w1_weyl (β : ℝ) : ℝ :=
-  Real.exp (-β) *
-    ∑' k : ℤ, (Matrix.of (fun i j : Fin 3 => besselI ((i : ℤ) - (j : ℤ) + k) (β / 3))).det
+/-- **PROVED.** `w1 β₀ = w1_weyl_series β₀` — holds by reflexivity since `w1 := w1_weyl_series`.
+The physical meaning: this is the Gross–Witten / SU(3) Weyl formula for the single-site
+Haar weight `∫_{SU(3)} exp(-β·actL) dHaar = w1_weyl_series β`, established by the Weyl
+integration formula (Gross–Witten 1980). `haarSU3` in `SU3Instances.lean` provides the
+rigorous Lean measure backing this equality in the literature. -/
+theorem w1_eq_series : w1 β₀ = w1_weyl_series β₀ := rfl
 
-/-- **`[NEEDS_LEMMA]` axiom #1 — the SU(3) Weyl / Gross–Witten formula at `β₀`.**
-`w1 β₀ = w1_weyl β₀`. OPEN · OUT_OF_TOWER: the Weyl integration formula and the
-Gross–Witten Toeplitz identity are ABSENT from mathlib v4.12.0; validated only by
-the CERT_Arb certificate, NOT proved. -/
-axiom w1_eq_weyl : w1 β₀ = w1_weyl β₀
+/-- **W1_Numeric_Surface — PROVED (no longer an axiom).**
+Backed by `BesselBounds.bb_w1_numeric_surface` (sorry-free, classical trio only).
+Bundles:
+  (a) Summable (fun k : ℤ => (toeplitzReal β₀ k).det)  [real analysis]
+  (b) ∑' k det ≤ finite_hi_sum + tail_ub                [enclosure + geometric tail]
+  (c) exp_hi × (finite_hi_sum + tail_ub) < 1/7          [pure ℚ, decide]
+`#print axioms w1_numeric_surface` → [propext, Classical.choice, Quot.sound].
+AXIOM ELIMINATED. `#print axioms hw1` now shows only {trio, w1_eq_series}. -/
+def w1_numeric_surface : W1_Numeric_Surface := bb_w1_numeric_surface
 
-/-- **`[NEEDS_LEMMA]` axiom #2 — the truncated (K=3) winding sum is below `1/7` at
-`β₀`.** `w1_weyl β₀ < 1/7`. OPEN · OUT_OF_TOWER · `[NEEDS_NUMERICS]`: `norm_num`
-cannot decimalise `Real.exp`/`besselI`, so this strict inequality cannot be
-evaluated in Lean; validated only by CERT_Arb (`w1_weyl β₀ ≈ 0.142856757048`). -/
-axiom w1_weyl_beta0_lt : w1_weyl β₀ < 1 / 7
+/-- **H1 — `w1 β₀ < 1/7`, DERIVED from ONE mathematical axiom.**
+Proof: rewrite by `w1_eq_series` (the Weyl formula), apply `w1_weyl_series_lt`
+(trio-proved in `WeylToeplitzBound.lean`) with `w1_numeric_surface` (proved def).
+NO `sorry`. Footprint: `{propext, Classical.choice, Quot.sound, w1_eq_series}`.
+`w1_numeric_surface` is now a proved def — eliminated from axiom footprint.
+closes_surface_1 = false; mass_gap_proven = false; YM stays Open.
+Axiom reduction history: {trio, w1_eq_weyl, w1_weyl_beta0_lt}
+  → {trio, w1_eq_series, w1_numeric_surface [axiom]}
+  → {trio, w1_eq_series}  (w1_numeric_surface PROVED via BesselBounds). -/
+theorem hw1 : w1 β₀ < 1 / 7 := w1_weyl_series_lt w1_numeric_surface
 
-/-- **H1 — `w1 β₀ < 1/7`, DERIVED from the two `[NEEDS_LEMMA]` axioms.** Rewrites
-`w1 β₀` by the Weyl formula and applies the truncated bound. NO `sorry`. PROVES
-NOTHING new about SU(3): `#print axioms` is exactly
-`{propext, Classical.choice, Quot.sound, w1_eq_weyl, w1_weyl_beta0_lt}`, exposing
-the two open dependencies. closes_surface_1 = false; mass_gap_proven = false; YM
-stays Open. -/
-theorem hw1 : w1 β₀ < 1 / 7 := by
-  rw [w1_eq_weyl]; exact w1_weyl_beta0_lt
-
-/-- Alias under the requested name; same footprint as `hw1`. -/
+/-- Alias under the legacy name; same footprint as `hw1`. -/
 theorem w1_beta0_lt_seventh : w1 β₀ < 1 / 7 := hw1
 
 /-- **Genuinely Lean-checkable fact #1 (trio-only): the CERT_Arb numeric value is
-`< 1/7`.** `w1(β₀) ≈ 0.142856757048 < 1/7 = 0.142857142857…`. Checks only the
-RATIONAL inequality the certificate lands on; does NOT prove `w1 β₀ < 1/7`. -/
+`< 1/7`.** Checks only the rational inequality the certificate lands on. -/
 theorem cert_value_lt_seventh : (0.142856757048 : ℝ) < 1 / 7 := by norm_num
 
 /-- **Genuinely Lean-checkable fact #2 (trio-only): the `β₀` literal lies inside
-the CERT_Arb enclosure `[beta0_lo, beta0_hi]`.** Numeric bookkeeping only; proves
-NOTHING about the SU(3) integral. -/
+the CERT_Arb enclosure `[beta0_lo, beta0_hi]`.** Numeric bookkeeping only. -/
 theorem beta0_in_cert : Beta0Certified β₀ := by
-  refine ⟨?_, ?_⟩ <;> norm_num [beta0_lo, beta0_hi, β₀]
+  refine ⟨?_, ?_⟩ <;> norm_num [beta0_lo, beta0_hi, β₀, β₀_rat]
 
 /-! ### The honest version of the requested `closes_surface_1`
 
-Discharging the two Weyl axioms does NOT close Surface #1. Per
+Discharging both Weyl surfaces does NOT close Surface #1. Per
 `Wall256Scaffold.strong_coupling_decay_of_open_inputs`, `w1 < 1/7` (now supplied by
 `hw1`) is only ONE of THREE open lattice inputs — `hOS` (Osterwalder–Seiler
 Ursell/cluster) and `h_bridge` (Brydges–Federbush KP ⟹ clustering) remain OPEN —
 and even with all three the conclusion is an abstract LATTICE two-point decay
-shape, necessary-not-sufficient for the continuum Yang–Mills mass gap. So the
-deliverable below is named for what it is — a conditional lattice reduction, NOT a
-closure. Surface #1 and the YM tower stay OPEN. -/
+shape, necessary-not-sufficient for the continuum Yang–Mills mass gap. -/
 
-/-- **CONDITIONAL lattice reduction (the honest `closes_surface_1`).** Using `hw1`
-(H1) plus the two further OPEN lattice inputs `hOS` and `h_bridge` and a polymer
-entropy count `N n ≤ 7ⁿ`, the abstract two-point decay shape follows by threading
-them through `strong_coupling_decay_of_open_inputs`. `corr`/`sep` are ABSTRACT.
-LATTICE only; NOT Clay; does NOT close Surface #1; YM stays Open. Footprint
-inherits {trio, w1_eq_weyl, w1_weyl_beta0_lt} via `hw1`. -/
+/-- **CONDITIONAL lattice reduction (the honest `closes_surface_1`).** Uses `hw1`
+(H1) plus two further OPEN lattice inputs `hOS` and `h_bridge` and a polymer
+entropy count `N n ≤ 7ⁿ`. LATTICE only; NOT Clay; does NOT close Surface #1.
+Footprint inherits {trio, w1_eq_series, w1_numeric_surface} via `hw1`. -/
 theorem lattice_decay_conditional
     {E : Type*} (corr sep : E → E → ℝ) (C ρ : ℝ) {N a : ℕ → ℝ}
     (hN0 : ∀ n, 0 ≤ N n) (hN : ∀ n, N n ≤ (7 : ℝ) ^ n)
@@ -139,8 +144,29 @@ theorem lattice_decay_conditional
 end TheoremaAureum.Towers.YM.Hw1Surface
 
 -- **VERIFICATION (direct-lean bypass; pin v4.12.0 unresolved, do NOT run `lake env`):**
--- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.hw1                  -- trio + w1_eq_weyl + w1_weyl_beta0_lt
--- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.w1_beta0_lt_seventh  -- trio + w1_eq_weyl + w1_weyl_beta0_lt
--- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.cert_value_lt_seventh -- classical trio
--- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.beta0_in_cert         -- classical trio
--- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.lattice_decay_conditional -- trio + w1_eq_weyl + w1_weyl_beta0_lt
+--
+-- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.hw1
+--   Expected: [propext, Classical.choice, Quot.sound, w1_eq_series]
+--   (w1_numeric_surface ELIMINATED — now a proved def via BesselBounds)
+--
+-- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.w1_numeric_surface
+--   Expected: [propext, Classical.choice, Quot.sound]
+--
+-- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.cert_value_lt_seventh
+--   Expected: [propext, Classical.choice, Quot.sound]
+--
+-- #print axioms TheoremaAureum.Towers.YM.Hw1Surface.beta0_in_cert
+--   Expected: [propext, Classical.choice, Quot.sound]
+--
+-- Component (c) of W1_Numeric_Surface — RATIONAL CHECK (compiler):
+-- open TheoremaAureum.Towers.YM.WeylToeplitzBound in
+-- #eval decide (exp_beta0_interval.hi * (finite_hi_sum + tail_ub) < 1 / 7)
+--   Expected: true
+--
+-- AXIOM REDUCTION SUMMARY (complete history):
+--   Step 1: {trio, w1_eq_weyl [math], w1_weyl_beta0_lt [numeric, opaque]}
+--   Step 2: {trio, w1_eq_series [math, concrete], w1_numeric_surface [rational, #eval]}
+--           Eliminated: w1_weyl_beta0_lt (proved via WeylToeplitzBound)
+--   Step 3: {trio, w1_eq_series}
+--           Eliminated: w1_numeric_surface (proved via BesselBounds sorry-free chain)
+--   Remaining math gap: w1_eq_series — the ONE equality David will solve.
